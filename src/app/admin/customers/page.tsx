@@ -24,14 +24,27 @@ export default function AdminCustomersPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<AdminCustomer | null>(null);
 
   useEffect(() => {
-    const fetchCustomersFromOrders = async () => {
+    const fetchCustomers = async () => {
       try {
-        const res = await fetch("/api/orders");
-        const data = await res.json();
-        if (data.success && Array.isArray(data.orders) && data.orders.length > 0) {
-          const map = new Map<string, AdminCustomer>();
-          data.orders.forEach((o: any) => {
-            const key = o.customerPhone || o.customerEmail || o.customerName;
+        const [ordersRes, usersRes] = await Promise.all([
+          fetch("/api/orders").then((r) => r.json()).catch(() => ({ success: false, orders: [] })),
+          fetch("/api/users").then((r) => r.json()).catch(() => ({ success: false, users: [] })),
+        ]);
+
+        const map = new Map<string, AdminCustomer>();
+
+        // 1. Add all registered members from Postgres database
+        if (usersRes.success && Array.isArray(usersRes.users)) {
+          usersRes.users.forEach((u: AdminCustomer) => {
+            const key = u.email || u.phone || u.id;
+            map.set(key, u);
+          });
+        }
+
+        // 2. Add or update with order records
+        if (ordersRes.success && Array.isArray(ordersRes.orders)) {
+          ordersRes.orders.forEach((o: any) => {
+            const key = o.customerEmail || o.customerPhone || o.customerName;
             if (map.has(key)) {
               const existing = map.get(key)!;
               existing.ordersCount += 1;
@@ -55,15 +68,14 @@ export default function AdminCustomersPage() {
               });
             }
           });
-          setCustomers(Array.from(map.values()));
-        } else {
-          setCustomers([]);
         }
+
+        setCustomers(Array.from(map.values()));
       } catch {
         setCustomers([]);
       }
     };
-    fetchCustomersFromOrders();
+    fetchCustomers();
   }, []);
 
   const filteredCustomers = customers.filter((c) => {

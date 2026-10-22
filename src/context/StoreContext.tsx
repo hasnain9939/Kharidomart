@@ -254,27 +254,28 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       ...customData,
     };
     setUser(newUser);
-    showToast(`Welcome, ${newUser.name.split(" ")[0]}! (Signed in with Google) 🎉`);
+    showToast(`Welcome, ${newUser.name.split(" ")[0]}! 🎉`);
   };
 
   const loginWithEmail = async (email: string, password?: string, name?: string): Promise<boolean> => {
-    const cleanEmail = email.trim().toLowerCase();
-    const displayName =
-      name ||
-      cleanEmail
-        .split("@")[0]
-        .replace(/[._]/g, " ")
-        .replace(/\b\w/g, (c) => c.toUpperCase());
-    const newUser: UserProfile = {
-      id: "usr_eml_" + Math.random().toString(36).substring(2, 9),
-      name: displayName,
-      email: cleanEmail,
-      provider: "email",
-      joinedDate: new Date().toLocaleDateString("en-IN", { month: "short", year: "numeric" }),
-    };
-    setUser(newUser);
-    showToast(`Welcome back, ${displayName}! 🛍️`);
-    return true;
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        showToast(data.error || "Invalid email or password", "warning");
+        return false;
+      }
+      setUser(data.user);
+      showToast(`Welcome back, ${data.user.name.split(" ")[0]}! 🛍️`);
+      return true;
+    } catch {
+      showToast("Unable to sign in. Please check your internet connection.", "warning");
+      return false;
+    }
   };
 
   const signupWithEmail = async (
@@ -283,18 +284,24 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     password?: string,
     phone?: string
   ): Promise<boolean> => {
-    const cleanEmail = email.trim().toLowerCase();
-    const newUser: UserProfile = {
-      id: "usr_eml_" + Math.random().toString(36).substring(2, 9),
-      name: name.trim(),
-      email: cleanEmail,
-      phone: phone?.trim(),
-      provider: "email",
-      joinedDate: new Date().toLocaleDateString("en-IN", { month: "short", year: "numeric" }),
-    };
-    setUser(newUser);
-    showToast(`Account created! Welcome to KharidoMart, ${name.trim().split(" ")[0]}! 🌟`);
-    return true;
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password, phone }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        showToast(data.error || "Registration failed", "warning");
+        return false;
+      }
+      setUser(data.user);
+      showToast(`Account created! Welcome to KharidoMart, ${data.user.name.split(" ")[0]}! 🌟`);
+      return true;
+    } catch {
+      showToast("Registration failed. Please check your internet connection.", "warning");
+      return false;
+    }
   };
 
   const logout = () => {
@@ -307,8 +314,24 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     showToast("You have been signed out.", "info");
   };
 
-  const updateUserProfile = (updates: Partial<UserProfile>) => {
+  const updateUserProfile = async (updates: Partial<UserProfile>) => {
     setUser((prev) => (prev ? { ...prev, ...updates } : null));
+    if (user?.email) {
+      try {
+        await fetch("/api/auth/profile", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: user.email,
+            name: updates.name,
+            phone: updates.phone,
+            address: updates.address,
+          }),
+        });
+      } catch {
+        // silent fallback
+      }
+    }
     showToast("Profile updated successfully!");
   };
 
