@@ -1,0 +1,351 @@
+export interface PolicySection {
+  title: string;
+  paragraphs: string[];
+}
+
+export interface Policy {
+  slug: string;
+  title: string;
+  lastUpdated: string;
+  summary: string;
+  sections: PolicySection[];
+  content: string[]; // for backward compatibility
+}
+
+export const POLICIES: Record<string, Policy> = {
+  "privacy-policy": {
+    slug: "privacy-policy",
+    title: "Privacy Policy",
+    lastUpdated: "October 2026",
+    summary:
+      "This Privacy Policy outlines how Kharido Mart Direct collects, uses, processes, stores, and protects your personal data in accordance with the Information Technology Act, 2000, the Information Technology (Reasonable Security Practices and Procedures and Sensitive Personal Data or Information) Rules, 2011, and the Digital Personal Data Protection Act (DPDPA), 2023.",
+    sections: [
+      {
+        title: "1. Scope and Applicability",
+        paragraphs: [
+          "This Privacy Policy applies to all users, visitors, and customers accessing or purchasing through our e-commerce platform kharidomart.com ('Website') and associated mobile-optimized interfaces operated by Kharido Mart Direct ('Kharido Mart', 'We', 'Us', or 'Our').",
+          "By accessing our platform, browsing our product listings, or placing an order, you explicitly consent to the collection, storage, transfer, and processing of your personal information as set out in this Policy."
+        ]
+      },
+      {
+        title: "2. Information We Collect",
+        paragraphs: [
+          "Personal Identifiable Information (PII): When you place an order, create an inquiry, or subscribe to updates, we collect your full legal name, delivery shipping address, billing address, active mobile telephone number, and email address.",
+          "Payment & Transactional Information: We facilitate payments through PCI-DSS Level 1 compliant licensed payment aggregators (e.g., Razorpay, Cashfree, PayU). We DO NOT collect, view, or store your credit/debit card numbers, CVV codes, UPI MPINs, or internet banking passwords on our servers.",
+          "Technical & Device Information: When you browse our Website, we automatically record device IP addresses, browser types, operating systems, access timestamps, and referring URLs to prevent malicious traffic and optimize checkout performance.",
+          "Cookies and Local Storage: We use essential session cookies and local storage tokens to retain your cart items, remember your recently viewed products, and support seamless multi-step checkout navigation."
+        ]
+      },
+      {
+        title: "3. Lawful Purpose of Data Processing",
+        paragraphs: [
+          "To process, confirm, pack, dispatch, and fulfill your orders.",
+          "To transmit operational delivery status notifications, courier tracking links (AWB), and dispatch receipts via SMS, WhatsApp, and email.",
+          "To facilitate doorstep Cash on Delivery (COD) verification and prevent fraud or fake order bookings.",
+          "To provide timely customer assistance, process eligible replacement requests, and address product queries.",
+          "To comply with applicable legal regulations and store order record mandates."
+        ]
+      },
+      {
+        title: "4. Data Sharing & Third-Party Logistics Disclosures",
+        paragraphs: [
+          "We strictly adhere to a zero-data-monetization policy: We NEVER sell, lease, rent, or trade your personal information to third-party advertisers or data brokers.",
+          "Authorized Logistics Partners: Your name, contact number, and destination delivery address are shared solely with our integrated courier partners (including BlueDart Express, Delhivery Ltd., Shadowfax Technologies, and India Post) exclusively for fulfilling the physical delivery of your order.",
+          "Regulatory & Statutory Authorities: We may disclose personal records if formally subpoenaed or required by law enforcement authorities under lawful process as per the Information Technology Act, 2000."
+        ]
+      },
+      {
+        title: "5. Data Security & Storage Architecture",
+        paragraphs: [
+          "All communications between your web browser and our servers are encrypted using modern 256-bit Secure Sockets Layer (SSL/TLS) encryption protocol.",
+          "Access to customer delivery data is strictly restricted on a need-to-know basis to authorized fulfillment center staff bound by non-disclosure and privacy obligations."
+        ]
+      },
+      {
+        title: "6. User Rights & Data Requests",
+        paragraphs: [
+          "Right to Access & Rectify: You have the right to request a summary of personal information held by us and request correction of inaccurate delivery records.",
+          "Right to Withdraw Consent & Erasure: You may request deletion of your personal records, subject to retention required for order fulfillment and dispute resolution.",
+          "To exercise these rights, submit a request through our Contact page."
+        ]
+      }
+    ],
+    content: [
+      "At Kharido Mart, we respect your privacy and are committed to protecting your personal data in full compliance with applicable Indian data protection principles.",
+      "When you purchase from our store, we collect personal information you provide such as your name, shipping address, email address, and phone number exclusively to fulfill and deliver your orders safely.",
+      "We never sell, rent, or trade your personal information to third parties. We use industry-standard 256-bit SSL encryption to ensure your checkout details and payment information are completely secure."
+    ]
+  },
+
+  "refund-policy": {
+    slug: "refund-policy",
+    title: "Refund, Return & Replacement Policy",
+    lastUpdated: "October 2026",
+    summary:
+      "At Kharido Mart, customer satisfaction and genuine trust are our foundational priorities. We provide an unambiguous 7-Day Replacement & Return Guarantee on all eligible products.",
+    sections: [
+      {
+        title: "1. 7-Day Replacement Guarantee",
+        paragraphs: [
+          "We offer a hassle-free 7-Day Replacement Guarantee from the recorded delivery date for any of the following occurrences:",
+          "a) Product arrived in a physically damaged or broken state.",
+          "b) Product has a manufacturing defect, electrical malfunction, or dead-on-arrival (DOA) motor/audio component.",
+          "c) Product received is incomplete, missing accessories, or entirely different from the item ordered."
+        ]
+      },
+      {
+        title: "2. Eligibility Criteria for Returns & Replacements",
+        paragraphs: [
+          "The return request must be initiated within 7 calendar days from the courier's confirmed delivery timestamp.",
+          "The product must be in its original condition, along with the original product packaging box, user manuals, warranty cards, cables, filing heads, and all bundled accessories.",
+          "We kindly request an unboxing video or photographs clearly displaying the reported issue and the shipping label on the outer carton. This expedites approval with our courier insurance partners."
+        ]
+      },
+      {
+        title: "3. Non-Returnable Items (Hygiene & Child Safety)",
+        paragraphs: [
+          "To safeguard child hygiene and safety, used filing pads or opened personal baby grooming attachments cannot be returned for resale unless the central motor unit itself is defective or malfunctioned upon initial unboxing.",
+          "Products that show clear signs of accidental physical damage, water ingress (where not rated waterproof), unauthorized repair, or misuse are not eligible for free replacement."
+        ]
+      },
+      {
+        title: "4. Step-by-Step Replacement Process",
+        paragraphs: [
+          "Step 1: Submit a replacement request via our Contact page with your Order ID and photo/video proof of the damaged or defective item.",
+          "Step 2: Our support team evaluates the request within 12-24 business hours and coordinates reverse pickup.",
+          "Step 3: Our courier partner visits your doorstep within 24 to 48 hours to collect the return parcel at zero cost to you.",
+          "Step 4: Once received and verified, a brand new replacement unit is dispatched within 24 hours, or a full refund is initiated as per your preference."
+        ]
+      },
+      {
+        title: "5. Refund Modes & Processing Timelines",
+        paragraphs: [
+          "Prepaid Orders (UPI, NetBanking, Credit/Debit Cards): Refunds are reversed directly to the original bank account or payment instrument. The credit reflects within 5 to 7 business days, depending on your issuing bank's settlement cycle.",
+          "Cash on Delivery (COD) Orders: Refunds for COD purchases are disbursed via secure direct NEFT/IMPS bank transfer or UPI ID provided by the customer upon verification. Transferred within 24–48 hours post return approval.",
+          "Full Refund Amount: The complete invoice value paid by the customer is refunded without any restocking deduction."
+        ]
+      },
+      {
+        title: "6. Order Cancellation Policy",
+        paragraphs: [
+          "You may cancel your order free of cost at any time prior to warehouse dispatch by submitting a cancellation request through our Contact page.",
+          "If the order has already been handed over to the courier and tracking is live, you can simply decline delivery when the courier partner arrives. Upon parcel return to our hub, your refund will be processed immediately."
+        ]
+      }
+    ],
+    content: [
+      "We want you to love every purchase from Kharido Mart! We offer a hassle-free 7-Day Replacement Guarantee on all eligible items.",
+      "If your product arrives damaged, defective, or different from what was described, please contact us within 7 days of delivery with photos or video of the issue.",
+      "Upon review, we arrange a free reverse pickup and dispatch a brand new replacement, or initiate a full refund to your original payment mode or bank account.",
+      "Refunds are processed within 3-5 business days upon receipt and inspection of the returned shipment."
+    ]
+  },
+
+  "terms-of-service": {
+    slug: "terms-of-service",
+    title: "Terms of Service",
+    lastUpdated: "October 2026",
+    summary:
+      "These Terms of Service constitute a legally binding electronic agreement between you ('Customer', 'User') and Kharido Mart Direct ('Kharido Mart') governing your usage of kharidomart.com.",
+    sections: [
+      {
+        title: "1. Acceptance of Terms",
+        paragraphs: [
+          "By accessing, browsing, registering, or transacting on kharidomart.com, you acknowledge that you have read, understood, and agreed to be legally bound by these Terms of Service along with our Privacy Policy and Shipping Policy.",
+          "If you do not agree with any provision of these Terms, you must discontinue your use of the website."
+        ]
+      },
+      {
+        title: "2. Eligibility & Account Integrity",
+        paragraphs: [
+          "Use of the website is available only to persons who can form legally binding contracts under the Indian Contract Act, 1872 (persons who are 18 years of age or older). Minors may access the website only under the supervision of a parent or legal guardian.",
+          "You are responsible for maintaining the confidentiality of your account information and for restricting access to your personal devices to prevent unauthorized transactions."
+        ]
+      },
+      {
+        title: "3. Product Descriptions, Pricing & Order Invoicing",
+        paragraphs: [
+          "We strive for maximum accuracy in product specifications, dimensions, features, and photographic depictions. However, minor color variations may occur due to individual digital screen calibrations.",
+          "All product prices listed on the website are displayed in Indian National Rupees (INR) and are inclusive of all applicable taxes.",
+          "In the event of a technical typographical error in price or inventory, Kharido Mart reserves the right to notify the customer and cancel the unfulfilled order with a 100% full refund."
+        ]
+      },
+      {
+        title: "4. Contract Formation & Order Acceptance",
+        paragraphs: [
+          "Placing an order on the Website constitutes an offer to purchase. Order confirmation is generated upon successful payment gateway authorization or upon completing Cash on Delivery (COD) verification.",
+          "Kharido Mart reserves the right to decline or cancel orders with unserviceable delivery pincodes, suspected bulk reseller purchases violating consumer order limits, or orders suspected of fraudulent intent."
+        ]
+      },
+      {
+        title: "5. Intellectual Property Rights",
+        paragraphs: [
+          "All intellectual property, including but not limited to the brand name 'Kharido Mart', the Kharido Mart shopping cart logo, graphic iconography, website design, product descriptions, banners, and layout structures, are the exclusive property of Kharido Mart Direct.",
+          "Unauthorized reproduction, copying, distribution, scraping, or commercial exploitation of any site content is strictly prohibited under the Copyright Act, 1957 and the Trade Marks Act, 1999."
+        ]
+      },
+      {
+        title: "6. Limitation of Liability & Warranties",
+        paragraphs: [
+          "Products sold on Kharido Mart are intended for lawful consumer use. To the maximum extent permitted by applicable Indian law, Kharido Mart's total cumulative liability for any claim arising from a product shall not exceed the invoice price actually paid by the customer for that product.",
+          "Warranty claims for electronic products are serviced directly according to the product warranty card terms included inside the packaging."
+        ]
+      },
+      {
+        title: "7. Governing Law & Dispute Jurisdiction",
+        paragraphs: [
+          "These Terms shall be interpreted, construed, and enforced exclusively in accordance with the laws of the Republic of India.",
+          "Any dispute, claim, or controversy arising out of or relating to your use of the platform shall be subject to the exclusive jurisdiction of the competent courts situated in New Delhi, India."
+        ]
+      }
+    ],
+    content: [
+      "By accessing and shopping at kharidomart.com, you agree to be bound by these Terms of Service.",
+      "All product descriptions, pricing, and availability are subject to change without prior notice. We strive to provide the most accurate product representations and specifications possible.",
+      "Orders placed on Kharido Mart are confirmed upon successful checkout verification or Cash on Delivery (COD) confirmation.",
+      "All transactions conducted through kharidomart.com are governed by the laws of India and subject to the jurisdiction of the courts of New Delhi."
+    ]
+  },
+
+  "shipping-policy": {
+    slug: "shipping-policy",
+    title: "Shipping & Delivery Policy",
+    lastUpdated: "October 2026",
+    summary:
+      "Kharido Mart operates a dedicated fulfillment network delivering safely to over 26,000+ postal pin codes across India with verified tracking on every order.",
+    sections: [
+      {
+        title: "1. Serviceable Pincodes & Nationwide Reach",
+        paragraphs: [
+          "We deliver across all 28 states and 8 union territories in India, covering major metro centers, Tier 2, Tier 3 cities, and regional postal zones.",
+          "To verify if your specific location is serviceable for express delivery and Cash on Delivery, you can enter your 6-digit postal code on any product page or during checkout."
+        ]
+      },
+      {
+        title: "2. Order Processing & Dispatch Timelines",
+        paragraphs: [
+          "All confirmed orders placed before 3:00 PM IST on business days are processed, quality-checked, and packed on the same day.",
+          "Standard warehouse dispatch takes place within 24 to 48 business hours (excluding Sundays and gazetted national holidays).",
+          "Upon dispatch, you will immediately receive an automated SMS and WhatsApp update containing your carrier name and live Airway Bill (AWB) tracking link."
+        ]
+      },
+      {
+        title: "3. Delivery Transit Time Estimates",
+        paragraphs: [
+          "Metro Cities (Delhi NCR, Mumbai, Bengaluru, Chennai, Hyderabad, Kolkata, Pune): 2 to 4 business days.",
+          "Rest of India (Tier 2 & Tier 3 Cities): 3 to 6 business days.",
+          "Remote, Hill Stations & North-Eastern States: 5 to 8 business days.",
+          "Please note that natural disruptions, heavy monsoon conditions, or regional holidays may occasionally affect carrier transit schedules."
+        ]
+      },
+      {
+        title: "4. Shipping Charges & Free Delivery Threshold",
+        paragraphs: [
+          "FREE Standard Express Shipping is provided on all prepaid orders (UPI, Card, NetBanking) regardless of cart value.",
+          "FREE Shipping applies on all orders totaling ₹499 or higher.",
+          "For orders below ₹499 opting for Cash on Delivery, a nominal handling and shipping fee of ₹50 is applied at checkout to offset carrier cash-collection tariffs.",
+          "Priority Express Air Dispatch is optionally available for ₹99 for customers requiring fast-tracked priority handling."
+        ]
+      },
+      {
+        title: "5. Courier Partners & Real-time Live Tracking",
+        paragraphs: [
+          "We partner exclusively with tier-1 logistics providers including BlueDart Express, Delhivery Ltd., Shadowfax Technologies, and India Post Speed Post.",
+          "You can track your parcel anytime on our dedicated tracking portal at kharidomart.com/track-order or via the courier tracking link sent to your phone."
+        ]
+      },
+      {
+        title: "6. Package Receipt & Damaged Parcels",
+        paragraphs: [
+          "All Kharido Mart packages are sealed with tamper-evident security tape. If you observe that the outer parcel is torn, opened, or tampered with, please REFUSE to accept delivery from the delivery agent and notify us immediately.",
+          "In case of any missing item or inner transit damage, contact us within 24 hours of delivery through our Contact page with photographs of the package."
+        ]
+      }
+    ],
+    content: [
+      "Kharido Mart delivers across all serviceable pincodes throughout India via trusted courier partners including BlueDart, Delhivery, Shadowfax, and India Post.",
+      "Orders are dispatched within 24 to 48 hours from our fulfillment center.",
+      "Standard delivery typically takes 2 to 5 business days depending on your delivery location and pincode.",
+      "Enjoy FREE Express Shipping on all prepaid orders or orders above ₹499! A nominal shipping charge of ₹50 applies on smaller COD orders."
+    ]
+  },
+
+  "contact-information": {
+    slug: "contact-information",
+    title: "Customer Support & Contact Help",
+    lastUpdated: "October 2026",
+    summary:
+      "Our customer support team is dedicated to providing prompt assistance for orders, delivery tracking, and doorstep replacements.",
+    sections: [
+      {
+        title: "1. Dedicated Customer Support Channels",
+        paragraphs: [
+          "Online Support Desk: Submit your inquiry anytime via our Contact page for priority assistance.",
+          "Live Order Tracking: Track your shipment in real time at kharidomart.com/track-order.",
+          "Response Time: Our team typically responds to all customer inquiries within 12 to 24 business hours.",
+          "Operational Hours: Monday to Saturday, 10:00 AM to 6:00 PM IST (Excluding National Holidays)."
+        ]
+      },
+      {
+        title: "2. Order Tracking & Delivery Inquiries",
+        paragraphs: [
+          "Every order placed on Kharido Mart receives an automated SMS and WhatsApp dispatch alert containing your courier tracking number.",
+          "You can enter your Order ID directly on our Track Order page to check real-time courier updates from dispatch to doorstep delivery."
+        ]
+      },
+      {
+        title: "3. Returns & Replacement Assistance",
+        paragraphs: [
+          "If your order arrived damaged, defective, or incomplete, simply submit a request through our Contact page with your Order ID and photo/video proof.",
+          "We offer a 7-Day Doorstep Replacement Guarantee on all eligible products."
+        ]
+      }
+    ],
+    content: [
+      "Have questions, feedback, or need help with your order? Our customer support team is here for you!",
+      "Submit an inquiry anytime through our online Contact form or track your parcel directly on our Track Order page."
+    ]
+  },
+
+  "legal-notice": {
+    slug: "legal-notice",
+    title: "Store Disclaimer & Terms of Use",
+    lastUpdated: "October 2026",
+    summary:
+      "Important store information, general usage terms, and buyer protections for shopping on Kharido Mart.",
+    sections: [
+      {
+        title: "1. Online Storefront & Platform Operations",
+        paragraphs: [
+          "Kharido Mart operates as an online direct-to-consumer dropshipping and retail storefront offering curated everyday home essentials, educational toys, and smart gadgets.",
+          "All transactions conducted on kharidomart.com are subject to our Terms of Service, Privacy Policy, and Refund Policy."
+        ]
+      },
+      {
+        title: "2. Product Authenticity & Quality Verification",
+        paragraphs: [
+          "All products listed on kharidomart.com are quality checked prior to dispatch and sourced from verified manufacturing and distribution partners.",
+          "Product descriptions, specifications, dimensions, and images are provided to help customers make informed purchasing decisions."
+        ]
+      },
+      {
+        title: "3. Pricing & Tax Inclusivity",
+        paragraphs: [
+          "All prices displayed across kharidomart.com are in Indian Rupees (INR) and are inclusive of all applicable taxes.",
+          "We do not employ hidden fees or unexpected surcharges at checkout."
+        ]
+      },
+      {
+        title: "4. Customer Inquiries & Dispute Resolution",
+        paragraphs: [
+          "For any questions regarding product orders, delivery, or replacements, please submit an inquiry through our dedicated Contact page.",
+          "Our support team handles all customer requests within 12 to 24 business hours."
+        ]
+      }
+    ],
+    content: [
+      "Kharido Mart is an online direct-to-consumer shopping platform specializing in everyday smart gadgets, educational learning products, and lifestyle essentials.",
+      "All purchases are protected by our 7-Day Replacement Guarantee and 256-bit secure checkout."
+    ]
+  }
+};

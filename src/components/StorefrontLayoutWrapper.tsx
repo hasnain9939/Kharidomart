@@ -1,0 +1,66 @@
+"use client";
+
+import React, { Suspense } from "react";
+import { usePathname } from "next/navigation";
+import AnnouncementBar from "@/components/AnnouncementBar";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import CartDrawer from "@/components/CartDrawer";
+import QuickViewModal from "@/components/QuickViewModal";
+import Toast from "@/components/Toast";
+import CookieConsentBanner from "@/components/CookieConsentBanner";
+import Analytics from "@/components/Analytics";
+import WhatsAppMomWidget from "@/components/WhatsAppMomWidget";
+import ExitIntentModal from "@/components/ExitIntentModal";
+
+function StorefrontLayoutInner({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const pathname = usePathname();
+  const isAdmin = pathname?.startsWith("/admin");
+
+  if (isAdmin) {
+    return (
+      <>
+        <div className="min-h-screen flex flex-col">{children}</div>
+        <Toast />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <AnnouncementBar />
+      <Suspense fallback={<div className="h-16 sm:h-20 bg-white border-b border-slate-100" />}>
+        <Header />
+      </Suspense>
+      <main className="flex-1">{children}</main>
+      <Footer />
+
+      {/* Interactive Modals & Drawers */}
+      <CartDrawer />
+      <QuickViewModal />
+      <ExitIntentModal />
+      <WhatsAppMomWidget />
+      <Toast />
+
+      {/* Compliance & Analytics */}
+      <CookieConsentBanner />
+      <Analytics />
+    </>
+  );
+}
+
+export default function StorefrontLayoutWrapper({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex flex-col">{children}</div>}>
+      <StorefrontLayoutInner>{children}</StorefrontLayoutInner>
+    </Suspense>
+  );
+}
