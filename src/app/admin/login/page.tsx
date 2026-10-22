@@ -260,16 +260,7 @@ export default function AdminLoginPage() {
               </button>
             </form>
 
-            {/* Quick Helper for Store Client */}
-            <div className="mt-6 pt-5 border-t border-white/10 text-center text-xs text-slate-400">
-              <span className="font-semibold text-slate-300">Default Credentials:</span>{" "}
-              <code className="text-[#ffedd5] bg-white/10 px-1.5 py-0.5 rounded text-[11px]">admin@kharidomart.com</code>
-              {" / "}
-              <code className="text-[#ffedd5] bg-white/10 px-1.5 py-0.5 rounded text-[11px]">admin</code>
-              <p className="text-[11px] text-slate-500 mt-1.5">
-                (Configurable via <code className="text-slate-400">ADMIN_EMAIL</code> &amp; <code className="text-slate-400">ADMIN_PASSWORD</code> in <code className="text-slate-400">.env</code>)
-              </p>
-            </div>
+
           </div>
         </div>
       </main>
