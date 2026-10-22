@@ -40,8 +40,11 @@ export default function AccountPage() {
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  // Forgot / Reset Password State
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotNewPassword, setForgotNewPassword] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotSubmitted, setForgotSubmitted] = useState(false);
 
   // Form State - Sign In
@@ -162,20 +165,45 @@ export default function AccountPage() {
     });
   };
 
-  // Handle Forgot Password
-  const handleForgotSubmit = (e: React.FormEvent) => {
+  // Handle Direct Password Reset
+  const handleForgotSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!forgotEmail) {
-      showToast("Please enter your registered email", "warning");
+    if (!forgotEmail || !forgotEmail.includes("@")) {
+      showToast("Please enter a valid registered email address", "warning");
       return;
     }
-    setForgotSubmitted(true);
-    showToast(`Password reset link sent to ${forgotEmail}`);
-    setTimeout(() => {
-      setShowForgotPassword(false);
-      setForgotSubmitted(false);
-      setForgotEmail("");
-    }, 2500);
+    if (!forgotNewPassword || forgotNewPassword.length < 6) {
+      showToast("New password must be at least 6 characters", "warning");
+      return;
+    }
+
+    setForgotLoading(true);
+    try {
+      const res = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail, newPassword: forgotNewPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        showToast(data.error || "Could not reset password", "warning");
+        setForgotLoading(false);
+        return;
+      }
+
+      setForgotSubmitted(true);
+      showToast("Password reset successfully! You can now log in.", "success");
+      setTimeout(() => {
+        setShowForgotPassword(false);
+        setForgotSubmitted(false);
+        setForgotEmail("");
+        setForgotNewPassword("");
+        setForgotLoading(false);
+      }, 2500);
+    } catch {
+      showToast("Network error. Please try again.", "warning");
+      setForgotLoading(false);
+    }
   };
 
   // ==========================================
@@ -917,45 +945,68 @@ export default function AccountPage() {
         </div>
       </div>
 
-      {/* Forgot Password Modal */}
+      {/* Forgot / Reset Password Modal */}
       {showForgotPassword && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-xl border border-[#e2e8f0] animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-bold text-[#0b1c30]">Reset Password</h2>
+              <h2 className="text-base font-bold text-[#0b1c30]">Reset Account Password</h2>
               <button
-                onClick={() => setShowForgotPassword(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+                onClick={() => {
+                  setShowForgotPassword(false);
+                  setForgotSubmitted(false);
+                }}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg cursor-pointer"
               >
                 <CloseCircle size={20} weight="Outline" />
               </button>
             </div>
 
             <p className="text-xs text-[#584237]/80">
-              Enter your registered email address and we will send you a secure verification link to reset your password.
+              Enter your registered email and choose a new password. Your password will be updated directly in your account.
             </p>
 
             {forgotSubmitted ? (
               <div className="p-4 bg-emerald-50 text-emerald-800 rounded-2xl text-xs font-medium space-y-1 text-center">
                 <CheckCircle size={24} weight="Filled" className="text-emerald-600 mx-auto" />
-                <p className="font-bold">Password Reset Link Dispatched!</p>
-                <p className="text-[11px] text-emerald-700">Check your inbox for further instructions.</p>
+                <p className="font-bold">Password Updated Successfully!</p>
+                <p className="text-[11px] text-emerald-700">You can now sign in with your new password.</p>
               </div>
             ) : (
               <form onSubmit={handleForgotSubmit} className="space-y-3">
-                <input
-                  type="email"
-                  required
-                  value={forgotEmail}
-                  onChange={(e) => setForgotEmail(e.target.value)}
-                  placeholder="you@gmail.com"
-                  className="w-full px-4 py-2.5 rounded-xl border border-[#e2e8f0] text-xs sm:text-sm focus:border-[#f97316] focus:outline-none bg-[#f8fafc]"
-                />
+                <div>
+                  <label className="block text-[11px] font-bold text-[#0b1c30] mb-1">
+                    Registered Email
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    placeholder="you@gmail.com"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[#e2e8f0] text-xs sm:text-sm focus:border-[#f97316] focus:outline-none bg-[#f8fafc]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-[#0b1c30] mb-1">
+                    New Password (min 6 characters)
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    value={forgotNewPassword}
+                    onChange={(e) => setForgotNewPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[#e2e8f0] text-xs sm:text-sm focus:border-[#f97316] focus:outline-none bg-[#f8fafc]"
+                  />
+                </div>
                 <button
                   type="submit"
-                  className="w-full py-2.5 bg-[#f97316] hover:bg-[#ea580c] text-white text-xs font-bold rounded-xl transition-all shadow-xs"
+                  disabled={forgotLoading}
+                  className="w-full py-2.5 bg-[#f97316] hover:bg-[#ea580c] text-white text-xs font-bold rounded-xl transition-all shadow-xs disabled:opacity-60 cursor-pointer"
                 >
-                  Send Reset Link
+                  {forgotLoading ? "Updating Password..." : "Update Password"}
                 </button>
               </form>
             )}
