@@ -158,24 +158,6 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Store Database & Status Banner */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 sm:px-4 sm:py-3 rounded-2xl bg-[#ffedd5]/80 border border-[#f97316]/30 text-[#0b1c30] shadow-xs gap-3">
-          <div className="flex items-start sm:items-center gap-3 min-w-0">
-            <div className="flex items-center justify-center w-7 h-7 rounded-xl bg-[#f97316] text-white shrink-0 shadow-xs mt-0.5 sm:mt-0">
-              <Notification size={16} weight="Filled" />
-            </div>
-            <p className="text-xs sm:text-sm text-[#0b1c30] leading-snug">
-              <strong className="text-[#ea580c] font-bold">Client Handover Ready:</strong>{" "}
-              Prisma ORM is connected to your database. Real products and customer checkouts are stored directly in tables. Zero mock or fake data.
-            </p>
-          </div>
-          <Link
-            href="/admin/products/new"
-            className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg bg-white hover:bg-[#f8fafc] text-[#ea580c] font-bold text-xs uppercase tracking-wider transition-colors shadow-xs shrink-0 self-start sm:self-auto"
-          >
-            Create Product
-          </Link>
-        </div>
       </div>
 
       {/* 4 Primary Real KPI Cards */}
@@ -463,9 +445,9 @@ export default function AdminDashboardPage() {
         )}
       </div>
 
-      {/* Catalog & Quick Setup Card for Client */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Card 1: Live Catalog */}
+      {/* Catalog & Inventory Overview */}
+      <div className="grid grid-cols-1 gap-5">
+        {/* Live Catalog */}
         <div className="p-6 rounded-2xl bg-white border border-[#e2e8f0] shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-3">
@@ -483,7 +465,7 @@ export default function AdminDashboardPage() {
               </Link>
             </div>
             <p className="text-xs text-[#565e74] mb-4">
-              Real inventory items currently published in your SQLite database.
+              Real inventory items currently published in your store database.
             </p>
 
             {products.length === 0 ? (
@@ -502,14 +484,14 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-2">
-                {products.slice(0, 3).map((p) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {products.map((p) => (
                   <div
                     key={p.id}
-                    className="flex items-center justify-between p-2.5 rounded-xl bg-[#f8fafc] border border-[#e2e8f0]"
+                    className="flex items-center justify-between p-3 rounded-xl bg-[#f8fafc] border border-[#e2e8f0]"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-white overflow-hidden relative shrink-0 border border-[#e2e8f0]">
+                      <div className="w-10 h-10 rounded-lg bg-white overflow-hidden relative shrink-0 border border-[#e2e8f0]">
                         <Image
                           src={p.images[0] || "/assets/stitch/hero_showcase.jpg"}
                           alt={p.title}
@@ -517,11 +499,16 @@ export default function AdminDashboardPage() {
                           className="object-cover"
                         />
                       </div>
-                      <span className="text-xs font-bold text-[#0b1c30] truncate">
-                        {p.title}
-                      </span>
+                      <div className="min-w-0">
+                        <span className="text-xs font-bold text-[#0b1c30] truncate block">
+                          {p.title}
+                        </span>
+                        <span className="text-[10px] text-[#565e74] block">
+                          Stock: {p.stock}
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-xs font-mono font-bold text-[#0b1c30] shrink-0">
+                    <span className="text-xs font-mono font-bold text-[#0b1c30] shrink-0 ml-2">
                       ₹{p.price}
                     </span>
                   </div>
@@ -538,43 +525,6 @@ export default function AdminDashboardPage() {
             >
               + Create Product
             </Link>
-          </div>
-        </div>
-
-        {/* Card 2: Technical Setup & Handover Instructions */}
-        <div className="p-6 rounded-2xl bg-[#0b1c30] text-white shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <ShieldCheck size={20} weight="Filled" className="text-[#15803d]" />
-              <h3 className="font-extrabold text-base text-white">
-                Client Setup &amp; Database Architecture
-              </h3>
-            </div>
-            <p className="text-xs text-[#94a3b8] mb-4 leading-relaxed">
-              This deployment is 100% production-ready. All fake items have been removed. Below is the active technical setup:
-            </p>
-
-            <div className="space-y-2 text-xs">
-              <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 flex justify-between items-center">
-                <span className="text-[#94a3b8]">ORM &amp; Database:</span>
-                <span className="font-bold text-white font-mono">Prisma / SQLite (`dev.db`)</span>
-              </div>
-              <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 flex justify-between items-center">
-                <span className="text-[#94a3b8]">PostgreSQL Switch:</span>
-                <span className="font-bold text-white font-mono">1 line in `.env`</span>
-              </div>
-              <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 flex justify-between items-center">
-                <span className="text-[#94a3b8]">Documentation:</span>
-                <span className="font-bold text-[#f97316]">HANDOVER.md (Root)</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs text-[#94a3b8]">
-            <span>Checkouts save to DB</span>
-            <span className="text-[#15803d] font-bold flex items-center gap-1">
-              <CheckCircle size={13} weight="Filled" /> Verified Live
-            </span>
           </div>
         </div>
       </div>
