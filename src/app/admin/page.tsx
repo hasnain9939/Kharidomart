@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   Check,
   CheckCircle,
+  CloseCircle,
   Clock,
   Location,
   Copy,
@@ -57,8 +58,10 @@ export default function AdminDashboardPage() {
   const { products, isLoadingProducts } = useStore();
   const [orders, setOrders] = useState<DbOrder[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(true);
-  const [activeTab, setActiveTab] = useState<"all" | "processing" | "shipped" | "delivered">("all");
+  const [activeTab, setActiveTab] = useState<"all" | "processing" | "shipped" | "delivered" | "cancelled">("all");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [cancelConfirmOrder, setCancelConfirmOrder] = useState<DbOrder | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const fetchOrders = async () => {
     setIsLoadingOrders(true);
@@ -79,7 +82,12 @@ export default function AdminDashboardPage() {
     fetchOrders();
   }, []);
 
-  const totalRevenue = orders.reduce((acc, o) => acc + (o.total || 0), 0);
+  const cancelledOrders = orders.filter((o) => o.status?.toLowerCase() === "cancelled");
+  const cancelledCount = cancelledOrders.length;
+  const cancelledValue = cancelledOrders.reduce((acc, o) => acc + (o.total || 0), 0);
+
+  const activeOrders = orders.filter((o) => o.status?.toLowerCase() !== "cancelled");
+  const totalRevenue = activeOrders.reduce((acc, o) => acc + (o.total || 0), 0);
   const pendingOrders = orders.filter(
     (o) => o.status === "Processing" || o.status === "Pending Dispatch"
   ).length;
@@ -95,8 +103,36 @@ export default function AdminDashboardPage() {
     if (activeTab === "shipped")
       return order.status === "In Transit" || order.status === "Shipped";
     if (activeTab === "delivered") return order.status === "Delivered";
+    if (activeTab === "cancelled") return order.status?.toLowerCase() === "cancelled";
     return true;
   });
+
+  const handleCancelOrder = async (order: DbOrder) => {
+    setIsCancelling(true);
+    try {
+      const res = await fetch(`/api/orders/${order.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "Cancelled" }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setOrders((prev) =>
+          prev.map((o) => (o.id === order.id ? { ...o, status: "Cancelled" } : o))
+        );
+        setToastMessage(`Order #${order.orderNumber} successfully cancelled before shipping.`);
+        setCancelConfirmOrder(null);
+      } else {
+        setToastMessage(`Failed to cancel order: ${data.error || "Unknown error"}`);
+      }
+    } catch (err) {
+      console.error("Error cancelling order:", err);
+      setToastMessage("Network error while cancelling order.");
+    } finally {
+      setIsCancelling(false);
+      setTimeout(() => setToastMessage(null), 3500);
+    }
+  };
 
   const handleCopyAwb = (awb: string) => {
     navigator.clipboard.writeText(awb);
@@ -160,27 +196,27 @@ export default function AdminDashboardPage() {
 
       </div>
 
-      {/* 4 Primary Real KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* 5 Primary Real KPI Cards (Includes Cancelled Orders Card) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {/* Metric 1: Real Total Store Sales */}
         <div className="p-5 rounded-2xl bg-white border border-[#e2e8f0] shadow-xs flex flex-col justify-between">
           <div className="flex items-start justify-between">
-            <span className="text-xs font-semibold text-[#565e74]">Total Real Revenue</span>
+            <span className="text-xs font-semibold text-[#565e74]">Net Store Sales</span>
             <span className="px-2 py-0.5 rounded-full bg-[#caecbf]/60 text-[#1d3819] text-[10px] font-bold">
               Database Live
             </span>
           </div>
           <div className="my-3">
-            <div className="text-3xl font-black text-[#0b1c30] tracking-tight font-mono">
+            <div className="text-2xl sm:text-3xl font-black text-[#0b1c30] tracking-tight font-mono">
               ₹{totalRevenue.toLocaleString("en-IN")}
             </div>
             <span className="text-xs text-[#565e74]">
-              From {orders.length} confirmed orders
+              From {activeOrders.length} active orders
             </span>
           </div>
           <div className="flex items-center gap-1.5 text-xs text-[#15803d] font-semibold">
             <CheckCircle size={14} weight="Filled" />
-            <span>Real customer checkout totals</span>
+            <span>Excludes cancelled</span>
           </div>
         </div>
 
@@ -193,7 +229,7 @@ export default function AdminDashboardPage() {
             </span>
           </div>
           <div className="my-3">
-            <div className="text-3xl font-black text-[#0b1c30] tracking-tight font-mono">
+            <div className="text-2xl sm:text-3xl font-black text-[#0b1c30] tracking-tight font-mono">
               {orders.length}
             </div>
             <span className="text-xs text-[#565e74]">
@@ -206,7 +242,43 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Metric 3: Active Catalog Products */}
+        {/* Metric 3: Cancelled Orders Card (Requested by User) */}
+        <div
+          onClick={() => setActiveTab("cancelled")}
+          className="p-5 rounded-2xl bg-white border border-[#fecdd3] hover:border-rose-400 shadow-xs flex flex-col justify-between cursor-pointer transition-all hover:shadow-md group relative overflow-hidden"
+          title="Click to view all cancelled orders"
+        >
+          <div className="flex items-start justify-between">
+            <span className="text-xs font-semibold text-[#565e74] group-hover:text-rose-700 transition-colors">
+              Cancelled Orders
+            </span>
+            <span className="px-2 py-0.5 rounded-full bg-[#ffdad6] text-[#ba1a1a] text-[10px] font-bold">
+              Pre-Shipping
+            </span>
+          </div>
+          <div className="my-3">
+            <div className="text-2xl sm:text-3xl font-black text-[#ba1a1a] tracking-tight font-mono flex items-baseline gap-2">
+              <span>{cancelledCount}</span>
+              <span className="text-xs font-bold text-[#ba1a1a]/70 font-sans">
+                (₹{cancelledValue.toLocaleString("en-IN")})
+              </span>
+            </div>
+            <span className="text-xs text-[#565e74]">
+              Saved from courier &amp; RTO costs
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="flex items-center gap-1 text-[#ba1a1a] font-semibold text-[11px]">
+              <CloseCircle size={13} weight="Filled" />
+              <span>Cancelled before dispatch</span>
+            </span>
+            <span className="text-[10px] text-rose-600 font-bold underline opacity-0 group-hover:opacity-100 transition-opacity">
+              View &rarr;
+            </span>
+          </div>
+        </div>
+
+        {/* Metric 4: Active Catalog Products */}
         <div className="p-5 rounded-2xl bg-white border border-[#e2e8f0] shadow-xs flex flex-col justify-between">
           <div className="flex items-start justify-between">
             <span className="text-xs font-semibold text-[#565e74]">Catalog Products</span>
@@ -215,7 +287,7 @@ export default function AdminDashboardPage() {
             </span>
           </div>
           <div className="my-3">
-            <div className="text-3xl font-black text-[#0b1c30] tracking-tight font-mono">
+            <div className="text-2xl sm:text-3xl font-black text-[#0b1c30] tracking-tight font-mono">
               {products.length}
             </div>
             <span className="text-xs text-[#565e74]">
@@ -230,7 +302,7 @@ export default function AdminDashboardPage() {
           </Link>
         </div>
 
-        {/* Metric 4: BlueDart & Fulfillment Ready */}
+        {/* Metric 5: BlueDart & Fulfillment Ready */}
         <div className="p-5 rounded-2xl bg-white border border-[#e2e8f0] shadow-xs flex flex-col justify-between">
           <div className="flex items-start justify-between">
             <span className="text-xs font-semibold text-[#565e74]">Logistics &amp; AWB</span>
@@ -239,7 +311,7 @@ export default function AdminDashboardPage() {
             </span>
           </div>
           <div className="my-3">
-            <div className="text-3xl font-black text-[#15803d] tracking-tight font-mono">
+            <div className="text-2xl sm:text-3xl font-black text-[#15803d] tracking-tight font-mono">
               100%
             </div>
             <span className="text-xs text-[#565e74]">
@@ -259,7 +331,7 @@ export default function AdminDashboardPage() {
           <div>
             <h2 className="text-lg font-bold text-[#0b1c30]">Recent Customer Orders</h2>
             <p className="text-xs text-[#565e74] mt-0.5">
-              Live orders received from customer checkouts across India.
+              Live orders received from customer checkouts across India. Pre-shipping orders can be cancelled directly.
             </p>
           </div>
           <Link
@@ -312,6 +384,17 @@ export default function AdminDashboardPage() {
           >
             Delivered ({deliveredOrders})
           </button>
+          <button
+            onClick={() => setActiveTab("cancelled")}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
+              activeTab === "cancelled"
+                ? "bg-[#ba1a1a] text-white shadow-xs"
+                : "bg-[#f8fafc] text-[#565e74] hover:bg-rose-50 hover:text-[#ba1a1a]"
+            }`}
+          >
+            <CloseCircle size={13} weight={activeTab === "cancelled" ? "Filled" : "Outline"} />
+            <span>Cancelled ({cancelledCount})</span>
+          </button>
         </div>
 
         {/* Orders Table */}
@@ -354,91 +437,110 @@ export default function AdminDashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#f1f5f9]">
-                {filteredOrders.slice(0, 8).map((order) => (
-                  <tr key={order.id} className="hover:bg-[#f8f9ff] transition-colors">
-                    <td className="py-3.5 px-4">
-                      <div className="flex flex-col">
-                        <span className="font-extrabold text-[#f97316]">
-                          {order.orderNumber}
-                        </span>
-                        <span className="font-bold text-[#0b1c30] mt-0.5">
-                          {order.customerName}
-                        </span>
-                        <span className="text-[#565e74] text-[11px] flex items-center gap-1">
-                          <Location size={11} weight="Outline" /> {order.city}, {order.state} - {order.pincode}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-[#0b1c30] line-clamp-1 max-w-[220px]">
-                          {order.items[0]?.title || "Store Item"}
-                        </span>
-                        <span className="text-[#565e74] text-[11px]">
-                          {order.items.length} {order.items.length === 1 ? "item" : "items"} (Total Qty: {order.items.reduce((s, it) => s + it.quantity, 0)})
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <div className="flex flex-col">
-                        <span className="font-bold text-[#0b1c30] font-mono">
-                          ₹{order.total}
-                        </span>
+                {filteredOrders.slice(0, 8).map((order) => {
+                  const isPreShipping = order.status === "Processing" || order.status === "Pending Dispatch";
+                  const isCancelled = order.status?.toLowerCase() === "cancelled";
+
+                  return (
+                    <tr key={order.id} className="hover:bg-[#f8f9ff] transition-colors">
+                      <td className="py-3.5 px-4">
+                        <div className="flex flex-col">
+                          <span className="font-extrabold text-[#f97316]">
+                            {order.orderNumber}
+                          </span>
+                          <span className="font-bold text-[#0b1c30] mt-0.5">
+                            {order.customerName}
+                          </span>
+                          <span className="text-[#565e74] text-[11px] flex items-center gap-1">
+                            <Location size={11} weight="Outline" /> {order.city}, {order.state} - {order.pincode}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-[#0b1c30] line-clamp-1 max-w-[220px]">
+                            {order.items[0]?.title || "Store Item"}
+                          </span>
+                          <span className="text-[#565e74] text-[11px]">
+                            {order.items.length} {order.items.length === 1 ? "item" : "items"} (Total Qty: {order.items.reduce((s, it) => s + it.quantity, 0)})
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-[#0b1c30] font-mono">
+                            ₹{order.total}
+                          </span>
+                          <span
+                            className={`text-[11px] font-bold flex items-center gap-0.5 ${
+                              order.paymentMethod === "UPI"
+                                ? "text-[#15803d]"
+                                : "text-[#ea580c]"
+                            }`}
+                          >
+                            {order.paymentMethod === "UPI" ? (
+                              <CheckCircle size={12} weight="Filled" />
+                            ) : (
+                              <Clock size={12} weight="Outline" />
+                            )}
+                            {order.paymentMethod}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="flex flex-col">
+                          <button
+                            onClick={() => handleCopyAwb(order.awbNumber)}
+                            className="font-mono text-[11px] text-[#0b1c30] hover:text-[#ea580c] flex items-center gap-1 text-left"
+                            title="Click to copy AWB"
+                          >
+                            <span>{order.awbNumber}</span>
+                            <Copy size={11} weight="Outline" />
+                          </button>
+                          <span className="text-[#565e74] text-[11px]">
+                            {order.courier || "BlueDart Express"}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4">
                         <span
-                          className={`text-[11px] font-bold flex items-center gap-0.5 ${
-                            order.paymentMethod === "UPI"
-                              ? "text-[#15803d]"
-                              : "text-[#ea580c]"
+                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold ${
+                            order.status === "Delivered"
+                              ? "bg-[#caecbf]/70 text-[#1d3819]"
+                              : order.status === "In Transit" || order.status === "Shipped"
+                              ? "bg-[#d3e4fe] text-[#0b1c30]"
+                              : isCancelled
+                              ? "bg-[#ffdad6] text-[#ba1a1a]"
+                              : "bg-[#ffedd5] text-[#ea580c]"
                           }`}
                         >
-                          {order.paymentMethod === "UPI" ? (
-                            <CheckCircle size={12} weight="Filled" />
-                          ) : (
-                            <Clock size={12} weight="Outline" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="inline-flex items-center justify-end gap-1.5">
+                          {isPreShipping && (
+                            <button
+                              onClick={() => setCancelConfirmOrder(order)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-[#ba1a1a] font-bold text-xs transition-all border border-rose-200 cursor-pointer active:scale-95 shadow-2xs"
+                              title="Cancel order before shipping"
+                            >
+                              <CloseCircle size={13} weight="Filled" />
+                              <span>Cancel</span>
+                            </button>
                           )}
-                          {order.paymentMethod}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <div className="flex flex-col">
-                        <button
-                          onClick={() => handleCopyAwb(order.awbNumber)}
-                          className="font-mono text-[11px] text-[#0b1c30] hover:text-[#ea580c] flex items-center gap-1 text-left"
-                          title="Click to copy AWB"
-                        >
-                          <span>{order.awbNumber}</span>
-                          <Copy size={11} weight="Outline" />
-                        </button>
-                        <span className="text-[#565e74] text-[11px]">
-                          {order.courier || "BlueDart Express"}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold ${
-                          order.status === "Delivered"
-                            ? "bg-[#caecbf]/70 text-[#1d3819]"
-                            : order.status === "In Transit" || order.status === "Shipped"
-                            ? "bg-[#d3e4fe] text-[#0b1c30]"
-                            : "bg-[#ffedd5] text-[#ea580c]"
-                        }`}
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-right">
-                      <Link
-                        href="/admin/orders"
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#f8fafc] hover:bg-[#ffedd5] text-[#0b1c30] hover:text-[#ea580c] font-bold text-xs transition-colors border border-[#e2e8f0]"
-                      >
-                        Manage &rarr;
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
+                          <Link
+                            href="/admin/orders"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#f8fafc] hover:bg-[#ffedd5] text-[#0b1c30] hover:text-[#ea580c] font-bold text-xs transition-colors border border-[#e2e8f0]"
+                          >
+                            Manage &rarr;
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -528,6 +630,84 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Cancel Order Confirmation Modal */}
+      {cancelConfirmOrder && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => !isCancelling && setCancelConfirmOrder(null)}
+        >
+          <div
+            className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl border border-rose-200 animate-in fade-in zoom-in-95 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-rose-100 text-[#ba1a1a] flex items-center justify-center shrink-0">
+                <CloseCircle size={26} weight="Filled" />
+              </div>
+              <div>
+                <h3 className="text-base font-extrabold text-[#0b1c30]">
+                  Cancel Order Before Shipping?
+                </h3>
+                <p className="text-xs text-[#565e74]">
+                  Order #{cancelConfirmOrder.orderNumber}
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-[#f8fafc] rounded-2xl p-4 border border-[#e2e8f0] text-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[#565e74]">Customer:</span>
+                <span className="font-bold text-[#0b1c30]">{cancelConfirmOrder.customerName}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[#565e74]">Phone:</span>
+                <span className="font-mono font-medium text-[#0b1c30]">{cancelConfirmOrder.customerPhone}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[#565e74]">Order Total:</span>
+                <span className="font-bold font-mono text-[#0b1c30]">₹{cancelConfirmOrder.total} ({cancelConfirmOrder.paymentMethod})</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[#565e74]">Current Status:</span>
+                <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 font-bold text-[10px]">
+                  {cancelConfirmOrder.status}
+                </span>
+              </div>
+            </div>
+
+            <p className="text-xs text-[#565e74] leading-relaxed">
+              Cancelling this order now marks it as <strong>Cancelled (Pre-Shipment)</strong> in the database. This halts fulfillment, stops BlueDart pickup, and avoids courier RTO loss.
+            </p>
+
+            <div className="flex items-center gap-2.5 pt-2">
+              <button
+                type="button"
+                disabled={isCancelling}
+                onClick={() => setCancelConfirmOrder(null)}
+                className="flex-1 py-2.5 rounded-xl border border-[#e2e8f0] bg-white hover:bg-slate-50 text-[#0b1c30] text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+              >
+                No, Keep Order
+              </button>
+              <button
+                type="button"
+                disabled={isCancelling}
+                onClick={() => handleCancelOrder(cancelConfirmOrder)}
+                className="flex-1 py-2.5 rounded-xl bg-[#ba1a1a] hover:bg-[#93000a] text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5"
+              >
+                {isCancelling ? (
+                  <span>Cancelling...</span>
+                ) : (
+                  <>
+                    <CloseCircle size={14} weight="Filled" />
+                    <span>Confirm Cancel</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

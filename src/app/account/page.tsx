@@ -96,16 +96,63 @@ function AccountContent() {
   const [whatsappUpdates, setWhatsappUpdates] = useState(true);
   const [emailInvoices, setEmailInvoices] = useState(true);
 
-  // Load orders from localStorage
+  // Load orders from API & localStorage
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("km_all_orders");
-      if (stored) {
-        setPastOrders(JSON.parse(stored));
+    const loadOrders = async () => {
+      try {
+        const res = await fetch("/api/orders");
+        const data = await res.json();
+        if (data.success && Array.isArray(data.orders)) {
+          const serverOrders = data.orders.map((o: any) => ({
+            orderId: o.orderNumber,
+            date: new Date(o.createdAt).toLocaleDateString("en-IN", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            }),
+            status: o.status,
+            grandTotal: Number(o.total ?? o.grandTotal ?? 0),
+            paymentMethod: o.paymentMethod,
+            items: (o.items || []).map((it: any) => ({
+              product: {
+                id: it.productId,
+                title: it.title,
+                price: Number(it.price),
+                image: it.image || "/assets/stitch/hero_showcase.jpg",
+              },
+              quantity: it.quantity,
+            })),
+          }));
+
+          const stored = localStorage.getItem("km_all_orders");
+          const localOrders = stored ? JSON.parse(stored) : [];
+
+          // Merge server orders with local storage fallback
+          const merged = [...serverOrders];
+          localOrders.forEach((lo: any) => {
+            const existing = merged.find((m) => m.orderId === lo.orderId);
+            if (!existing) {
+              merged.push(lo);
+            }
+          });
+          setPastOrders(merged);
+          return;
+        }
+      } catch {
+        // fallback
       }
-    } catch {
-      // ignore
-    }
+
+      try {
+        const stored = localStorage.getItem("km_all_orders");
+        if (stored) {
+          setPastOrders(JSON.parse(stored));
+        }
+      } catch {
+        // ignore
+      }
+    };
+
+    loadOrders();
   }, [user]);
 
   // Sync profile & addresses when user changes
@@ -731,9 +778,24 @@ function AccountContent() {
                             <span className="text-xs font-bold font-space text-[#0b1c30]">
                               Order #{order.orderId}
                             </span>
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200/60">
-                              Order Confirmed & Processing
-                            </span>
+                            {order.status?.toLowerCase() === "cancelled" ? (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-200/60 flex items-center gap-1">
+                                <CloseCircle size={11} weight="Filled" />
+                                <span>Order Cancelled (Pre-Shipment)</span>
+                              </span>
+                            ) : order.status?.toLowerCase() === "delivered" ? (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                                Delivered
+                              </span>
+                            ) : order.status?.toLowerCase() === "in transit" ? (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200/60">
+                                In Transit
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200/60">
+                                Order Confirmed & Processing
+                              </span>
+                            )}
                           </div>
                           <span className="text-xs text-[#584237]/70 font-mono">
                             Placed on {order.date}

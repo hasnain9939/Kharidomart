@@ -15,7 +15,7 @@ export interface AdminOrder {
   paymentMethod: "COD" | "UPI / Prepaid";
   courier: string;
   awb: string;
-  status: "Pending Dispatch" | "In Transit" | "Delivered" | "RTO / Cancelled";
+  status: "Pending Dispatch" | "In Transit" | "Delivered" | "RTO / Cancelled" | "Cancelled";
   createdAt: string;
   dispatchTime?: string;
   trackingStep: number;
