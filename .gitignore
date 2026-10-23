@@ -50,3 +50,8 @@ prisma/*.db-journal
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local uploads
+public/uploads/*
+!public/uploads/.gitkeep
+

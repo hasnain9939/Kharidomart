@@ -69,7 +69,25 @@ export default function ProductDetailsClient({
   const videoEmbed = product.videoUrl ? getVideoEmbed(product.videoUrl) : null;
   const [quantity, setQuantity] = useState(1);
   const [selectedBundle, setSelectedBundle] = useState<number>(1);
-  const [selectedColor, setSelectedColor] = useState("Pastel Mint Green");
+
+  // Dynamic colors: use product.colors if available; fallback to default if undefined
+  const defaultColors = [
+    { name: "Pastel Mint Green", hex: "#B8E2D8", label: "Pastel Mint (Most Popular)" },
+    { name: "Soft Blush Pink", hex: "#F7C6D0", label: "Blush Pink" },
+    { name: "Cloud White", hex: "#FAFAFC", label: "Cloud White" },
+  ];
+  const colorVariants = product.colors && product.colors.length > 0
+    ? product.colors
+    : (product.colors === undefined ? defaultColors : []);
+
+  const [selectedColor, setSelectedColor] = useState(colorVariants[0]?.name || "Pastel Mint Green");
+
+  React.useEffect(() => {
+    if (colorVariants.length > 0 && (!selectedColor || !colorVariants.some((c) => c.name === selectedColor))) {
+      setSelectedColor(colorVariants[0].name);
+    }
+  }, [colorVariants, selectedColor]);
+
   const [pincode, setPincode] = useState("");
   const [pincodeChecked, setPincodeChecked] = useState(false);
   const [activeTab, setActiveTab] = useState<"features" | "specs" | "reviews">("features");
@@ -121,7 +139,10 @@ export default function ProductDetailsClient({
   const activeTier = bundleTiers.find((b) => b.qty === quantity);
   const currentTotalPrice = activeTier ? activeTier.totalPrice : product.price * quantity;
 
-  // Countdown to 5:00 PM same-day dispatch
+  // Countdown to custom or default 5:00 PM same-day dispatch
+  const cutoffTimeDisplay = product.dispatchCutoff || "5:00 PM";
+  const dispatchLeadTime = product.dispatchTime || "24–48 hrs";
+
   const [dispatchCountdown, setDispatchCountdown] = useState<{ hours: string; minutes: string; seconds: string }>({
     hours: "00",
     minutes: "00",
@@ -129,10 +150,22 @@ export default function ProductDetailsClient({
   });
 
   React.useEffect(() => {
+    const parseCutoff = (cutoffStr: string) => {
+      const match = cutoffStr.match(/(\d+)(?::(\d+))?\s*(AM|PM)?/i);
+      if (!match) return { hour: 17, minute: 0 };
+      let hour = parseInt(match[1], 10);
+      const minute = match[2] ? parseInt(match[2], 10) : 0;
+      const period = match[3]?.toUpperCase();
+      if (period === "PM" && hour < 12) hour += 12;
+      if (period === "AM" && hour === 12) hour = 0;
+      return { hour, minute };
+    };
+
     const calculateTimeLeft = () => {
       const now = new Date();
       const cutoff = new Date();
-      cutoff.setHours(17, 0, 0, 0); // 5:00 PM cutoff
+      const { hour, minute } = parseCutoff(cutoffTimeDisplay);
+      cutoff.setHours(hour, minute, 0, 0);
 
       let diff = cutoff.getTime() - now.getTime();
       if (diff <= 0) {
@@ -154,7 +187,7 @@ export default function ProductDetailsClient({
     calculateTimeLeft();
     const interval = setInterval(calculateTimeLeft, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [cutoffTimeDisplay]);
 
   // Pincode saved in localStorage
   React.useEffect(() => {
@@ -288,11 +321,6 @@ export default function ProductDetailsClient({
     }
   };
 
-  const colorVariants = [
-    { name: "Pastel Mint Green", hex: "#B8E2D8", label: "Pastel Mint (Most Popular)" },
-    { name: "Soft Blush Pink", hex: "#F7C6D0", label: "Blush Pink" },
-    { name: "Cloud White", hex: "#FAFAFC", label: "Cloud White" },
-  ];
 
   return (
     <div className="w-full bg-[#fdfbf7] min-h-screen pb-24 sm:pb-0">
@@ -593,7 +621,7 @@ export default function ProductDetailsClient({
                     <div>
                       <p className="font-bold text-[#2b1f1a] flex items-center gap-1.5">
                         <span>Same-Day Dispatch Cutoff:</span>
-                        <span className="text-[#e06b5b] font-space font-extrabold">5:00 PM</span>
+                        <span className="text-[#e06b5b] font-space font-extrabold">{cutoffTimeDisplay}</span>
                       </p>
                       <p className="text-[11px] text-[#6b5850]">
                         Order in the next window for priority warehouse handoff
@@ -611,32 +639,34 @@ export default function ProductDetailsClient({
               </div>
 
               {/* Color Finish Selector */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#0b1c30]">Select Color Finish:</span>
-                  <span className="text-xs font-bold text-[#ea580c]">{selectedColor}</span>
+              {colorVariants.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#0b1c30]">Select Color Finish:</span>
+                    <span className="text-xs font-bold text-[#ea580c]">{selectedColor}</span>
+                  </div>
+                  <div className="flex items-center flex-wrap gap-2 sm:gap-2.5">
+                    {colorVariants.map((color) => (
+                      <button
+                        key={color.name}
+                        type="button"
+                        onClick={() => setSelectedColor(color.name)}
+                        className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border cursor-pointer ${
+                          selectedColor === color.name
+                            ? "border-[#f97316] bg-orange-50/40 shadow-xs"
+                            : "border-[#e2e8f0] bg-white hover:bg-slate-50"
+                        }`}
+                      >
+                        <span
+                          className="w-4 h-4 rounded-full border border-black/10 shadow-inner shrink-0"
+                          style={{ backgroundColor: color.hex }}
+                        />
+                        <span className="text-[#0b1c30]">{color.label || color.name}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex items-center flex-wrap gap-2 sm:gap-2.5">
-                  {colorVariants.map((color) => (
-                    <button
-                      key={color.name}
-                      type="button"
-                      onClick={() => setSelectedColor(color.name)}
-                      className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border ${
-                        selectedColor === color.name
-                          ? "border-[#f97316] bg-orange-50/40 shadow-xs"
-                          : "border-[#e2e8f0] bg-white hover:bg-slate-50"
-                      }`}
-                    >
-                      <span
-                        className="w-4 h-4 rounded-full border border-black/10 shadow-inner"
-                        style={{ backgroundColor: color.hex }}
-                      />
-                      <span className="text-[#0b1c30]">{color.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
+              )}
 
               {/* Quantity Bundle Deals (WideBundle dropshipping pattern) */}
               <div className="space-y-2.5">
@@ -740,27 +770,19 @@ export default function ProductDetailsClient({
                   <div className="flex-1 min-w-0 text-[11px] sm:text-xs text-[#584237] leading-tight">
                     <span className="flex items-start sm:items-center gap-1.5 font-medium">
                       <TruckFast size={16} weight="Filled" className="text-[#f97316] shrink-0 mt-0.5 sm:mt-0" />
-                      <span>Dispatches in <strong>24–48 hrs</strong> with WhatsApp live tracking</span>
+                      <span>Dispatches in <strong>{dispatchLeadTime}</strong> with WhatsApp live tracking</span>
                     </span>
                   </div>
                 </div>
 
-                {/* Primary Dual Buttons */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Primary Full-Width Action Button */}
+                <div>
                   <button
                     onClick={handleAddToCart}
-                    className="w-full h-13 bg-[#e06b5b] hover:bg-[#c95444] active:scale-[0.98] text-white font-bold text-sm rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-[#e06b5b]/25 transition-all cursor-pointer"
+                    className="w-full h-13 bg-[#e06b5b] hover:bg-[#c95444] active:scale-[0.98] text-white font-bold text-base rounded-2xl flex items-center justify-center gap-2.5 shadow-lg shadow-[#e06b5b]/25 transition-all cursor-pointer"
                   >
-                    <ShoppingBag size={18} weight="Filled" />
+                    <ShoppingBag size={20} weight="Filled" />
                     <span>Add to Bag — ₹{currentTotalPrice.toLocaleString("en-IN")}</span>
-                  </button>
-
-                  <button
-                    onClick={handleBuyNow}
-                    className="w-full h-13 bg-[#2b1f1a] hover:bg-[#3d2c25] active:scale-[0.98] text-white font-bold text-sm rounded-2xl flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
-                  >
-                    <Lock size={16} weight="Filled" />
-                    <span>Buy Now (Cash on Delivery)</span>
                   </button>
                 </div>
               </div>
@@ -1328,17 +1350,10 @@ export default function ProductDetailsClient({
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={handleAddToCart}
-            className="h-10 px-3.5 bg-[#fcf9f5] text-[#e06b5b] border border-[#ebdcd3] font-bold text-xs rounded-xl flex items-center justify-center hover:bg-[#f6eee9] active:scale-[0.98] transition-all"
-            aria-label="Add to bag"
+            className="h-10 px-5 bg-[#e06b5b] hover:bg-[#c25445] text-white font-bold text-xs rounded-xl flex items-center gap-2 shadow-md shadow-[#e06b5b]/25 active:scale-[0.98] transition-all cursor-pointer"
           >
-            <ShoppingBag size={16} weight="Filled" />
-          </button>
-          <button
-            onClick={handleBuyNow}
-            className="h-10 px-4 bg-[#e06b5b] hover:bg-[#c25445] text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-md shadow-[#e06b5b]/25 active:scale-[0.98] transition-all"
-          >
-            <Lock size={13} weight="Filled" />
-            <span>Order COD</span>
+            <ShoppingBag size={15} weight="Filled" />
+            <span>Add to Bag</span>
           </button>
         </div>
       </div>

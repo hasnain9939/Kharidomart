@@ -1,3 +1,9 @@
+export interface ProductColor {
+  name: string;
+  hex: string;
+  label: string;
+}
+
 export interface Product {
   id: string;
   slug: string;
@@ -14,6 +20,9 @@ export interface Product {
   featured: boolean;
   images: string[];
   videoUrl?: string;
+  colors?: ProductColor[];
+  dispatchTime?: string;
+  dispatchCutoff?: string;
   description: string;
   highlights: string[];
   specs: { label: string; value: string }[];

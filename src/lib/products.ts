@@ -1,4 +1,4 @@
-import { Product } from "@/data/products";
+import { Product, ProductColor } from "@/data/products";
 
 // Safely parse JSON or return fallback
 function safeJsonParse<T>(val: unknown, fallback: T): T {
@@ -48,6 +48,65 @@ export function formatProduct(dbProduct: any): Product {
     }));
   }
 
+  // Extract colors if present in dbProduct directly OR stored in specs
+  let colors: ProductColor[] | undefined = undefined;
+  if (dbProduct.colors) {
+    const parsedColors = safeJsonParse<ProductColor[]>(dbProduct.colors, []);
+    if (Array.isArray(parsedColors) && parsedColors.length > 0) {
+      colors = parsedColors;
+    }
+  }
+  if (!colors) {
+    const colorSpec = specs.find(
+      (s) => s.label.toLowerCase() === "colors" || s.label.toLowerCase() === "colorvariants"
+    );
+    if (colorSpec) {
+      const parsed = safeJsonParse<ProductColor[]>(colorSpec.value, []);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        colors = parsed;
+      }
+    }
+  }
+
+  // Extract custom dispatch time
+  const dispatchTime =
+    dbProduct.dispatchTime ||
+    specs.find(
+      (s) =>
+        s.label.toLowerCase() === "dispatch time" ||
+        s.label.toLowerCase() === "dispatchtime" ||
+        s.label.toLowerCase() === "lead time"
+    )?.value ||
+    undefined;
+
+  // Extract custom dispatch cutoff
+  const dispatchCutoff =
+    dbProduct.dispatchCutoff ||
+    specs.find(
+      (s) =>
+        s.label.toLowerCase() === "dispatch cutoff" ||
+        s.label.toLowerCase() === "dispatchcutoff" ||
+        s.label.toLowerCase() === "cutoff time"
+    )?.value ||
+    undefined;
+
+  // Filter out internal metadata specs so the technical specifications table stays clean
+  const publicSpecs = specs.filter(
+    (s) =>
+      ![
+        "colors",
+        "colorvariants",
+        "dispatch time",
+        "dispatchtime",
+        "lead time",
+        "dispatch cutoff",
+        "dispatchcutoff",
+        "cutoff time",
+        "videourl",
+        "video",
+      ].includes(s.label.toLowerCase())
+  );
+
   return {
     id: String(dbProduct.id),
     slug: String(dbProduct.slug),
@@ -64,9 +123,12 @@ export function formatProduct(dbProduct: any): Product {
     featured: Boolean(dbProduct.isFeatured ?? dbProduct.featured ?? false),
     images,
     videoUrl: dbProduct.videoUrl ? String(dbProduct.videoUrl) : specs.find((s) => s.label.toLowerCase() === "videourl" || s.label.toLowerCase() === "video")?.value || undefined,
+    colors,
+    dispatchTime,
+    dispatchCutoff,
     description: String(dbProduct.description || ""),
     highlights,
-    specs,
+    specs: publicSpecs,
     createdAt: dbProduct.createdAt ? new Date(dbProduct.createdAt).toISOString() : undefined,
     updatedAt: dbProduct.updatedAt ? new Date(dbProduct.updatedAt).toISOString() : undefined,
   };

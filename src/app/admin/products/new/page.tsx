@@ -18,6 +18,7 @@ import {
   Image as ImageIcon,
   VideoPlay,
   Upload,
+  Clock,
 } from "reicon-react";
 import { useStore } from "@/context/StoreContext";
 
@@ -65,6 +66,63 @@ function AddProductForm() {
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [videoUrl, setVideoUrl] = useState("");
   const [customImageInput, setCustomImageInput] = useState("");
+
+  // Color Finish Variants
+  interface ColorOption {
+    name: string;
+    hex: string;
+    label: string;
+  }
+  const [colors, setColors] = useState<ColorOption[]>([]);
+  const [newColorName, setNewColorName] = useState("");
+  const [newColorHex, setNewColorHex] = useState("#B8E2D8");
+  const [newColorLabel, setNewColorLabel] = useState("");
+
+  // Custom Dispatch & Delivery Timing
+  const [dispatchTime, setDispatchTime] = useState("24–48 hrs");
+  const [dispatchCutoff, setDispatchCutoff] = useState("5:00 PM");
+
+  const handleAddColor = () => {
+    if (!newColorName.trim()) {
+      alert("Please enter a color name (e.g. Pastel Mint Green)");
+      return;
+    }
+    const colorToAdd: ColorOption = {
+      name: newColorName.trim(),
+      hex: newColorHex.trim() || "#B8E2D8",
+      label: newColorLabel.trim() || newColorName.trim(),
+    };
+    setColors((prev) => [...prev, colorToAdd]);
+    setNewColorName("");
+    setNewColorLabel("");
+    setNewColorHex("#B8E2D8");
+  };
+
+  const handleRemoveColor = (indexToRemove: number) => {
+    setColors((prev) => prev.filter((_, i) => i !== indexToRemove));
+  };
+
+  const handleLoadColorPreset = (presetType: "baby" | "neutral" | "vibrant") => {
+    if (presetType === "baby") {
+      setColors([
+        { name: "Pastel Mint Green", hex: "#B8E2D8", label: "Pastel Mint (Most Popular)" },
+        { name: "Soft Blush Pink", hex: "#F7C6D0", label: "Blush Pink" },
+        { name: "Cloud White", hex: "#FAFAFC", label: "Cloud White" },
+      ]);
+    } else if (presetType === "neutral") {
+      setColors([
+        { name: "Matte Black", hex: "#1C1917", label: "Matte Black" },
+        { name: "Crisp White", hex: "#FFFFFF", label: "Crisp White" },
+        { name: "Slate Grey", hex: "#94A3B8", label: "Slate Grey" },
+      ]);
+    } else if (presetType === "vibrant") {
+      setColors([
+        { name: "Ocean Blue", hex: "#0284C7", label: "Ocean Blue" },
+        { name: "Crimson Red", hex: "#DC2626", label: "Crimson Red" },
+        { name: "Sunshine Yellow", hex: "#EAB308", label: "Sunshine Yellow" },
+      ]);
+    }
+  };
 
   // Trust badges
   const [badgeBestseller, setBadgeBestseller] = useState(true);
@@ -199,6 +257,31 @@ function AddProductForm() {
             const skuSpec = p.specs.find((s: any) => s.label === "SKU");
             if (skuSpec) setSku(skuSpec.value);
           }
+          if (p.colors && Array.isArray(p.colors) && p.colors.length > 0) {
+            setColors(p.colors);
+          } else if (Array.isArray(p.specs)) {
+            const colorSpec = p.specs.find((s: any) => s.label?.toLowerCase() === "colors" || s.label?.toLowerCase() === "colorvariants");
+            if (colorSpec) {
+              try {
+                const parsed = JSON.parse(colorSpec.value);
+                if (Array.isArray(parsed)) setColors(parsed);
+              } catch {
+                // ignore
+              }
+            }
+          }
+          if (p.dispatchTime) {
+            setDispatchTime(p.dispatchTime);
+          } else if (Array.isArray(p.specs)) {
+            const dtSpec = p.specs.find((s: any) => s.label?.toLowerCase() === "dispatch time");
+            if (dtSpec) setDispatchTime(dtSpec.value);
+          }
+          if (p.dispatchCutoff) {
+            setDispatchCutoff(p.dispatchCutoff);
+          } else if (Array.isArray(p.specs)) {
+            const dcSpec = p.specs.find((s: any) => s.label?.toLowerCase() === "dispatch cutoff");
+            if (dcSpec) setDispatchCutoff(dcSpec.value);
+          }
         }
       } catch (err) {
         console.error("Failed to load product for editing:", err);
@@ -297,7 +380,13 @@ function AddProductForm() {
             { label: "SKU", value: sku || "KM-" + Math.floor(1000 + Math.random() * 9000) },
             { label: "Warranty", value: "24-Hour Replacement Guarantee" },
             { label: "MRP Declaration", value: "Inclusive of all Taxes" },
+            ...(colors.length > 0 ? [{ label: "Colors", value: JSON.stringify(colors) }] : []),
+            { label: "Dispatch Time", value: dispatchTime.trim() || "24–48 hrs" },
+            { label: "Dispatch Cutoff", value: dispatchCutoff.trim() || "5:00 PM" },
           ],
+          colors: colors.length > 0 ? colors : undefined,
+          dispatchTime: dispatchTime.trim() || "24–48 hrs",
+          dispatchCutoff: dispatchCutoff.trim() || "5:00 PM",
         }),
       });
 
@@ -900,6 +989,186 @@ function AddProductForm() {
               </div>
             </div>
           </div>
+
+          {/* 4. Color Variants & Finishes */}
+          <div className="p-5 sm:p-6 rounded-2xl bg-white border border-[#e2e8f0] shadow-xs flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h2 className="text-sm font-bold text-[#0b1c30] uppercase tracking-wider flex items-center gap-2">
+                  <span className="w-2 h-4 rounded-full bg-[#f97316]"></span>
+                  Color Variants &amp; Finishes (Optional)
+                </h2>
+                <p className="text-[11px] text-[#565e74] mt-0.5">
+                  Configure selectable color options (like Pastel Mint, Blush Pink) displayed on the live product page.
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] font-bold text-[#565e74] uppercase tracking-wider">Presets:</span>
+                <button
+                  type="button"
+                  onClick={() => handleLoadColorPreset("baby")}
+                  className="px-2.5 py-1 rounded-lg bg-orange-50 hover:bg-orange-100 text-[#ea580c] text-[11px] font-bold transition-colors cursor-pointer border border-orange-200"
+                >
+                  👶 Baby Pastels
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleLoadColorPreset("neutral")}
+                  className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[#0b1c30] text-[11px] font-bold transition-colors cursor-pointer"
+                >
+                  🖤 Neutrals
+                </button>
+                {colors.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setColors([])}
+                    className="px-2 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 text-[11px] font-bold transition-colors cursor-pointer"
+                  >
+                    Clear All
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Configured Colors List & Live Preview */}
+            {colors.length > 0 ? (
+              <div className="flex flex-col gap-3">
+                <div className="p-4 rounded-xl bg-[#f8fafc] border border-[#e2e8f0]">
+                  <span className="text-[11px] font-bold text-[#565e74] uppercase tracking-wider block mb-2">
+                    Active Color Variants ({colors.length}):
+                  </span>
+                  <div className="flex items-center flex-wrap gap-2.5">
+                    {colors.map((c, idx) => (
+                      <div
+                        key={idx}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-[#e2e8f0] shadow-xs text-xs"
+                      >
+                        <span
+                          className="w-4 h-4 rounded-full border border-black/15 shadow-inner shrink-0"
+                          style={{ backgroundColor: c.hex }}
+                        />
+                        <span className="font-bold text-[#0b1c30]">{c.name}</span>
+                        {c.label && c.label !== c.name && (
+                          <span className="text-[10px] text-[#ea580c] font-semibold bg-orange-50 px-1.5 py-0.5 rounded">
+                            {c.label}
+                          </span>
+                        )}
+                        <span className="text-[10px] font-mono text-[#565e74]">{c.hex}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveColor(idx)}
+                          className="w-5 h-5 rounded-full hover:bg-red-50 text-red-500 flex items-center justify-center transition-colors cursor-pointer ml-1"
+                          title="Remove color"
+                        >
+                          <CloseCircle size={14} weight="Filled" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Customer View Simulation Preview */}
+                <div className="p-3.5 rounded-xl bg-[#fffaf5] border border-[#fed7aa]/60">
+                  <span className="text-[11px] font-bold text-[#ea580c] uppercase tracking-wider block mb-2">
+                    Customer Product Page Preview:
+                  </span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {colors.map((c, idx) => (
+                      <div
+                        key={idx}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border ${
+                          idx === 0
+                            ? "border-[#f97316] bg-orange-50/50 shadow-xs"
+                            : "border-[#e2e8f0] bg-white"
+                        }`}
+                      >
+                        <span
+                          className="w-3.5 h-3.5 rounded-full border border-black/10 shrink-0"
+                          style={{ backgroundColor: c.hex }}
+                        />
+                        <span className="text-[#0b1c30]">{c.label || c.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 rounded-xl bg-[#f8fafc] border border-dashed border-[#cbd5e1] text-center">
+                <p className="text-xs font-semibold text-[#565e74]">
+                  No color variants added yet.
+                </p>
+                <p className="text-[11px] text-[#94a3b8] mt-0.5">
+                  If left empty, the color finish selector will be hidden on the product page. Use the form below or pick a preset to add color finishes.
+                </p>
+              </div>
+            )}
+
+            {/* Add New Color Form */}
+            <div className="pt-3 border-t border-[#f1f5f9]">
+              <span className="text-xs font-bold text-[#0b1c30] block mb-2">
+                Add a Color Option:
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end">
+                <div className="sm:col-span-4">
+                  <label className="block text-[11px] font-semibold text-[#565e74] mb-1">
+                    Color Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Pastel Mint Green"
+                    value={newColorName}
+                    onChange={(e) => setNewColorName(e.target.value)}
+                    className="w-full h-9 px-3 rounded-xl bg-[#f8fafc] text-xs text-[#0b1c30] border border-[#e2e8f0] focus:border-[#f97316] focus:bg-white focus:outline-none"
+                  />
+                </div>
+
+                <div className="sm:col-span-3">
+                  <label className="block text-[11px] font-semibold text-[#565e74] mb-1">
+                    Color Swatch
+                  </label>
+                  <div className="flex items-center gap-1.5 h-9 px-2 rounded-xl bg-[#f8fafc] border border-[#e2e8f0]">
+                    <input
+                      type="color"
+                      value={newColorHex}
+                      onChange={(e) => setNewColorHex(e.target.value)}
+                      className="w-6 h-6 rounded-md border-0 p-0 cursor-pointer bg-transparent"
+                    />
+                    <input
+                      type="text"
+                      value={newColorHex}
+                      onChange={(e) => setNewColorHex(e.target.value)}
+                      placeholder="#B8E2D8"
+                      className="w-full bg-transparent text-xs font-mono text-[#0b1c30] focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="sm:col-span-3">
+                  <label className="block text-[11px] font-semibold text-[#565e74] mb-1">
+                    Button Label (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Pastel Mint (Most Popular)"
+                    value={newColorLabel}
+                    onChange={(e) => setNewColorLabel(e.target.value)}
+                    className="w-full h-9 px-3 rounded-xl bg-[#f8fafc] text-xs text-[#0b1c30] border border-[#e2e8f0] focus:border-[#f97316] focus:bg-white focus:outline-none"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <button
+                    type="button"
+                    onClick={handleAddColor}
+                    className="w-full h-9 px-3 rounded-xl bg-[#f97316] hover:bg-[#ea580c] active:scale-[0.98] text-white text-xs font-bold flex items-center justify-center gap-1 shadow-xs transition-all cursor-pointer"
+                  >
+                    <Add size={14} weight="Outline" />
+                    <span>Add Color</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* RIGHT COLUMN: 4 cols */}
@@ -990,6 +1259,99 @@ function AddProductForm() {
                   className="accent-[#f97316] w-4 h-4 rounded"
                 />
               </label>
+            </div>
+          </div>
+
+          {/* Shipping & Dispatch Timing */}
+          <div className="p-5 rounded-2xl bg-white border border-[#e2e8f0] shadow-xs flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs font-bold text-[#0b1c30] uppercase tracking-wider flex items-center gap-1.5">
+                <TruckFast size={15} weight="Filled" className="text-[#f97316]" />
+                Dispatch &amp; Delivery Timing
+              </h2>
+              <span className="text-[10px] font-bold text-[#15803d] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                Live on Store
+              </span>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-[#565e74]">
+                  Dispatch Lead Time
+                </label>
+                <span className="text-[10px] text-[#94a3b8]">Shown beside truck icon</span>
+              </div>
+              <input
+                type="text"
+                value={dispatchTime}
+                onChange={(e) => setDispatchTime(e.target.value)}
+                placeholder="e.g. 24–48 hrs, Same-Day Dispatch, 1–2 Days"
+                className="w-full h-10 px-3 rounded-xl bg-[#f8fafc] text-xs font-bold text-[#0b1c30] border border-[#e2e8f0] focus:border-[#f97316] focus:bg-white focus:outline-none"
+              />
+              <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                {["24–48 hrs", "Same-Day Dispatch", "1–2 Days", "2–3 Days"].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setDispatchTime(preset)}
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border transition-colors cursor-pointer ${
+                      dispatchTime === preset
+                        ? "bg-orange-50 border-orange-200 text-[#ea580c]"
+                        : "bg-slate-50 border-slate-200 text-[#565e74] hover:bg-slate-100"
+                    }`}
+                  >
+                    {preset}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-[#565e74]">
+                  Same-Day Dispatch Cutoff
+                </label>
+                <span className="text-[10px] text-[#94a3b8]">Countdown cutoff time</span>
+              </div>
+              <input
+                type="text"
+                value={dispatchCutoff}
+                onChange={(e) => setDispatchCutoff(e.target.value)}
+                placeholder="e.g. 5:00 PM, 2:00 PM, 6:00 PM"
+                className="w-full h-10 px-3 rounded-xl bg-[#f8fafc] text-xs font-bold text-[#0b1c30] border border-[#e2e8f0] focus:border-[#f97316] focus:bg-white focus:outline-none"
+              />
+              <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                {["5:00 PM", "2:00 PM", "4:00 PM", "6:00 PM"].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setDispatchCutoff(preset)}
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border transition-colors cursor-pointer ${
+                      dispatchCutoff === preset
+                        ? "bg-orange-50 border-orange-200 text-[#ea580c]"
+                        : "bg-slate-50 border-slate-200 text-[#565e74] hover:bg-slate-100"
+                    }`}
+                  >
+                    {preset}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Live Store Preview of Dispatch info */}
+            <div className="p-3 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-xs space-y-2 mt-1">
+              <div className="flex items-center gap-2 text-[#584237]">
+                <TruckFast size={14} weight="Filled" className="text-[#f97316] shrink-0" />
+                <span>
+                  Dispatches in <strong className="text-[#0b1c30]">{dispatchTime || "24–48 hrs"}</strong> with WhatsApp tracking
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-[#2b1f1a] pt-1.5 border-t border-[#e2e8f0]/60">
+                <Clock size={14} weight="Filled" className="text-[#e06b5b] shrink-0" />
+                <span>
+                  Cutoff: <strong className="text-[#e06b5b]">{dispatchCutoff || "5:00 PM"}</strong> (Countdown active)
+                </span>
+              </div>
             </div>
           </div>
         </div>
