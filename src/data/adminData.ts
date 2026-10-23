@@ -36,10 +36,12 @@ export interface AdminSupplier {
   currentStock: number;
   capacityPercentage: number;
   dispatchesToday: number;
-  status: "Optimal" | "High Load" | "Restocking";
+  status?: "Optimal" | "Degraded" | "Offline";
   courierPartners: string[];
-  apiStatus: "Connected (Live)" | "Syncing" | "Needs Re-auth";
+  apiStatus: "Connected (Live)" | "Syncing" | "Needs Re-auth" | "Not Connected";
   avgDispatchTime: string;
+  apiKey?: string;
+  merchantId?: string;
   pendingOrders: number;
   walletBalance: number;
 }
@@ -135,7 +137,7 @@ export const DROPSHIP_SUPPLIERS: AdminSupplier[] = [
     dispatchesToday: 0,
     status: "Optimal",
     courierPartners: ["BlueDart Express", "Delhivery Direct", "Shadowfax"],
-    apiStatus: "Connected (Live)",
+    apiStatus: "Not Connected",
     avgDispatchTime: "24 Hours",
     pendingOrders: 0,
     walletBalance: 0,
@@ -151,7 +153,7 @@ export const DROPSHIP_SUPPLIERS: AdminSupplier[] = [
     dispatchesToday: 0,
     status: "Optimal",
     courierPartners: ["BlueDart Air", "Delhivery Air"],
-    apiStatus: "Connected (Live)",
+    apiStatus: "Not Connected",
     avgDispatchTime: "24 Hours",
     pendingOrders: 0,
     walletBalance: 0,
@@ -167,7 +169,7 @@ export const DROPSHIP_SUPPLIERS: AdminSupplier[] = [
     dispatchesToday: 0,
     status: "Optimal",
     courierPartners: ["XpressBees", "BlueDart"],
-    apiStatus: "Connected (Live)",
+    apiStatus: "Not Connected",
     avgDispatchTime: "24 Hours",
     pendingOrders: 0,
     walletBalance: 0,
