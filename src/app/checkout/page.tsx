@@ -912,7 +912,7 @@ export default function CheckoutPage() {
 
               <div className="p-3 bg-[#f8fafc] rounded-2xl text-center border border-[#e2e8f0]">
                 <p className="text-[11px] text-[#584237] leading-relaxed">
-                  🔒 By placing this order, you agree to Kharido Mart&apos;s 7-Day Doorstep Replacement and Privacy policies.
+                  🔒 By placing this order, you agree to Kharido Mart&apos;s 24-Hour Replacement (unboxing video mandatory) and Privacy policies.
                 </p>
               </div>
             </div>

@@ -122,7 +122,7 @@ export default function CartPage() {
             </span>
             <span className="hidden sm:inline-flex items-center gap-1.5">
               <TruckFast size={16} weight="Filled" className="text-[#f97316]" />
-              7-Day Doorstep Replacement Guarantee
+              24-Hour Replacement Guarantee
             </span>
           </div>
         </div>
@@ -455,9 +455,9 @@ export default function CartPage() {
                       <TruckFast size={22} weight="Filled" />
                     </div>
                     <div>
-                      <h5 className="text-sm font-bold text-[#0b1c30]">7-Day Free Replacement</h5>
+                      <h5 className="text-sm font-bold text-[#0b1c30]">24-Hour Doorstep Replacement</h5>
                       <p className="text-xs text-[#584237] mt-0.5">
-                        Zero hassle doorstep pickup and replacement if anything arrives defective.
+                        Free doorstep replacement if damaged/defective. Unboxing video required within 24 hours.
                       </p>
                     </div>
                   </div>

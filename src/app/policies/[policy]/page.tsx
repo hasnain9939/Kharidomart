@@ -41,7 +41,7 @@ export default async function PolicyPage({ params }: PolicyPageProps) {
 
   const allPolicyLinks = [
     { label: "Privacy Policy", slug: "privacy-policy" },
-    { label: "Refund & Replacement", slug: "refund-policy" },
+    { label: "Replacement Policy (No Refund)", slug: "refund-policy" },
     { label: "Terms of Service", slug: "terms-of-service" },
     { label: "Shipping Policy", slug: "shipping-policy" },
     { label: "Legal Notice & Disclosures", slug: "legal-notice" },
@@ -75,11 +75,37 @@ export default async function PolicyPage({ params }: PolicyPageProps) {
             <span className="text-xs text-[#584237]">
               Effective Date: {policy.lastUpdated || "October 2026"}
             </span>
+            {policySlug === "refund-policy" && (
+              <span className="text-xs font-space font-bold uppercase tracking-wider text-rose-700 bg-rose-50 border border-rose-200 px-3 py-1 rounded-full">
+                Strict Replacement-Only
+              </span>
+            )}
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-extrabold text-[#0b1c30] tracking-tight">
             {policy.title}
           </h1>
+
+          {policySlug === "refund-policy" && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              <div className="p-4 rounded-2xl bg-rose-50/80 border border-rose-200 text-xs text-rose-900 space-y-1">
+                <span className="font-extrabold text-sm text-rose-700 block flex items-center gap-1.5">
+                  ⏱️ 24-Hour Strict Deadline
+                </span>
+                <p className="text-rose-800 leading-relaxed">
+                  Replacement claims must be reported within <strong>24 hours</strong> of courier confirmed delivery. Late requests are strictly ineligible.
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900 space-y-1">
+                <span className="font-extrabold text-sm text-amber-700 block flex items-center gap-1.5">
+                  📹 Uncut Unboxing Video Mandatory
+                </span>
+                <p className="text-amber-800 leading-relaxed">
+                  A single-take, continuous video showing the outer shipping label and opening of the parcel is required to process any replacement.
+                </p>
+              </div>
+            </div>
+          )}
 
           {policy.summary && (
             <div className="p-4 sm:p-5 rounded-2xl bg-[#eff4ff]/70 border border-[#e2e8f0] text-xs sm:text-sm text-[#0b1c30] leading-relaxed font-medium">

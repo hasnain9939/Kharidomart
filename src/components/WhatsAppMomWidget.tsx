@@ -17,8 +17,8 @@ export default function WhatsAppMomWidget() {
       a: "You simply pay cash to the courier partner upon doorstep delivery. No advance payment required! We also accept UPI at delivery.",
     },
     {
-      q: "What is your 7-Day Replacement Policy?",
-      a: "If any item arrives damaged or defective, we provide an immediate free doorstep pickup and fresh unit replacement within 7 days of delivery.",
+      q: "What is your Replacement Policy?",
+      a: "We have a strict No-Refund, No-Return policy. If an item arrives damaged or defective, report within 24 hours of delivery with an uncut unboxing video for a free identical replacement.",
     },
     {
       q: "How fast is express dispatch?",

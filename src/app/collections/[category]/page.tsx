@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   }
 
   const title = `${category.name} | Kharido Mart India`;
-  const description = `${category.subtitle}. Explore pediatrician-tested, 100% child-safe essentials with pan-India Cash on Delivery and easy 7-day replacements.`;
+  const description = `${category.subtitle}. Explore pediatrician-tested, 100% child-safe essentials with pan-India Cash on Delivery and 24-hour doorstep replacements.`;
 
   return {
     title,

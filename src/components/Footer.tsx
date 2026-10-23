@@ -168,7 +168,7 @@ export default function Footer() {
             <ul className="space-y-2.5 text-xs sm:text-sm text-[#6b5850]">
               <li>
                 <Link href="/policies/refund-policy" className="hover:text-[#e06b5b] transition-colors">
-                  7-Day Doorstep Replacement
+                  24-Hour Replacement Policy
                 </Link>
               </li>
               <li>

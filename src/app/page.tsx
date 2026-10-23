@@ -64,7 +64,7 @@ export default function Home() {
             <div className="flex items-center justify-center gap-2 py-1">
               <Refresh size={17} weight="Outline" className="text-[#6b5850] shrink-0" />
               <span className="font-semibold text-[#2b1f1a]">
-                Easy 7-Day Doorstep Replacement
+                24-Hour Doorstep Replacement
               </span>
             </div>
           </div>
@@ -125,9 +125,9 @@ export default function Home() {
               <div className="pt-4 grid grid-cols-3 gap-3 max-w-lg mx-auto lg:mx-0">
                 <div className="bg-white/90 p-3.5 rounded-2xl border border-[#eddcd1] shadow-2xs text-center lg:text-left">
                   <p className="font-mono text-xl sm:text-2xl text-[#e06b5b] font-black tabular-nums">
-                    7 Days
+                    24 Hrs
                   </p>
-                  <p className="text-xs text-[#6b5850] font-medium mt-0.5">Easy Return Guarantee</p>
+                  <p className="text-xs text-[#6b5850] font-medium mt-0.5">Replacement Guarantee</p>
                 </div>
 
                 <div className="bg-white/90 p-3.5 rounded-2xl border border-[#eddcd1] shadow-2xs text-center lg:text-left">
@@ -563,9 +563,9 @@ export default function Home() {
                 <div className="w-12 h-12 rounded-xl bg-[#f5f0ea] text-[#2b1f1a] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
                   <Headphones size={24} weight="Filled" />
                 </div>
-                <h3 className="text-base font-black text-[#2b1f1a] mb-1.5">Hassle-Free Doorstep Exchange</h3>
+                <h3 className="text-base font-black text-[#2b1f1a] mb-1.5">24-Hour Doorstep Replacement</h3>
                 <p className="text-xs text-[#6b5850] leading-relaxed">
-                  Zero-stress 7-day doorstep replacement if any item isn&apos;t 100% satisfactory. Friendly support on WhatsApp.
+                  Prompt replacement if any item arrives damaged or defective. Simply share an unboxing video within 24 hours on WhatsApp.
                 </p>
               </div>
             </div>

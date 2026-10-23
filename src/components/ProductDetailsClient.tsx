@@ -831,7 +831,7 @@ export default function ProductDetailsClient({
                         ✓ Free Delivery on ₹499+
                       </span>
                       <span className="bg-[#eaf3ed] text-[#2c4a35] font-semibold px-2 py-0.5 rounded-md">
-                        ✓ 7-Day Doorstep Replacement
+                        ✓ 24-Hr Doorstep Replacement
                       </span>
                     </div>
                   </div>
@@ -842,11 +842,11 @@ export default function ProductDetailsClient({
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <div className="bg-[#fdfbf7] p-3 rounded-2xl flex items-center gap-2 border border-[#eddcd1]">
                   <TruckFast size={20} weight="Filled" className="text-[#e06b5b]" />
-                  <span className="text-xs font-semibold text-[#2b1f1a]">7-Day Doorstep Replacement</span>
+                  <span className="text-xs font-semibold text-[#2b1f1a]">24-Hr Replacement (Video Req.)</span>
                 </div>
                 <div className="bg-[#fdfbf7] p-3 rounded-2xl flex items-center gap-2 border border-[#eddcd1]">
                   <ShieldCheck size={20} weight="Filled" className="text-[#4f775d]" />
-                  <span className="text-xs font-semibold text-[#2b1f1a]">100% Baby-Safe Warranty</span>
+                  <span className="text-xs font-semibold text-[#2b1f1a]">100% Quality Inspected</span>
                 </div>
               </div>
             </div>

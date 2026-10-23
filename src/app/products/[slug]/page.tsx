@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   const title = `${product.title} | Kharido Mart India`;
   const description =
     product.description.slice(0, 155) +
-    " — 100% Quality Inspected, Pan-India Cash on Delivery & Free 7-Day Replacement.";
+    " — 100% Quality Inspected, Pan-India Cash on Delivery & 24-Hour Replacement Guarantee.";
 
   return {
     title,

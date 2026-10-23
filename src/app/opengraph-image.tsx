@@ -206,7 +206,7 @@ export default async function Image() {
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <span style={{ fontSize: "20px" }}>🛡️</span>
               <span style={{ fontSize: "15px", fontWeight: 700, color: "#2b1f1a" }}>
-                7-Day Free Replacement
+                24-Hour Replacement
               </span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>

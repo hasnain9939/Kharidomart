@@ -265,7 +265,7 @@ function AddProductForm() {
       : [
           "100% Certified Safe & High Quality Materials",
           "Fast Dispatch via BlueDart Express Air Courier",
-          "Cash on Delivery & Easy 7-Day Replacement Support",
+          "Cash on Delivery & 24-Hour Replacement Support",
         ];
 
     try {
@@ -295,7 +295,7 @@ function AddProductForm() {
           specs: [
             { label: "Country of Origin", value: "India" },
             { label: "SKU", value: sku || "KM-" + Math.floor(1000 + Math.random() * 9000) },
-            { label: "Warranty", value: "7-Day Replacement Guarantee" },
+            { label: "Warranty", value: "24-Hour Replacement Guarantee" },
             { label: "MRP Declaration", value: "Inclusive of all Taxes" },
           ],
         }),

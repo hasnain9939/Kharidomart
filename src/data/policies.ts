@@ -79,65 +79,75 @@ export const POLICIES: Record<string, Policy> = {
 
   "refund-policy": {
     slug: "refund-policy",
-    title: "Refund, Return & Replacement Policy",
+    title: "Replacement Policy (Strictly No Returns & No Refunds)",
     lastUpdated: "October 2026",
     summary:
-      "At Kharido Mart, customer satisfaction and genuine trust are our foundational priorities. We provide an unambiguous 7-Day Replacement & Return Guarantee on all eligible products.",
+      "Kharido Mart operates under a strict REPLACEMENT-ONLY POLICY. We do NOT offer monetary refunds or product returns under any circumstances. Free doorstep replacements are provided exclusively for products that arrive physically damaged, defective, or incorrect, provided the claim is submitted within 24 hours of delivery with a mandatory, continuous product unboxing video.",
     sections: [
       {
-        title: "1. 7-Day Replacement Guarantee",
+        title: "1. Strict No-Refund & No-Return Policy",
         paragraphs: [
-          "We offer a hassle-free 7-Day Replacement Guarantee from the recorded delivery date for any of the following occurrences:",
-          "a) Product arrived in a physically damaged or broken state.",
-          "b) Product has a manufacturing defect, electrical malfunction, or dead-on-arrival (DOA) motor/audio component.",
-          "c) Product received is incomplete, missing accessories, or entirely different from the item ordered."
+          "All sales and orders placed on Kharido Mart are final and non-refundable.",
+          "We do NOT provide cash, UPI, bank transfer, card, or store credit refunds for any purchases, whether paid via online prepaid methods or Cash on Delivery (COD).",
+          "Returns for monetary refunds, exchanges for other products, or returns citing buyer's remorse, change of mind, perceived expectation differences, or accidental ordering are strictly NOT accepted.",
+          "Kharido Mart exclusively offers identical product replacements when eligible items satisfy the strict damage or defect criteria outlined in this policy."
         ]
       },
       {
-        title: "2. Eligibility Criteria for Returns & Replacements",
+        title: "2. Mandatory 24-Hour Reporting Window",
         paragraphs: [
-          "The return request must be initiated within 7 calendar days from the courier's confirmed delivery timestamp.",
-          "The product must be in its original condition, along with the original product packaging box, user manuals, warranty cards, cables, filing heads, and all bundled accessories.",
-          "We kindly request an unboxing video or photographs clearly displaying the reported issue and the shipping label on the outer carton. This expedites approval with our courier insurance partners."
+          "Any request for product replacement MUST be officially submitted within exactly 24 hours of delivery.",
+          "The 24-hour window commences from the exact delivery timestamp recorded by our logistics partner's delivery tracking system (BlueDart, Delhivery, XpressBees, or Shadowfax).",
+          "Important: Claims submitted after the 24-hour delivery window will be automatically rejected without exception, as courier insurance coverage expires 24 hours post-delivery."
         ]
       },
       {
-        title: "3. Non-Returnable Items (Hygiene & Child Safety)",
+        title: "3. Mandatory Uncut Product Unboxing Video Requirement",
         paragraphs: [
-          "To safeguard child hygiene and safety, used filing pads or opened personal baby grooming attachments cannot be returned for resale unless the central motor unit itself is defective or malfunctioned upon initial unboxing.",
-          "Products that show clear signs of accidental physical damage, water ingress (where not rated waterproof), unauthorized repair, or misuse are not eligible for free replacement."
+          "To be eligible for a replacement, a continuous, uncut, single-take video recording of the unboxing is 100% MANDATORY.",
+          "The unboxing video must strictly meet the following conditions:",
+          "a) The video must begin BEFORE opening the parcel, clearly displaying the intact outer courier bag/box and the shipping label containing your Name, Address, and Tracking AWB number in clear focus.",
+          "b) The unsealing and opening of the parcel must be recorded in one continuous shot without any pauses, cuts, stops, fast-forwarding, or video edits.",
+          "c) The product and all accessories must be removed and inspected on camera in the same uninterrupted clip, clearly demonstrating the physical damage, missing component, or functional defect.",
+          "Claims submitted without a valid unboxing video, or with videos recorded after the package has already been opened, will be summarily declined."
         ]
       },
       {
-        title: "4. Step-by-Step Replacement Process",
+        title: "4. Eligible Conditions for Free Replacement",
         paragraphs: [
-          "Step 1: Submit a replacement request via our Contact page with your Order ID and photo/video proof of the damaged or defective item.",
-          "Step 2: Our support team evaluates the request within 12-24 business hours and coordinates reverse pickup.",
-          "Step 3: Our courier partner visits your doorstep within 24 to 48 hours to collect the return parcel at zero cost to you.",
-          "Step 4: Once received and verified, a brand new replacement unit is dispatched within 24 hours, or a full refund is initiated as per your preference."
+          "A free doorstep replacement will be approved only under the following verified conditions:",
+          "a) Physical In-Transit Damage: The outer item arrived crushed, broken, shattered, or visibly compromised during transit.",
+          "b) Dead on Arrival (DOA) / Manufacturing Malfunction: Electrical components, motors, batteries, or mechanisms fail to operate upon initial unboxing.",
+          "c) Wrong Product Delivered: The received item or model is entirely different from the product ordered.",
+          "d) Missing Essential Parts: Factory-sealed box is missing core components, power cables, or attachments specified in the package contents."
         ]
       },
       {
-        title: "5. Refund Modes & Processing Timelines",
+        title: "5. How to Submit a 24-Hour Replacement Request",
         paragraphs: [
-          "Prepaid Orders (UPI, NetBanking, Credit/Debit Cards): Refunds are reversed directly to the original bank account or payment instrument. The credit reflects within 5 to 7 business days, depending on your issuing bank's settlement cycle.",
-          "Cash on Delivery (COD) Orders: Refunds for COD purchases are disbursed via secure direct NEFT/IMPS bank transfer or UPI ID provided by the customer upon verification. Transferred within 24–48 hours post return approval.",
-          "Full Refund Amount: The complete invoice value paid by the customer is refunded without any restocking deduction."
+          "Step 1: Immediately upon receiving the delivery, record your uncut unboxing video showing the outer shipping label.",
+          "Step 2: Within 24 hours of delivery, contact our official support team via WhatsApp (+91 99394 85740) or through our Contact page (kharidomart.com/contact).",
+          "Step 3: Provide your Order ID, registered phone number, a clear photo of the courier shipping label, and the continuous unboxing video.",
+          "Step 4: Our quality assurance team will inspect the footage within 12 to 24 business hours.",
+          "Step 5: Upon validation, an identical brand-new replacement unit will be dispatched to your address with priority express shipping at zero cost to you."
         ]
       },
       {
-        title: "6. Order Cancellation Policy",
+        title: "6. Non-Eligible Items & Claim Rejection Criteria",
         paragraphs: [
-          "You may cancel your order free of cost at any time prior to warehouse dispatch by submitting a cancellation request through our Contact page.",
-          "If the order has already been handed over to the courier and tracking is live, you can simply decline delivery when the courier partner arrives. Upon parcel return to our hub, your refund will be processed immediately."
+          "Requests will be declined under the following circumstances:",
+          "• Claims submitted after 24 hours from the courier's confirmed delivery timestamp.",
+          "• Inability to provide an uncut, continuous unboxing video showing the sealed parcel and shipping label.",
+          "• Normal wear and tear, cosmetic marks from regular use, liquid damage (unless device is IPX-rated), or physical damage resulting from customer dropping, mishandling, or improper assembly.",
+          "• Opened or used personal hygiene, grooming, or infant feeding accessories due to strict sanitary and child-safety protocols.",
+          "• Items returned incomplete without the original brand box, packaging materials, manuals, and bundled attachments."
         ]
       }
     ],
     content: [
-      "We want you to love every purchase from Kharido Mart! We offer a hassle-free 7-Day Replacement Guarantee on all eligible items.",
-      "If your product arrives damaged, defective, or different from what was described, please contact us within 7 days of delivery with photos or video of the issue.",
-      "Upon review, we arrange a free reverse pickup and dispatch a brand new replacement, or initiate a full refund to your original payment mode or bank account.",
-      "Refunds are processed within 3-5 business days upon receipt and inspection of the returned shipment."
+      "Kharido Mart operates under a strict Replacement-Only Policy. We do NOT provide returns or cash/UPI refunds under any circumstances.",
+      "If your order arrives damaged, defective, or incorrect, you must report it within 24 hours of delivery with a mandatory, uncut unboxing video.",
+      "Upon review and verification of the unboxing video, we dispatch an identical brand-new replacement unit to your doorstep at zero cost."
     ]
   },
 
@@ -294,10 +304,10 @@ export const POLICIES: Record<string, Policy> = {
         ]
       },
       {
-        title: "3. Returns & Replacement Assistance",
+        title: "3. Replacement Support (No Returns / No Refunds)",
         paragraphs: [
-          "If your order arrived damaged, defective, or incomplete, simply submit a request through our Contact page with your Order ID and photo/video proof.",
-          "We offer a 7-Day Doorstep Replacement Guarantee on all eligible products."
+          "If your order arrived damaged, defective, or incomplete, submit a claim through our Contact page or WhatsApp within 24 hours of delivery along with your mandatory, uncut unboxing video.",
+          "We offer a 24-Hour Doorstep Replacement Guarantee on all eligible products."
         ]
       }
     ],
@@ -318,7 +328,7 @@ export const POLICIES: Record<string, Policy> = {
         title: "1. Online Storefront & Platform Operations",
         paragraphs: [
           "Kharido Mart operates as an online direct-to-consumer dropshipping and retail storefront offering curated everyday home essentials, educational toys, and smart gadgets.",
-          "All transactions conducted on kharidomart.com are subject to our Terms of Service, Privacy Policy, and Refund Policy."
+          "All transactions conducted on kharidomart.com are subject to our Terms of Service, Privacy Policy, and Replacement Policy."
         ]
       },
       {
@@ -345,7 +355,7 @@ export const POLICIES: Record<string, Policy> = {
     ],
     content: [
       "Kharido Mart is an online direct-to-consumer shopping platform specializing in everyday smart gadgets, educational learning products, and lifestyle essentials.",
-      "All purchases are protected by our 7-Day Replacement Guarantee and 256-bit secure checkout."
+      "All purchases are protected by our 24-Hour Replacement Guarantee (unboxing video mandatory) and 256-bit secure checkout."
     ]
   }
 };

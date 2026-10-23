@@ -75,7 +75,7 @@ export default function ContactPage() {
     },
     {
       q: "What is your replacement policy?",
-      a: "We offer a 7-day hassle-free replacement on any damaged or defective item. Contact us on WhatsApp or email with your order ID and photos of the product.",
+      a: "We follow a strict Replacement-Only policy (no returns or refunds). If your item arrives damaged or defective, report it within 24 hours of delivery with a mandatory uncut unboxing video for a free replacement.",
     },
     {
       q: "How long does shipping take?",
@@ -126,9 +126,9 @@ export default function ContactPage() {
               <div className="flex items-start gap-3.5">
                 <span className="text-xl">🔄</span>
                 <div>
-                  <p className="font-bold text-stone-900">7-Day Replacement Support</p>
+                  <p className="font-bold text-stone-900">24-Hour Replacement Support</p>
                   <p className="text-xs text-stone-500 mt-0.5 leading-relaxed">
-                    Damaged or defective item? Fill out the contact form with your Order ID and issue details for a quick replacement.
+                    Damaged or defective item? Contact us within 24 hours with your Order ID and mandatory uncut unboxing video for a quick replacement.
                   </p>
                   <Link
                     href="/policies/refund-policy"
