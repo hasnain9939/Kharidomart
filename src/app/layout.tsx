@@ -4,6 +4,8 @@ import { Plus_Jakarta_Sans, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { StoreProvider } from "@/context/StoreContext";
 import StorefrontLayoutWrapper from "@/components/StorefrontLayoutWrapper";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const fontSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -134,6 +136,8 @@ export default function RootLayout({
         <StoreProvider>
           <StorefrontLayoutWrapper>{children}</StorefrontLayoutWrapper>
         </StoreProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
