@@ -8,6 +8,18 @@ export interface CartItem {
   quantity: number;
 }
 
+export interface SavedAddress {
+  id: string;
+  name: string;
+  phone: string;
+  type: "home" | "work" | "other";
+  addressLine: string;
+  city: string;
+  state: string;
+  pincode: string;
+  isDefault: boolean;
+}
+
 export interface UserProfile {
   id: string;
   name: string;
@@ -22,6 +34,7 @@ export interface UserProfile {
     state: string;
     pincode: string;
   };
+  savedAddresses?: SavedAddress[];
 }
 
 interface ToastMessage {
