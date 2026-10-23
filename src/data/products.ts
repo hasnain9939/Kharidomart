@@ -13,6 +13,7 @@ export interface Product {
   stock: number;
   featured: boolean;
   images: string[];
+  videoUrl?: string;
   description: string;
   highlights: string[];
   specs: { label: string; value: string }[];

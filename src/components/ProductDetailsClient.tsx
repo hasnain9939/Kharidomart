@@ -24,7 +24,31 @@ import {
   Sparkles,
   TicketDiscount,
   Clock,
+  VideoPlay,
 } from "reicon-react";
+
+function getVideoEmbed(url: string) {
+  if (!url || typeof url !== "string") return null;
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+
+  const ytShorts = trimmed.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/i);
+  if (ytShorts && ytShorts[1]) {
+    return { type: "youtube" as const, embedUrl: `https://www.youtube-nocookie.com/embed/${ytShorts[1]}` };
+  }
+
+  const ytMatch = trimmed.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
+  if (ytMatch && ytMatch[1]) {
+    return { type: "youtube" as const, embedUrl: `https://www.youtube-nocookie.com/embed/${ytMatch[1]}` };
+  }
+
+  const vimeoMatch = trimmed.match(/vimeo\.com\/(\d+)/i);
+  if (vimeoMatch && vimeoMatch[1]) {
+    return { type: "vimeo" as const, embedUrl: `https://player.vimeo.com/video/${vimeoMatch[1]}` };
+  }
+
+  return { type: "direct" as const, embedUrl: trimmed };
+}
 
 // Real customer reviews are stored per-product and submitted by verified purchasers
 
@@ -41,6 +65,8 @@ export default function ProductDetailsClient({
   const { addToCart, toggleWishlist, isWishlisted, openCart, showToast } = useStore();
 
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
+  const [showVideo, setShowVideo] = useState(false);
+  const videoEmbed = product.videoUrl ? getVideoEmbed(product.videoUrl) : null;
   const [quantity, setQuantity] = useState(1);
   const [selectedBundle, setSelectedBundle] = useState<number>(1);
   const [selectedColor, setSelectedColor] = useState("Pastel Mint Green");
@@ -333,32 +359,79 @@ export default function ProductDetailsClient({
                   </button>
                 </div>
 
-                {/* Main Product Image */}
-                <div className="relative w-full h-[280px] sm:h-[380px] md:h-[460px] flex items-center justify-center">
-                  <Image
-                    src={product.images[selectedImageIdx] || product.images[0]}
-                    alt={product.title}
-                    fill
-                    priority
-                    className="object-contain rounded-2xl transition-all duration-300 hover:scale-[1.03]"
-                  />
-                </div>
+                {/* Floating Watch Video Button (when photo is shown) */}
+                {videoEmbed && !showVideo && (
+                  <button
+                    type="button"
+                    onClick={() => setShowVideo(true)}
+                    className="absolute top-4 left-4 z-10 bg-black/85 hover:bg-black text-white px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-lg backdrop-blur-xs transition-all hover:scale-105 cursor-pointer"
+                  >
+                    <VideoPlay size={14} weight="Filled" className="text-[#f97316]" />
+                    <span>Watch Video Demo</span>
+                  </button>
+                )}
+
+                {/* Main Product Image or Video */}
+                {showVideo && videoEmbed ? (
+                  <div className="relative w-full h-[280px] sm:h-[380px] md:h-[460px] rounded-2xl overflow-hidden bg-black flex items-center justify-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowVideo(false)}
+                      className="absolute top-3 right-3 z-20 bg-white/90 hover:bg-white text-[#0b1c30] px-3.5 py-1.5 rounded-full text-xs font-bold shadow-md transition-all cursor-pointer flex items-center gap-1"
+                    >
+                      <span>✕ Back to Photos</span>
+                    </button>
+                    {videoEmbed.type === "youtube" || videoEmbed.type === "vimeo" ? (
+                      <iframe
+                        src={`${videoEmbed.embedUrl}?autoplay=1`}
+                        title={`${product.title} video`}
+                        className="w-full h-full border-0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    ) : (
+                      <video
+                        src={videoEmbed.embedUrl}
+                        controls
+                        autoPlay
+                        playsInline
+                        className="w-full h-full object-contain"
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <div className="relative w-full h-[280px] sm:h-[380px] md:h-[460px] flex items-center justify-center">
+                    <Image
+                      src={product.images[selectedImageIdx] || product.images[0]}
+                      alt={product.title}
+                      fill
+                      priority
+                      className="object-contain rounded-2xl transition-all duration-300 hover:scale-[1.03]"
+                    />
+                  </div>
+                )}
 
                 {/* Zoom Cue */}
-                <div className="absolute bottom-4 right-4 bg-white/85 backdrop-blur-xs px-3 py-1.5 rounded-full text-[#584237] text-xs font-semibold flex items-center gap-1.5 shadow-2xs border border-[#e2e8f0]/60">
-                  <span>🔍 Hover to inspect cushioned detail</span>
-                </div>
+                {!showVideo && (
+                  <div className="absolute bottom-4 right-4 bg-white/85 backdrop-blur-xs px-3 py-1.5 rounded-full text-[#584237] text-xs font-semibold flex items-center gap-1.5 shadow-2xs border border-[#e2e8f0]/60">
+                    <span>🔍 Hover to inspect cushioned detail</span>
+                  </div>
+                )}
               </div>
 
-              {/* Thumbnails Strip */}
-              {product.images.length > 1 && (
+              {/* Thumbnails Strip (Photos + Video) */}
+              {(product.images.length > 1 || Boolean(videoEmbed)) && (
                 <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
                   {product.images.slice(0, 6).map((img, idx) => (
                     <button
                       key={idx}
-                      onClick={() => setSelectedImageIdx(idx)}
-                      className={`relative aspect-square rounded-2xl overflow-hidden p-1 bg-white border-2 transition-all ${
-                        selectedImageIdx === idx
+                      type="button"
+                      onClick={() => {
+                        setShowVideo(false);
+                        setSelectedImageIdx(idx);
+                      }}
+                      className={`relative aspect-square rounded-2xl overflow-hidden p-1 bg-white border-2 transition-all cursor-pointer ${
+                        !showVideo && selectedImageIdx === idx
                           ? "border-[#f97316] ring-3 ring-orange-200 scale-95 shadow-sm"
                           : "border-[#e2e8f0] hover:border-orange-300 opacity-80 hover:opacity-100"
                       }`}
@@ -371,6 +444,25 @@ export default function ProductDetailsClient({
                       />
                     </button>
                   ))}
+
+                  {videoEmbed && (
+                    <button
+                      type="button"
+                      onClick={() => setShowVideo(true)}
+                      className={`relative aspect-square rounded-2xl overflow-hidden p-1 bg-[#0b1c30] text-white border-2 transition-all flex flex-col items-center justify-center gap-1 cursor-pointer ${
+                        showVideo
+                          ? "border-[#f97316] ring-3 ring-orange-200 scale-95 shadow-sm"
+                          : "border-[#e2e8f0] hover:border-orange-300 opacity-90 hover:opacity-100"
+                      }`}
+                    >
+                      <div className="w-8 h-8 rounded-full bg-[#f97316] text-white flex items-center justify-center shadow-md">
+                        <VideoPlay size={16} weight="Filled" />
+                      </div>
+                      <span className="text-[10px] font-bold text-white tracking-tight">
+                        Video Demo
+                      </span>
+                    </button>
+                  )}
                 </div>
               )}
 

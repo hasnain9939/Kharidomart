@@ -16,8 +16,32 @@ import {
   CloseCircle,
   Trash,
   Image as ImageIcon,
+  VideoPlay,
 } from "reicon-react";
 import { useStore } from "@/context/StoreContext";
+
+function getVideoEmbed(url: string) {
+  if (!url || typeof url !== "string") return null;
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+
+  const ytShorts = trimmed.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/i);
+  if (ytShorts && ytShorts[1]) {
+    return { type: "youtube" as const, embedUrl: `https://www.youtube-nocookie.com/embed/${ytShorts[1]}` };
+  }
+
+  const ytMatch = trimmed.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
+  if (ytMatch && ytMatch[1]) {
+    return { type: "youtube" as const, embedUrl: `https://www.youtube-nocookie.com/embed/${ytMatch[1]}` };
+  }
+
+  const vimeoMatch = trimmed.match(/vimeo\.com\/(\d+)/i);
+  if (vimeoMatch && vimeoMatch[1]) {
+    return { type: "vimeo" as const, embedUrl: `https://player.vimeo.com/video/${vimeoMatch[1]}` };
+  }
+
+  return { type: "direct" as const, embedUrl: trimmed };
+}
 
 function AddProductForm() {
   const router = useRouter();
@@ -36,7 +60,9 @@ function AddProductForm() {
   const [sku, setSku] = useState("");
   const [stock, setStock] = useState<number>(25);
   const [description, setDescription] = useState("");
-  const [imageUrl, setImageUrl] = useState("/assets/stitch/hero_showcase.jpg");
+  const [imageUrl, setImageUrl] = useState("");
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [videoUrl, setVideoUrl] = useState("");
   const [customImageInput, setCustomImageInput] = useState("");
 
   // Trust badges
@@ -67,6 +93,10 @@ function AddProductForm() {
           setDescription(p.description || "");
           if (Array.isArray(p.images) && p.images.length > 0) {
             setImageUrl(p.images[0]);
+            setGalleryImages(p.images.slice(1));
+          }
+          if (p.videoUrl) {
+            setVideoUrl(p.videoUrl);
           }
           setFeatured(Boolean(p.featured));
           setBadgeBestseller(p.badge === "Bestseller");
@@ -109,19 +139,16 @@ function AddProductForm() {
     setTimeout(() => setCopiedSlug(false), 2000);
   };
 
-  const sampleImages = [
-    { label: "Showcase Hero", url: "/assets/stitch/hero_showcase.jpg" },
-    { label: "Mom & Child Care", url: "/assets/stitch/story_mother_child.jpg" },
-    { label: "Fun Finds", url: "/assets/stitch/bento_fun_clever.jpg" },
-    { label: "Baby Safety", url: "/assets/stitch/story_safety_edges.jpg" },
-    { label: "Baby Nail Trimmer", url: "/assets/images/baby-nail-trimmer-345704.jpg" },
-    { label: "Interactive Sound Book", url: "/assets/images/sound-book-788876.jpg" },
-  ];
-
   const handlePublish = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !sellingPrice) {
       alert("Please enter a valid product title and selling price.");
+      return;
+    }
+
+    const finalImages = [imageUrl.trim(), ...galleryImages.map((g) => g.trim())].filter(Boolean);
+    if (finalImages.length === 0) {
+      alert("Please provide at least one product image URL.");
       return;
     }
 
@@ -165,7 +192,8 @@ function AddProductForm() {
           categorySlug: catSlug,
           badge: badgeBestseller ? "Bestseller" : badgeCod ? "COD Available" : undefined,
           featured,
-          images: [imageUrl || "/assets/stitch/hero_showcase.jpg"],
+          images: finalImages,
+          videoUrl: videoUrl.trim() || undefined,
           description:
             description.trim() ||
             `${title.trim()} is carefully curated and inspected for genuine everyday utility and supreme build quality. Order now with pan-India Cash on Delivery.`,
@@ -345,53 +373,221 @@ function AddProductForm() {
 
           {/* 2. Media Image Selection */}
           <div className="p-5 sm:p-6 rounded-2xl bg-white border border-[#e2e8f0] shadow-xs flex flex-col gap-4">
-            <h2 className="text-sm font-bold text-[#0b1c30] uppercase tracking-wider flex items-center gap-2">
-              <span className="w-2 h-4 rounded-full bg-[#f97316]"></span>
-              Product Image
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold text-[#0b1c30] uppercase tracking-wider flex items-center gap-2">
+                <span className="w-2 h-4 rounded-full bg-[#f97316]"></span>
+                Product Images
+              </h2>
+              <span className="text-[11px] text-[#565e74]">
+                Paste image URL or local asset path
+              </span>
+            </div>
 
             <div>
               <label className="block text-xs font-bold text-[#0b1c30] mb-1">
-                Image URL or Local Asset Path
+                Main Image URL <span className="text-[#ef4444]">*</span>
               </label>
               <div className="flex items-center gap-2">
                 <input
                   type="text"
                   value={imageUrl}
                   onChange={(e) => setImageUrl(e.target.value)}
-                  placeholder="Paste any image URL (https://...) or local path"
-                  className="w-full h-10 px-3.5 rounded-xl bg-[#f8fafc] text-xs text-[#0b1c30] border border-[#e2e8f0] focus:border-[#f97316] focus:outline-none font-mono"
+                  placeholder="https://images.unsplash.com/... or /assets/..."
+                  className="w-full h-10 px-3.5 rounded-xl bg-[#f8fafc] text-xs text-[#0b1c30] border border-[#e2e8f0] focus:border-[#f97316] focus:bg-white focus:outline-none font-mono transition-all"
                 />
+                {imageUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setImageUrl("")}
+                    className="h-10 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#565e74] text-xs font-bold shrink-0 transition-colors cursor-pointer"
+                  >
+                    Clear
+                  </button>
+                )}
               </div>
             </div>
 
-            {/* Image Preview & Quick Selection */}
-            <div>
-              <span className="text-[11px] font-bold text-[#565e74] uppercase tracking-wider block mb-2">
-                Or click to choose a starter image:
-              </span>
-              <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
-                {sampleImages.map((s, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setImageUrl(s.url)}
-                    className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all p-1 ${
-                      imageUrl === s.url
-                        ? "border-[#f97316] shadow-md ring-2 ring-[#f97316]/20"
-                        : "border-[#e2e8f0] opacity-80 hover:opacity-100"
-                    }`}
-                  >
-                    <Image
-                      src={s.url}
-                      alt={s.label}
-                      fill
-                      className="object-cover"
-                    />
-                  </button>
-                ))}
+            {/* Main Image Live Preview */}
+            {imageUrl ? (
+              <div className="relative p-3.5 rounded-2xl border border-[#e2e8f0] bg-[#f8fafc] flex flex-col sm:flex-row items-center gap-4">
+                <div className="relative w-28 h-28 rounded-xl overflow-hidden bg-white border border-[#e2e8f0] shrink-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={imageUrl}
+                    alt="Main product preview"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='1.5'%3E%3Crect width='18' height='18' x='3' y='3' rx='2' ry='2'/%3E%3Ccircle cx='9' cy='9' r='2'/%3E%3Cpath d='m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21'/%3E%3C/svg%3E";
+                    }}
+                  />
+                </div>
+                <div className="flex-1 min-w-0 text-left">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#15803d]/10 text-[#15803d]">
+                      Cover Image
+                    </span>
+                    <span className="text-[11px] text-[#565e74] truncate">
+                      {imageUrl}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#565e74] mt-1.5">
+                    This primary image is displayed on the storefront catalog, search results, and hero section.
+                  </p>
+                </div>
               </div>
+            ) : (
+              <div className="p-6 rounded-2xl border-2 border-dashed border-[#e2e8f0] bg-[#f8fafc] text-center flex flex-col items-center justify-center gap-1.5">
+                <div className="w-10 h-10 rounded-full bg-orange-50 text-[#f97316] flex items-center justify-center">
+                  <ImageIcon size={20} weight="Outline" />
+                </div>
+                <p className="text-xs font-bold text-[#0b1c30]">No image provided yet</p>
+                <p className="text-[11px] text-[#565e74]">
+                  Paste a direct image URL above to see live preview.
+                </p>
+              </div>
+            )}
+
+            {/* Additional Gallery Images */}
+            <div className="pt-2 border-t border-[#f1f5f9] flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-[#0b1c30]">
+                    Additional Gallery Images (Optional)
+                  </span>
+                  <p className="text-[11px] text-[#565e74]">
+                    Add extra angles, close-ups, or unboxing photos.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setGalleryImages([...galleryImages, ""])}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-[#ea580c] text-xs font-bold transition-colors cursor-pointer"
+                >
+                  <Add size={14} weight="Outline" />
+                  <span>Add Another Image</span>
+                </button>
+              </div>
+
+              {galleryImages.map((img, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <span className="text-xs font-mono font-bold text-[#565e74] w-6 text-center">
+                    #{idx + 2}
+                  </span>
+                  <input
+                    type="text"
+                    value={img}
+                    onChange={(e) => {
+                      const updated = [...galleryImages];
+                      updated[idx] = e.target.value;
+                      setGalleryImages(updated);
+                    }}
+                    placeholder={`Gallery photo URL #${idx + 2}`}
+                    className="flex-1 h-9 px-3 rounded-xl bg-[#f8fafc] text-xs text-[#0b1c30] border border-[#e2e8f0] focus:border-[#f97316] focus:bg-white focus:outline-none font-mono"
+                  />
+                  {img && (
+                    <div className="w-9 h-9 rounded-lg overflow-hidden bg-slate-100 border border-[#e2e8f0] shrink-0">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={img} alt={`Gallery ${idx + 2}`} className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setGalleryImages(galleryImages.filter((_, i) => i !== idx));
+                    }}
+                    className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-red-50 hover:text-red-600 text-[#565e74] flex items-center justify-center shrink-0 transition-colors cursor-pointer"
+                    title="Remove image"
+                  >
+                    <CloseCircle size={16} weight="Outline" />
+                  </button>
+                </div>
+              ))}
             </div>
+          </div>
+
+          {/* 3. Product Video Section */}
+          <div className="p-5 sm:p-6 rounded-2xl bg-white border border-[#e2e8f0] shadow-xs flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold text-[#0b1c30] uppercase tracking-wider flex items-center gap-2">
+                <span className="w-2 h-4 rounded-full bg-[#15803d]"></span>
+                Product Video (Optional)
+              </h2>
+              <span className="text-[11px] font-bold text-[#15803d] bg-[#f0fdf4] px-2.5 py-0.5 rounded-full border border-[#bbf7d0]">
+                Interactive Video Player
+              </span>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-[#0b1c30] mb-1">
+                Video URL (YouTube, YouTube Shorts, Vimeo, or Direct .mp4 / .webm)
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={videoUrl}
+                  onChange={(e) => setVideoUrl(e.target.value)}
+                  placeholder="e.g. https://www.youtube.com/watch?v=... or https://youtu.be/... or .mp4 link"
+                  className="w-full h-10 px-3.5 rounded-xl bg-[#f8fafc] text-xs text-[#0b1c30] border border-[#e2e8f0] focus:border-[#f97316] focus:bg-white focus:outline-none font-mono transition-all"
+                />
+                {videoUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setVideoUrl("")}
+                    className="h-10 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#565e74] text-xs font-bold shrink-0 transition-colors cursor-pointer"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              <p className="text-[11px] text-[#565e74] mt-1.5">
+                Supports YouTube links, YouTube Shorts, Vimeo, or direct MP4/WebM files. Shoppers can watch the product video directly on the product detail page.
+              </p>
+            </div>
+
+            {/* Video Live Preview */}
+            {videoUrl ? (
+              <div className="p-4 rounded-2xl bg-[#f8fafc] border border-[#e2e8f0] flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#0b1c30] flex items-center gap-1.5">
+                    <VideoPlay size={15} weight="Filled" className="text-[#ea580c]" />
+                    Live Video Player Preview
+                  </span>
+                  <span className="text-[10px] font-mono text-[#565e74] truncate max-w-xs">
+                    {videoUrl}
+                  </span>
+                </div>
+                <div className="w-full aspect-video rounded-xl overflow-hidden bg-black/90 shadow-sm border border-slate-700/30 flex items-center justify-center">
+                  {(() => {
+                    const embed = getVideoEmbed(videoUrl);
+                    if (!embed) return null;
+                    if (embed.type === "youtube" || embed.type === "vimeo") {
+                      return (
+                        <iframe
+                          src={embed.embedUrl}
+                          title="Product video preview"
+                          className="w-full h-full border-0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      );
+                    }
+                    return (
+                      <video
+                        src={embed.embedUrl}
+                        controls
+                        className="w-full h-full object-contain"
+                      />
+                    );
+                  })()}
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 rounded-2xl border border-[#e2e8f0] bg-[#f8fafc] text-xs text-[#565e74] flex items-center gap-2.5">
+                <VideoPlay size={18} weight="Outline" className="text-[#565e74] shrink-0" />
+                <span>Paste a YouTube or video link above to see the interactive video player preview here.</span>
+              </div>
+            )}
           </div>
 
           {/* 3. Pricing & Profit Margin */}

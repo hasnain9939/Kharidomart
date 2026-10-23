@@ -63,6 +63,7 @@ export function formatProduct(dbProduct: any): Product {
     stock: Number(dbProduct.stockCount ?? dbProduct.stock ?? 25),
     featured: Boolean(dbProduct.isFeatured ?? dbProduct.featured ?? false),
     images,
+    videoUrl: dbProduct.videoUrl ? String(dbProduct.videoUrl) : specs.find((s) => s.label.toLowerCase() === "videourl" || s.label.toLowerCase() === "video")?.value || undefined,
     description: String(dbProduct.description || ""),
     highlights,
     specs,

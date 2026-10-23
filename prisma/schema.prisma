@@ -42,6 +42,7 @@ model Product {
   stock         Int         @default(0)
   featured      Boolean     @default(false)
   images        String      // JSON array of image URLs: ["/assets/..."]
+  videoUrl      String?     // Video link: YouTube, Vimeo, MP4, etc.
   description   String
   highlights    String      // JSON array of strings: ["highlight 1", ...]
   specs         String      // JSON array of {label, value}: [{"label": "Origin", "value": "India"}]

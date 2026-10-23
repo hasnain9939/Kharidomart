@@ -81,6 +81,9 @@ export async function PUT(
     if (body.images !== undefined) {
       updateData.images = JSON.stringify(Array.isArray(body.images) ? body.images : [body.images]);
     }
+    if (body.videoUrl !== undefined) {
+      updateData.videoUrl = body.videoUrl?.trim() || null;
+    }
     if (body.highlights !== undefined) {
       updateData.highlights = JSON.stringify(Array.isArray(body.highlights) ? body.highlights : []);
     }
