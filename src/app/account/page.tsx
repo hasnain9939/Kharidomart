@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import KharidoMartLogo from "@/components/KharidoMartLogo";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useStore } from "@/context/StoreContext";
 import {
   User,
@@ -22,8 +22,12 @@ import {
   CloseCircle,
 } from "reicon-react";
 
-export default function AccountPage() {
+function AccountContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get("redirect") || "";
+  const isCheckoutRedirect = redirectUrl === "/checkout" || redirectUrl.startsWith("/checkout");
+
   const {
     user,
     loginWithGoogle,
@@ -101,6 +105,13 @@ export default function AccountPage() {
     }
   }, [user]);
 
+  // Auto-redirect if already logged in and redirect param is present
+  useEffect(() => {
+    if (user && redirectUrl) {
+      router.replace(redirectUrl);
+    }
+  }, [user, redirectUrl, router]);
+
   // Handle Email Sign In
   const handleSignInSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,8 +125,11 @@ export default function AccountPage() {
     }
 
     setIsLoading(true);
-    await loginWithEmail(signInEmail, signInPassword);
+    const success = await loginWithEmail(signInEmail, signInPassword);
     setIsLoading(false);
+    if (success && redirectUrl) {
+      router.push(redirectUrl);
+    }
   };
 
   // Handle Email Sign Up
@@ -139,8 +153,11 @@ export default function AccountPage() {
     }
 
     setIsLoading(true);
-    await signupWithEmail(signUpName, signUpEmail, signUpPassword, signUpPhone);
+    const success = await signupWithEmail(signUpName, signUpEmail, signUpPassword, signUpPhone);
     setIsLoading(false);
+    if (success && redirectUrl) {
+      router.push(redirectUrl);
+    }
   };
 
   // Handle Save Address
@@ -669,18 +686,37 @@ export default function AccountPage() {
 
           <div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0b1c30] tracking-tight">
-              {authMode === "signin" ? "Welcome Back" : "Create an Account"}
+              {isCheckoutRedirect
+                ? (authMode === "signin" ? "Sign In & Checkout" : "Create Account & Checkout")
+                : (authMode === "signin" ? "Welcome Back" : "Create an Account")}
             </h1>
             <p className="text-xs sm:text-sm text-[#584237]/80 mt-1">
-              {authMode === "signin"
-                ? "Sign in to manage your orders, deliveries, and saved items"
-                : "Join KharidoMart for faster checkout, order tracking & rewards"}
+              {isCheckoutRedirect
+                ? "Sign in or create an account to proceed directly to secure checkout"
+                : (authMode === "signin"
+                    ? "Sign in to manage your orders, deliveries, and saved items"
+                    : "Join KharidoMart for faster checkout, order tracking & rewards")}
             </p>
           </div>
         </div>
 
         {/* Auth Main Card */}
         <div className="bg-white rounded-3xl border border-[#e2e8f0] p-6 sm:p-8 shadow-sm space-y-6">
+
+          {/* Checkout Guidance Alert */}
+          {isCheckoutRedirect && (
+            <div className="p-4 bg-orange-50 border border-orange-200/90 rounded-2xl flex items-start gap-3 text-xs text-[#0b1c30]">
+              <div className="w-8 h-8 rounded-xl bg-[#f97316] text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+                <Lock size={16} weight="Filled" />
+              </div>
+              <div className="space-y-1">
+                <p className="font-bold text-[#0b1c30] text-sm">Sign in to complete your checkout</p>
+                <p className="text-[#584237]/80 text-xs leading-relaxed">
+                  Log in with your existing account or create a new one below. We will immediately transfer your cart items directly into checkout!
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Toggle Tabs: Sign In / Create Account */}
           <div className="flex bg-[#f1f5f9] p-1 rounded-2xl">
@@ -786,7 +822,7 @@ export default function AccountPage() {
                   <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
                 ) : (
                   <>
-                    <span>Sign In to KharidoMart</span>
+                    <span>{isCheckoutRedirect ? "Sign In & Proceed to Checkout" : "Sign In to KharidoMart"}</span>
                     <ArrowRight size={16} weight="Outline" />
                   </>
                 )}
@@ -912,13 +948,42 @@ export default function AccountPage() {
                   <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
                 ) : (
                   <>
-                    <span>Create My Account</span>
+                    <span>{isCheckoutRedirect ? "Create Account & Proceed to Checkout" : "Create My Account"}</span>
                     <ArrowRight size={16} weight="Outline" />
                   </>
                 )}
               </button>
             </form>
           )}
+
+          {/* Quick Google Sign In */}
+          <div className="pt-1">
+            <div className="relative my-3">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-[#f1f5f9]" />
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="bg-white px-3 text-[#584237]/60 font-medium">Or continue with</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                loginWithGoogle();
+                if (redirectUrl) router.push(redirectUrl);
+              }}
+              className="w-full py-2.5 px-4 bg-white hover:bg-slate-50 border border-[#e2e8f0] rounded-2xl text-xs sm:text-sm font-semibold text-[#0b1c30] flex items-center justify-center gap-2.5 transition-all shadow-2xs active:scale-[0.99] cursor-pointer"
+            >
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+              <span>{isCheckoutRedirect ? "Quick Google Sign-In & Checkout" : "Continue with Google"}</span>
+            </button>
+          </div>
 
           {/* Trust Badges */}
           <div className="pt-2 border-t border-[#f1f5f9] flex flex-wrap items-center justify-center gap-4 text-[11px] text-[#584237]/70">
@@ -1014,5 +1079,19 @@ export default function AccountPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AccountPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
+          <div className="w-8 h-8 border-3 border-orange-500/20 border-t-[#ea580c] rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <AccountContent />
+    </Suspense>
   );
 }

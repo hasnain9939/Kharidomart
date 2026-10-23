@@ -28,7 +28,15 @@ export default function CheckoutPage() {
     clearCart,
     showToast,
     user,
+    isAuthLoaded,
   } = useStore();
+
+  // Redirect unauthenticated customers to login/signup page with redirect back to /checkout
+  useEffect(() => {
+    if (isAuthLoaded && !user) {
+      router.replace("/account?redirect=/checkout");
+    }
+  }, [isAuthLoaded, user, router]);
 
   // Contact form state
   const [phone, setPhone] = useState(user?.phone?.replace("+91", "").trim() || "");
@@ -244,6 +252,24 @@ export default function CheckoutPage() {
       setIsSubmitting(false);
     }
   };
+
+  if (!isAuthLoaded) {
+    return (
+      <div className="w-full min-h-[70vh] flex flex-col items-center justify-center p-6 text-center bg-[#f8f9ff]">
+        <div className="w-10 h-10 border-3 border-orange-500/20 border-t-[#ea580c] rounded-full animate-spin mb-4" />
+        <p className="text-xs font-semibold text-[#584237]">Securing checkout session...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="w-full min-h-[70vh] flex flex-col items-center justify-center p-6 text-center bg-[#f8f9ff]">
+        <div className="w-10 h-10 border-3 border-orange-500/20 border-t-[#ea580c] rounded-full animate-spin mb-4" />
+        <p className="text-xs font-semibold text-[#584237]">Redirecting to sign in...</p>
+      </div>
+    );
+  }
 
   if (cart.length === 0) {
     return (

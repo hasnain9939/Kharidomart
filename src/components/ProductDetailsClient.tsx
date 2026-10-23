@@ -62,7 +62,7 @@ export default function ProductDetailsClient({
   relatedProducts,
 }: ProductDetailsClientProps) {
   const router = useRouter();
-  const { addToCart, toggleWishlist, isWishlisted, openCart, showToast } = useStore();
+  const { addToCart, toggleWishlist, isWishlisted, openCart, showToast, user } = useStore();
 
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
   const [showVideo, setShowVideo] = useState(false);
@@ -297,7 +297,11 @@ export default function ProductDetailsClient({
       ? { ...product, price: activeTier.unitPrice }
       : product;
     addToCart(discountedProduct, quantity);
-    router.push("/checkout");
+    if (!user) {
+      router.push("/account?redirect=/checkout");
+    } else {
+      router.push("/checkout");
+    }
   };
 
   const handleShare = () => {

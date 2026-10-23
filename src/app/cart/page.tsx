@@ -38,6 +38,7 @@ export default function CartPage() {
     toggleWishlist,
     isWishlisted,
     showToast,
+    user,
   } = useStore();
 
   const [couponInput, setCouponInput] = useState("");
@@ -631,7 +632,7 @@ export default function CartPage() {
                   {/* Primary Checkout CTA Button */}
                   <div className="mt-6 space-y-3">
                     <Link
-                      href="/checkout"
+                      href={user ? "/checkout" : "/account?redirect=/checkout"}
                       className="w-full h-13 bg-[#f97316] hover:bg-[#ea580c] text-white font-bold text-sm rounded-2xl shadow-lg shadow-orange-500/25 transition-all flex items-center justify-center gap-2 group active:scale-[0.98]"
                     >
                       <span>Proceed to Secure Checkout</span>

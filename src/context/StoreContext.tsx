@@ -48,6 +48,7 @@ interface StoreContextType {
   refreshProducts: () => Promise<void>;
   toasts: ToastMessage[];
   user: UserProfile | null;
+  isAuthLoaded: boolean;
   addToCart: (product: Product, quantity?: number) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   removeFromCart: (productId: string) => void;
@@ -86,6 +87,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [discountCode, setDiscountCode] = useState<string>("");
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [isAuthLoaded, setIsAuthLoaded] = useState(false);
 
   const refreshProducts = async () => {
     try {
@@ -119,6 +121,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       if (savedWishlist) setWishlist(JSON.parse(savedWishlist));
     } catch {
       // ignore
+    } finally {
+      setIsAuthLoaded(true);
     }
   }, []);
 
@@ -371,6 +375,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         wishlist,
         toasts,
         user,
+        isAuthLoaded,
         addToCart,
         updateQuantity,
         removeFromCart,
