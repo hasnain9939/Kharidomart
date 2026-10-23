@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import Script from "next/script";
 import KharidoMartLogo from "@/components/KharidoMartLogo";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useStore } from "@/context/StoreContext";
@@ -50,6 +51,10 @@ function AccountContent() {
   const [forgotNewPassword, setForgotNewPassword] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotSubmitted, setForgotSubmitted] = useState(false);
+
+  // Google OAuth State
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [showGoogleSetupModal, setShowGoogleSetupModal] = useState(false);
 
   // Form State - Sign In
   const [signInEmail, setSignInEmail] = useState("");
@@ -157,6 +162,68 @@ function AccountContent() {
     setIsLoading(false);
     if (success && redirectUrl) {
       router.push(redirectUrl);
+    }
+  };
+
+  // Handle Real Google Login
+  const handleGoogleLogin = () => {
+    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+    // If client ID is not configured in .env, show configuration guidance modal
+    if (!googleClientId) {
+      setShowGoogleSetupModal(true);
+      return;
+    }
+
+    // Google Identity Services OAuth 2.0 Token Client (Popup flow)
+    if (typeof window !== "undefined" && (window as any).google?.accounts?.oauth2) {
+      try {
+        setIsGoogleLoading(true);
+        const client = (window as any).google.accounts.oauth2.initTokenClient({
+          client_id: googleClientId,
+          scope: "email profile openid",
+          callback: async (tokenResponse: any) => {
+            if (tokenResponse?.error) {
+              setIsGoogleLoading(false);
+              showToast("Google sign in was cancelled or failed", "warning");
+              return;
+            }
+            if (tokenResponse?.access_token) {
+              try {
+                const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+                  headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+                });
+                const userInfo = await userInfoRes.json();
+                if (userInfo?.email) {
+                  const success = await loginWithGoogle({
+                    email: userInfo.email,
+                    name: userInfo.name || userInfo.email.split("@")[0],
+                    googleId: userInfo.sub,
+                    picture: userInfo.picture,
+                  });
+                  if (success && redirectUrl) {
+                    router.push(redirectUrl);
+                  }
+                } else {
+                  showToast("Could not retrieve email from Google", "warning");
+                }
+              } catch (err) {
+                console.error("Google userinfo error:", err);
+                showToast("Failed to fetch Google profile. Please try again.", "warning");
+              } finally {
+                setIsGoogleLoading(false);
+              }
+            }
+          },
+        });
+        client.requestAccessToken({ prompt: "select_account" });
+      } catch (err) {
+        setIsGoogleLoading(false);
+        console.error("Google init error:", err);
+        showToast("Google Sign-In failed to initialize. Please check your Client ID.", "warning");
+      }
+    } else {
+      showToast("Google Services are loading. Please try again in a few seconds.", "info");
     }
   };
 
@@ -969,19 +1036,21 @@ function AccountContent() {
 
             <button
               type="button"
-              onClick={() => {
-                loginWithGoogle();
-                if (redirectUrl) router.push(redirectUrl);
-              }}
-              className="w-full py-2.5 px-4 bg-white hover:bg-slate-50 border border-[#e2e8f0] rounded-2xl text-xs sm:text-sm font-semibold text-[#0b1c30] flex items-center justify-center gap-2.5 transition-all shadow-2xs active:scale-[0.99] cursor-pointer"
+              disabled={isGoogleLoading}
+              onClick={handleGoogleLogin}
+              className="w-full py-2.5 px-4 bg-white hover:bg-slate-50 border border-[#e2e8f0] rounded-2xl text-xs sm:text-sm font-semibold text-[#0b1c30] flex items-center justify-center gap-2.5 transition-all shadow-2xs active:scale-[0.99] cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-              </svg>
-              <span>{isCheckoutRedirect ? "Quick Google Sign-In & Checkout" : "Continue with Google"}</span>
+              {isGoogleLoading ? (
+                <div className="w-4 h-4 border-2 border-orange-500/40 border-t-[#ea580c] rounded-full animate-spin" />
+              ) : (
+                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+              )}
+              <span>{isGoogleLoading ? "Connecting to Google..." : (isCheckoutRedirect ? "Sign In with Google & Checkout" : "Continue with Google")}</span>
             </button>
           </div>
 
@@ -1075,6 +1144,60 @@ function AccountContent() {
                 </button>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Google Identity Services SDK Script */}
+      <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
+
+      {/* Google OAuth Configuration Guide Modal */}
+      {showGoogleSetupModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-xl border border-[#e2e8f0] animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-orange-50 border border-orange-200 text-[#ea580c] flex items-center justify-center shrink-0">
+                  <ShieldCheck size={20} weight="Filled" />
+                </div>
+                <div>
+                  <h2 className="text-sm sm:text-base font-bold text-[#0b1c30]">Google Sign-In Configuration Required</h2>
+                  <p className="text-[11px] text-[#584237]/70">Connect with your Google Cloud project</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowGoogleSetupModal(false)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg cursor-pointer"
+              >
+                <CloseCircle size={20} weight="Outline" />
+              </button>
+            </div>
+
+            <p className="text-xs text-[#584237] leading-relaxed">
+              Real Google Sign-In requires your Google Cloud OAuth Client ID to securely connect Google accounts and prevent unauthorized mock logins.
+            </p>
+
+            <div className="bg-[#f8fafc] p-3.5 rounded-2xl border border-[#e2e8f0] space-y-2 text-xs">
+              <p className="font-semibold text-[#0b1c30] text-[11px]">How to enable Google OAuth in 2 minutes:</p>
+              <ol className="list-decimal pl-4 space-y-1 text-[#584237]/90 text-[11px]">
+                <li>Open <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noreferrer" className="text-[#ea580c] underline font-semibold">Google Cloud Console &rarr; Credentials</a>.</li>
+                <li>Create an <strong>OAuth 2.0 Client ID</strong> (Web application).</li>
+                <li>Add <code className="bg-white px-1.5 py-0.5 rounded border border-slate-200 font-mono text-[10px]">http://localhost:3000</code> and your live domain to Authorized JavaScript origins.</li>
+                <li>Add to your <code className="bg-white px-1.5 py-0.5 rounded border border-slate-200 font-mono text-[10px]">.env</code> file:
+                  <pre className="mt-1.5 p-2 bg-[#0b1c30] text-emerald-400 rounded-lg text-[10px] overflow-x-auto font-mono">NEXT_PUBLIC_GOOGLE_CLIENT_ID=&quot;your-client-id.apps.googleusercontent.com&quot;</pre>
+                </li>
+              </ol>
+            </div>
+
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={() => setShowGoogleSetupModal(false)}
+                className="w-full py-2.5 bg-[#f97316] hover:bg-[#ea580c] text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer text-center"
+              >
+                Sign In with Email &amp; Password
+              </button>
+            </div>
           </div>
         </div>
       )}

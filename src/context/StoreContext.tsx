@@ -65,7 +65,7 @@ interface StoreContextType {
   removeCoupon: () => void;
   showToast: (message: string, type?: "success" | "info" | "warning") => void;
   removeToast: (id: string) => void;
-  loginWithGoogle: (customData?: Partial<UserProfile>) => void;
+  loginWithGoogle: (googleData?: { name?: string; email: string; googleId?: string; picture?: string }) => Promise<boolean>;
   loginWithEmail: (email: string, password?: string, name?: string) => Promise<boolean>;
   signupWithEmail: (name: string, email: string, password?: string, phone?: string) => Promise<boolean>;
   logout: () => void;
@@ -243,22 +243,29 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     showToast("Coupon removed", "info");
   };
 
-  const loginWithGoogle = (customData?: Partial<UserProfile>) => {
-    const defaultEmail = customData?.email || "customer@gmail.com";
-    const defaultName =
-      customData?.name ||
-      defaultEmail.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-    const newUser: UserProfile = {
-      id: "usr_goog_" + Math.random().toString(36).substring(2, 9),
-      name: defaultName,
-      email: defaultEmail,
-      provider: "google",
-      phone: customData?.phone || "",
-      joinedDate: new Date().toLocaleDateString("en-IN", { month: "short", year: "numeric" }),
-      ...customData,
-    };
-    setUser(newUser);
-    showToast(`Welcome, ${newUser.name.split(" ")[0]}! 🎉`);
+  const loginWithGoogle = async (googleData?: { name?: string; email: string; googleId?: string; picture?: string }): Promise<boolean> => {
+    if (!googleData?.email) {
+      showToast("Google authentication did not provide an email address", "warning");
+      return false;
+    }
+    try {
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(googleData),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        showToast(data.error || "Google login failed", "warning");
+        return false;
+      }
+      setUser(data.user);
+      showToast(`Welcome, ${data.user.name.split(" ")[0]}! 🎉`);
+      return true;
+    } catch {
+      showToast("Unable to complete Google sign in. Please try again.", "warning");
+      return false;
+    }
   };
 
   const loginWithEmail = async (email: string, password?: string, name?: string): Promise<boolean> => {
