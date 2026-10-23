@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -17,6 +17,7 @@ import {
   Trash,
   Image as ImageIcon,
   VideoPlay,
+  Upload,
 } from "reicon-react";
 import { useStore } from "@/context/StoreContext";
 
@@ -75,6 +76,99 @@ function AddProductForm() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Local File Upload Refs & States
+  const mainFileInputRef = useRef<HTMLInputElement>(null);
+  const galleryFileInputRef = useRef<HTMLInputElement>(null);
+  const videoFileInputRef = useRef<HTMLInputElement>(null);
+
+  const [uploadingMain, setUploadingMain] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+
+  const uploadFileToServer = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        return data.url;
+      }
+      if (data.error) {
+        console.warn("Upload API error:", data.error);
+      }
+    } catch (err) {
+      console.warn("Upload endpoint failed, falling back to base64 Data URL", err);
+    }
+
+    // Client-side fallback to Data URL (works 100% reliably in any environment)
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (err) => reject(err);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleMainFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingMain(true);
+    try {
+      const url = await uploadFileToServer(file);
+      setImageUrl(url);
+      setToastMessage(`Cover image "${file.name}" uploaded! 📸`);
+      setTimeout(() => setToastMessage(null), 3000);
+    } catch (err: any) {
+      alert("Failed to upload image: " + err.message);
+    } finally {
+      setUploadingMain(false);
+      if (mainFileInputRef.current) mainFileInputRef.current.value = "";
+    }
+  };
+
+  const handleGalleryFilesChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    setUploadingGallery(true);
+    try {
+      const uploadedUrls: string[] = [];
+      for (const file of files) {
+        const url = await uploadFileToServer(file);
+        uploadedUrls.push(url);
+      }
+      setGalleryImages((prev) => [...prev.filter(Boolean), ...uploadedUrls]);
+      setToastMessage(`${uploadedUrls.length} gallery image${uploadedUrls.length > 1 ? "s" : ""} uploaded! ✨`);
+      setTimeout(() => setToastMessage(null), 3000);
+    } catch (err: any) {
+      alert("Failed to upload gallery images: " + err.message);
+    } finally {
+      setUploadingGallery(false);
+      if (galleryFileInputRef.current) galleryFileInputRef.current.value = "";
+    }
+  };
+
+  const handleVideoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingVideo(true);
+    try {
+      const url = await uploadFileToServer(file);
+      setVideoUrl(url);
+      setToastMessage(`Video "${file.name}" uploaded! 🎬`);
+      setTimeout(() => setToastMessage(null), 3000);
+    } catch (err: any) {
+      alert("Failed to upload video: " + err.message);
+    } finally {
+      setUploadingVideo(false);
+      if (videoFileInputRef.current) videoFileInputRef.current.value = "";
+    }
+  };
 
   useEffect(() => {
     if (!editId) return;
@@ -372,85 +466,166 @@ function AddProductForm() {
           </div>
 
           {/* 2. Media Image Selection */}
-          <div className="p-5 sm:p-6 rounded-2xl bg-white border border-[#e2e8f0] shadow-xs flex flex-col gap-4">
+          <div className="p-5 sm:p-6 rounded-2xl bg-white border border-[#e2e8f0] shadow-xs flex flex-col gap-5">
+            {/* Hidden native file pickers */}
+            <input
+              ref={mainFileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleMainFileChange}
+            />
+            <input
+              ref={galleryFileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={handleGalleryFilesChange}
+            />
+
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-bold text-[#0b1c30] uppercase tracking-wider flex items-center gap-2">
-                <span className="w-2 h-4 rounded-full bg-[#f97316]"></span>
-                Product Images
-              </h2>
-              <span className="text-[11px] text-[#565e74]">
-                Paste image URL or local asset path
-              </span>
+              <div>
+                <h2 className="text-sm font-bold text-[#0b1c30] uppercase tracking-wider flex items-center gap-2">
+                  <span className="w-2 h-4 rounded-full bg-[#f97316]"></span>
+                  Product Images
+                </h2>
+                <p className="text-[11px] text-[#565e74] mt-0.5">
+                  Upload directly from your computer/device or paste an image link.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => mainFileInputRef.current?.click()}
+                disabled={uploadingMain}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-[#ea580c] text-xs font-bold transition-all cursor-pointer border border-orange-200"
+              >
+                <Upload size={14} weight="Outline" />
+                <span>{uploadingMain ? "Uploading..." : "Upload from Device"}</span>
+              </button>
             </div>
 
+            {/* Main Cover Image Uploader & Dropzone */}
             <div>
-              <label className="block text-xs font-bold text-[#0b1c30] mb-1">
-                Main Image URL <span className="text-[#ef4444]">*</span>
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  placeholder="https://images.unsplash.com/... or /assets/..."
-                  className="w-full h-10 px-3.5 rounded-xl bg-[#f8fafc] text-xs text-[#0b1c30] border border-[#e2e8f0] focus:border-[#f97316] focus:bg-white focus:outline-none font-mono transition-all"
-                />
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-bold text-[#0b1c30]">
+                  Main Cover Image <span className="text-[#ef4444]">*</span>
+                </label>
                 {imageUrl && (
                   <button
                     type="button"
-                    onClick={() => setImageUrl("")}
-                    className="h-10 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#565e74] text-xs font-bold shrink-0 transition-colors cursor-pointer"
+                    onClick={() => mainFileInputRef.current?.click()}
+                    className="text-[11px] font-bold text-[#ea580c] hover:underline flex items-center gap-1 cursor-pointer"
                   >
-                    Clear
+                    Change / Replace photo
                   </button>
                 )}
               </div>
+
+              {imageUrl ? (
+                <div className="relative p-4 rounded-2xl border border-[#e2e8f0] bg-[#f8fafc] flex flex-col sm:flex-row items-center gap-4">
+                  <div className="relative w-28 h-28 rounded-xl overflow-hidden bg-white border border-[#e2e8f0] shrink-0 shadow-xs">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={imageUrl}
+                      alt="Main product preview"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src =
+                          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='1.5'%3E%3Crect width='18' height='18' x='3' y='3' rx='2' ry='2'/%3E%3Ccircle cx='9' cy='9' r='2'/%3E%3Cpath d='m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21'/%3E%3C/svg%3E";
+                      }}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#15803d]/10 text-[#15803d]">
+                        Cover Image Active
+                      </span>
+                      <span className="text-[11px] text-[#565e74] truncate">
+                        {imageUrl.startsWith("data:") ? "Uploaded local image file" : imageUrl}
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#565e74] mt-1.5">
+                      This primary image is displayed on the storefront catalog, search results, and hero section.
+                    </p>
+                    <div className="flex items-center gap-2 mt-3">
+                      <button
+                        type="button"
+                        onClick={() => mainFileInputRef.current?.click()}
+                        disabled={uploadingMain}
+                        className="px-3 py-1.5 rounded-lg bg-white border border-[#e2e8f0] text-[#0b1c30] text-xs font-semibold hover:bg-slate-50 transition-colors cursor-pointer"
+                      >
+                        {uploadingMain ? "Uploading..." : "Upload New File"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setImageUrl("")}
+                        className="px-3 py-1.5 rounded-lg bg-white border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-50 transition-colors cursor-pointer"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  onClick={() => mainFileInputRef.current?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const file = e.dataTransfer.files?.[0];
+                    if (file && file.type.startsWith("image/")) {
+                      const pseudoEvent = { target: { files: [file] } } as any;
+                      handleMainFileChange(pseudoEvent);
+                    }
+                  }}
+                  className="p-8 rounded-2xl border-2 border-dashed border-[#fed7aa] hover:border-[#f97316] bg-orange-50/20 hover:bg-orange-50/40 text-center flex flex-col items-center justify-center gap-2.5 transition-all cursor-pointer group"
+                >
+                  <div className="w-12 h-12 rounded-full bg-orange-100/70 text-[#ea580c] flex items-center justify-center group-hover:scale-105 transition-transform">
+                    {uploadingMain ? (
+                      <div className="w-5 h-5 border-2 border-[#ea580c] border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Upload size={22} weight="Outline" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-[#0b1c30]">
+                      {uploadingMain ? "Uploading cover image..." : "Click to select a photo from your computer / device"}
+                    </p>
+                    <p className="text-[11px] text-[#565e74] mt-0.5">
+                      or drag & drop your image file here (PNG, JPG, WEBP)
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      mainFileInputRef.current?.click();
+                    }}
+                    disabled={uploadingMain}
+                    className="mt-1 px-4 py-2 rounded-xl bg-[#f97316] hover:bg-[#ea580c] text-white text-xs font-bold shadow-xs transition-colors cursor-pointer"
+                  >
+                    📁 Browse Local Files
+                  </button>
+                </div>
+              )}
+
+              {/* Or paste link option */}
+              <div className="mt-3 flex items-center gap-2">
+                <span className="text-[11px] font-semibold text-[#565e74] shrink-0">Or enter image URL:</span>
+                <input
+                  type="text"
+                  value={imageUrl.startsWith("data:") ? "" : imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  placeholder="https://images.unsplash.com/... or /assets/..."
+                  className="flex-1 h-8 px-3 rounded-lg bg-[#f8fafc] text-xs text-[#0b1c30] border border-[#e2e8f0] focus:border-[#f97316] focus:bg-white focus:outline-none font-mono"
+                />
+              </div>
             </div>
 
-            {/* Main Image Live Preview */}
-            {imageUrl ? (
-              <div className="relative p-3.5 rounded-2xl border border-[#e2e8f0] bg-[#f8fafc] flex flex-col sm:flex-row items-center gap-4">
-                <div className="relative w-28 h-28 rounded-xl overflow-hidden bg-white border border-[#e2e8f0] shrink-0">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={imageUrl}
-                    alt="Main product preview"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src =
-                        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='1.5'%3E%3Crect width='18' height='18' x='3' y='3' rx='2' ry='2'/%3E%3Ccircle cx='9' cy='9' r='2'/%3E%3Cpath d='m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21'/%3E%3C/svg%3E";
-                    }}
-                  />
-                </div>
-                <div className="flex-1 min-w-0 text-left">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#15803d]/10 text-[#15803d]">
-                      Cover Image
-                    </span>
-                    <span className="text-[11px] text-[#565e74] truncate">
-                      {imageUrl}
-                    </span>
-                  </div>
-                  <p className="text-xs text-[#565e74] mt-1.5">
-                    This primary image is displayed on the storefront catalog, search results, and hero section.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="p-6 rounded-2xl border-2 border-dashed border-[#e2e8f0] bg-[#f8fafc] text-center flex flex-col items-center justify-center gap-1.5">
-                <div className="w-10 h-10 rounded-full bg-orange-50 text-[#f97316] flex items-center justify-center">
-                  <ImageIcon size={20} weight="Outline" />
-                </div>
-                <p className="text-xs font-bold text-[#0b1c30]">No image provided yet</p>
-                <p className="text-[11px] text-[#565e74]">
-                  Paste a direct image URL above to see live preview.
-                </p>
-              </div>
-            )}
-
             {/* Additional Gallery Images */}
-            <div className="pt-2 border-t border-[#f1f5f9] flex flex-col gap-3">
-              <div className="flex items-center justify-between">
+            <div className="pt-3 border-t border-[#f1f5f9] flex flex-col gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
                   <span className="text-xs font-bold text-[#0b1c30]">
                     Additional Gallery Images (Optional)
@@ -459,90 +634,141 @@ function AddProductForm() {
                     Add extra angles, close-ups, or unboxing photos.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setGalleryImages([...galleryImages, ""])}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-[#ea580c] text-xs font-bold transition-colors cursor-pointer"
-                >
-                  <Add size={14} weight="Outline" />
-                  <span>Add Another Image</span>
-                </button>
-              </div>
-
-              {galleryImages.map((img, idx) => (
-                <div key={idx} className="flex items-center gap-2">
-                  <span className="text-xs font-mono font-bold text-[#565e74] w-6 text-center">
-                    #{idx + 2}
-                  </span>
-                  <input
-                    type="text"
-                    value={img}
-                    onChange={(e) => {
-                      const updated = [...galleryImages];
-                      updated[idx] = e.target.value;
-                      setGalleryImages(updated);
-                    }}
-                    placeholder={`Gallery photo URL #${idx + 2}`}
-                    className="flex-1 h-9 px-3 rounded-xl bg-[#f8fafc] text-xs text-[#0b1c30] border border-[#e2e8f0] focus:border-[#f97316] focus:bg-white focus:outline-none font-mono"
-                  />
-                  {img && (
-                    <div className="w-9 h-9 rounded-lg overflow-hidden bg-slate-100 border border-[#e2e8f0] shrink-0">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={img} alt={`Gallery ${idx + 2}`} className="w-full h-full object-cover" />
-                    </div>
-                  )}
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => {
-                      setGalleryImages(galleryImages.filter((_, i) => i !== idx));
-                    }}
-                    className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-red-50 hover:text-red-600 text-[#565e74] flex items-center justify-center shrink-0 transition-colors cursor-pointer"
-                    title="Remove image"
+                    onClick={() => galleryFileInputRef.current?.click()}
+                    disabled={uploadingGallery}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-[#ea580c] text-xs font-bold transition-colors cursor-pointer border border-orange-200"
                   >
-                    <CloseCircle size={16} weight="Outline" />
+                    <Upload size={13} weight="Outline" />
+                    <span>{uploadingGallery ? "Uploading..." : "Upload Photos"}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGalleryImages([...galleryImages, ""])}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#0b1c30] text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    <Add size={13} weight="Outline" />
+                    <span>Add by URL</span>
                   </button>
                 </div>
-              ))}
+              </div>
+
+              {galleryImages.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2.5 pt-1">
+                  {galleryImages.map((img, idx) => (
+                    <div
+                      key={idx}
+                      className="group relative aspect-square rounded-xl overflow-hidden bg-slate-100 border border-[#e2e8f0] shadow-xs"
+                    >
+                      {img ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={img}
+                          alt={`Gallery photo ${idx + 2}`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center">
+                          <input
+                            type="text"
+                            placeholder="URL..."
+                            value={img}
+                            onChange={(e) => {
+                              const updated = [...galleryImages];
+                              updated[idx] = e.target.value;
+                              setGalleryImages(updated);
+                            }}
+                            className="w-full text-[10px] p-1 bg-white border border-[#e2e8f0] rounded"
+                          />
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setGalleryImages(galleryImages.filter((_, i) => i !== idx));
+                        }}
+                        className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-red-600/90 text-white flex items-center justify-center opacity-80 group-hover:opacity-100 hover:scale-110 transition-all cursor-pointer shadow-sm"
+                        title="Remove image"
+                      >
+                        <CloseCircle size={14} weight="Filled" />
+                      </button>
+                      <span className="absolute bottom-1 left-1.5 text-[9px] font-bold font-mono px-1 rounded bg-black/60 text-white">
+                        #{idx + 2}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
           {/* 3. Product Video Section */}
           <div className="p-5 sm:p-6 rounded-2xl bg-white border border-[#e2e8f0] shadow-xs flex flex-col gap-4">
+            {/* Hidden native video file picker */}
+            <input
+              ref={videoFileInputRef}
+              type="file"
+              accept="video/mp4,video/webm,video/ogg,video/quicktime,.mp4,.webm,.mov,.mkv"
+              className="hidden"
+              onChange={handleVideoFileChange}
+            />
+
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-bold text-[#0b1c30] uppercase tracking-wider flex items-center gap-2">
-                <span className="w-2 h-4 rounded-full bg-[#15803d]"></span>
-                Product Video (Optional)
-              </h2>
+              <div>
+                <h2 className="text-sm font-bold text-[#0b1c30] uppercase tracking-wider flex items-center gap-2">
+                  <span className="w-2 h-4 rounded-full bg-[#15803d]"></span>
+                  Product Video (Optional)
+                </h2>
+                <p className="text-[11px] text-[#565e74] mt-0.5">
+                  Upload a video from your computer or paste a YouTube / Vimeo link.
+                </p>
+              </div>
               <span className="text-[11px] font-bold text-[#15803d] bg-[#f0fdf4] px-2.5 py-0.5 rounded-full border border-[#bbf7d0]">
                 Interactive Video Player
               </span>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-[#0b1c30] mb-1">
-                Video URL (YouTube, YouTube Shorts, Vimeo, or Direct .mp4 / .webm)
-              </label>
-              <div className="flex items-center gap-2">
+            {/* Video Upload or Link Bar */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <button
+                type="button"
+                onClick={() => videoFileInputRef.current?.click()}
+                disabled={uploadingVideo}
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#15803d] text-xs font-bold transition-all cursor-pointer border border-emerald-200 shrink-0"
+              >
+                {uploadingVideo ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-[#15803d] border-t-transparent rounded-full animate-spin" />
+                    <span>Uploading Video...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload size={14} weight="Outline" />
+                    <span>📁 Upload Video File (.mp4, .webm)</span>
+                  </>
+                )}
+              </button>
+
+              <div className="relative flex-1 flex items-center">
                 <input
                   type="text"
-                  value={videoUrl}
+                  value={videoUrl.startsWith("data:") ? "" : videoUrl}
                   onChange={(e) => setVideoUrl(e.target.value)}
-                  placeholder="e.g. https://www.youtube.com/watch?v=... or https://youtu.be/... or .mp4 link"
+                  placeholder="Or paste YouTube, Shorts, Vimeo, or .mp4 link"
                   className="w-full h-10 px-3.5 rounded-xl bg-[#f8fafc] text-xs text-[#0b1c30] border border-[#e2e8f0] focus:border-[#f97316] focus:bg-white focus:outline-none font-mono transition-all"
                 />
                 {videoUrl && (
                   <button
                     type="button"
                     onClick={() => setVideoUrl("")}
-                    className="h-10 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#565e74] text-xs font-bold shrink-0 transition-colors cursor-pointer"
+                    className="absolute right-1.5 h-7 px-2.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-[#565e74] text-xs font-bold transition-colors cursor-pointer"
                   >
                     Clear
                   </button>
                 )}
               </div>
-              <p className="text-[11px] text-[#565e74] mt-1.5">
-                Supports YouTube links, YouTube Shorts, Vimeo, or direct MP4/WebM files. Shoppers can watch the product video directly on the product detail page.
-              </p>
             </div>
 
             {/* Video Live Preview */}
@@ -553,9 +779,18 @@ function AddProductForm() {
                     <VideoPlay size={15} weight="Filled" className="text-[#ea580c]" />
                     Live Video Player Preview
                   </span>
-                  <span className="text-[10px] font-mono text-[#565e74] truncate max-w-xs">
-                    {videoUrl}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono text-[#565e74] truncate max-w-xs">
+                      {videoUrl.startsWith("data:") ? "Uploaded local video file" : videoUrl}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setVideoUrl("")}
+                      className="text-xs font-bold text-red-600 hover:underline cursor-pointer"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
                 <div className="w-full aspect-video rounded-xl overflow-hidden bg-black/90 shadow-sm border border-slate-700/30 flex items-center justify-center">
                   {(() => {
@@ -583,9 +818,19 @@ function AddProductForm() {
                 </div>
               </div>
             ) : (
-              <div className="p-4 rounded-2xl border border-[#e2e8f0] bg-[#f8fafc] text-xs text-[#565e74] flex items-center gap-2.5">
-                <VideoPlay size={18} weight="Outline" className="text-[#565e74] shrink-0" />
-                <span>Paste a YouTube or video link above to see the interactive video player preview here.</span>
+              <div
+                onClick={() => videoFileInputRef.current?.click()}
+                className="p-6 rounded-2xl border-2 border-dashed border-[#e2e8f0] hover:border-emerald-400 bg-[#f8fafc] hover:bg-emerald-50/20 text-center flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer"
+              >
+                <div className="w-10 h-10 rounded-full bg-emerald-50 text-[#15803d] flex items-center justify-center">
+                  <VideoPlay size={20} weight="Outline" />
+                </div>
+                <p className="text-xs font-bold text-[#0b1c30]">
+                  Click to choose a video file from your computer or paste a link above
+                </p>
+                <p className="text-[11px] text-[#565e74]">
+                  Supports MP4, WebM, MOV, or YouTube/Shorts/Vimeo links.
+                </p>
               </div>
             )}
           </div>
