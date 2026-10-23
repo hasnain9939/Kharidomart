@@ -98,8 +98,8 @@ export async function POST(req: NextRequest) {
         discountAmount: parseFloat(discountAmount),
         shippingFee: parseFloat(shippingFee),
         total: parseFloat(grandTotal),
-        paymentMethod: paymentMethod === "upi" ? "UPI" : "COD",
-        status: "Processing",
+        paymentMethod: paymentMethod === "upi" ? "UPI" : paymentMethod === "card" ? "Card" : "COD",
+        status: paymentMethod === "cod" ? "Processing" : "Pending Payment",
         courier: "BlueDart Express",
         awbNumber,
         items: {

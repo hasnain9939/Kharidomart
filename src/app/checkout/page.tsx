@@ -789,6 +789,24 @@ export default function CheckoutPage() {
                   </div>
                 </label>
               </div>
+
+              {/* Payment info note */}
+              {paymentMethod !== "cod" && (
+                <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-2xl flex items-start gap-2.5">
+                  <span className="text-blue-500 text-base mt-0.5">ℹ️</span>
+                  <p className="text-xs text-blue-700 font-medium leading-relaxed">
+                    <strong>Payment before dispatch:</strong> After placing your order, our team will reach out on your WhatsApp / phone to collect payment via GPay, PhonePe, or Paytm before your order is shipped.
+                  </p>
+                </div>
+              )}
+              {paymentMethod === "cod" && (
+                <div className="p-3.5 bg-green-50 border border-green-200 rounded-2xl flex items-start gap-2.5">
+                  <span className="text-base mt-0.5">💵</span>
+                  <p className="text-xs text-green-700 font-medium leading-relaxed">
+                    <strong>Cash on Delivery:</strong> Pay cash or scan our UPI QR directly to the delivery agent when your order arrives at your door. No advance payment needed.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
