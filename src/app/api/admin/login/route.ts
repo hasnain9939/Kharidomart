@@ -49,6 +49,15 @@ export async function POST(req: NextRequest) {
             },
           ]
         : []),
+      ...(process.env.ADMIN_EMAIL_3
+        ? [
+            {
+              email: process.env.ADMIN_EMAIL_3.trim().toLowerCase(),
+              password: process.env.ADMIN_PASSWORD_3 || "admin",
+              name: "Store Administrator",
+            },
+          ]
+        : []),
     ];
 
     const matchedAdmin = validAdmins.find(
