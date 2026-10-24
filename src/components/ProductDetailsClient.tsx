@@ -26,29 +26,8 @@ import {
   Clock,
   VideoPlay,
 } from "reicon-react";
-
-function getVideoEmbed(url: string) {
-  if (!url || typeof url !== "string") return null;
-  const trimmed = url.trim();
-  if (!trimmed) return null;
-
-  const ytShorts = trimmed.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/i);
-  if (ytShorts && ytShorts[1]) {
-    return { type: "youtube" as const, embedUrl: `https://www.youtube-nocookie.com/embed/${ytShorts[1]}` };
-  }
-
-  const ytMatch = trimmed.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
-  if (ytMatch && ytMatch[1]) {
-    return { type: "youtube" as const, embedUrl: `https://www.youtube-nocookie.com/embed/${ytMatch[1]}` };
-  }
-
-  const vimeoMatch = trimmed.match(/vimeo\.com\/(\d+)/i);
-  if (vimeoMatch && vimeoMatch[1]) {
-    return { type: "vimeo" as const, embedUrl: `https://player.vimeo.com/video/${vimeoMatch[1]}` };
-  }
-
-  return { type: "direct" as const, embedUrl: trimmed };
-}
+import { getVideoEmbed } from "@/lib/media";
+import { trackViewItem, trackAddToCart } from "@/lib/analytics";
 
 // Real customer reviews are stored per-product and submitted by verified purchasers
 
@@ -62,13 +41,12 @@ export default function ProductDetailsClient({
   relatedProducts,
 }: ProductDetailsClientProps) {
   const router = useRouter();
-  const { addToCart, toggleWishlist, isWishlisted, openCart, showToast, user } = useStore();
+  const { addToCart, toggleWishlist, isWishlisted, openCart, showToast } = useStore();
 
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
   const [showVideo, setShowVideo] = useState(false);
   const videoEmbed = product.videoUrl ? getVideoEmbed(product.videoUrl) : null;
   const [quantity, setQuantity] = useState(1);
-  const [selectedBundle, setSelectedBundle] = useState<number>(1);
 
   // Dynamic colors: use product.colors if available; fallback to default if undefined
   const defaultColors = [
@@ -80,20 +58,37 @@ export default function ProductDetailsClient({
     ? product.colors
     : (product.colors === undefined ? defaultColors : []);
 
-  const [selectedColor, setSelectedColor] = useState(colorVariants[0]?.name || "Pastel Mint Green");
-
-  React.useEffect(() => {
-    if (colorVariants.length > 0 && (!selectedColor || !colorVariants.some((c) => c.name === selectedColor))) {
-      setSelectedColor(colorVariants[0].name);
-    }
-  }, [colorVariants, selectedColor]);
+  const [userSelectedColor, setUserSelectedColor] = useState<string | null>(null);
+  const selectedColor =
+    userSelectedColor && colorVariants.some((c) => c.name === userSelectedColor)
+      ? userSelectedColor
+      : (colorVariants[0]?.name || "Pastel Mint Green");
+  const setSelectedColor = (colorName: string) => setUserSelectedColor(colorName);
 
   const [pincode, setPincode] = useState("");
   const [pincodeChecked, setPincodeChecked] = useState(false);
+  const [pincodeLocation, setPincodeLocation] = useState<{ district: string; state: string } | null>(null);
+  const [isPincodeLoading, setIsPincodeLoading] = useState(false);
+
   const [activeTab, setActiveTab] = useState<"features" | "specs" | "reviews">("features");
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(true);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [liveRating, setLiveRating] = useState<number>(product.rating || 5);
+  const [liveReviewsCount, setLiveReviewsCount] = useState<number>(product.reviewsCount || 0);
+
   const [userReviews, setUserReviews] = useState<
-    Array<{ name: string; city: string; rating: number; title: string; comment: string; date: string }>
+    Array<{
+      id?: string;
+      name: string;
+      customerName?: string;
+      city: string;
+      rating: number;
+      title?: string;
+      comment: string;
+      date: string;
+      verified?: boolean;
+    }>
   >([]);
   const [reviewForm, setReviewForm] = useState({
     name: "",
@@ -189,17 +184,29 @@ export default function ProductDetailsClient({
     return () => clearInterval(interval);
   }, [cutoffTimeDisplay]);
 
-  // Pincode saved in localStorage
+  // Pincode saved in localStorage with live district lookup
   React.useEffect(() => {
+    let isMounted = true;
     try {
       const savedPin = localStorage.getItem("km_user_pincode");
       if (savedPin && savedPin.length === 6) {
         setPincode(savedPin);
         setPincodeChecked(true);
+        fetch(`/api/pincode/${savedPin}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (isMounted && data.success && data.city && data.state) {
+              setPincodeLocation({ district: data.city, state: data.state });
+            }
+          })
+          .catch(() => {});
       }
     } catch {
       // ignore
     }
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Helper for delivery dates estimation
@@ -245,63 +252,105 @@ export default function ProductDetailsClient({
     };
   };
 
+  // Fetch real reviews from Neon PostgreSQL on mount
   React.useEffect(() => {
-    try {
-      const stored = localStorage.getItem(`km_reviews_${product.id}`);
-      if (stored) {
-        setUserReviews(JSON.parse(stored));
+    let isMounted = true;
+    const loadProductReviews = async () => {
+      setIsLoadingReviews(true);
+      try {
+        const query = product.id ? `productId=${encodeURIComponent(product.id)}` : `slug=${encodeURIComponent(product.slug)}`;
+        const res = await fetch(`/api/reviews?${query}`);
+        const data = await res.json();
+        if (isMounted && data.success && Array.isArray(data.reviews)) {
+          setUserReviews(data.reviews);
+          if (typeof data.averageRating === "number") setLiveRating(data.averageRating);
+          if (typeof data.count === "number") setLiveReviewsCount(data.count);
+        }
+      } catch (err) {
+        console.warn("Failed to load reviews from API:", err);
+      } finally {
+        if (isMounted) setIsLoadingReviews(false);
       }
-    } catch {
-      // ignore
-    }
-  }, [product.id]);
+    };
 
-  const handleSubmitReview = (e: React.FormEvent) => {
+    loadProductReviews();
+    return () => {
+      isMounted = false;
+    };
+  }, [product.id, product.slug]);
+
+  // Submit verified customer review to PostgreSQL
+  const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reviewForm.name || !reviewForm.comment) {
+    if (!reviewForm.name.trim() || !reviewForm.comment.trim()) {
       showToast("Please provide your name and review details", "warning");
       return;
     }
-    const newEntry = {
-      ...reviewForm,
-      date: "Just now",
-    };
-    const updated = [newEntry, ...userReviews];
-    setUserReviews(updated);
-    try {
-      localStorage.setItem(`km_reviews_${product.id}`, JSON.stringify(updated));
-    } catch {
-      // ignore
+    if (reviewForm.comment.trim().length < 5) {
+      showToast("Review must be at least 5 characters long", "warning");
+      return;
     }
-    setIsReviewModalOpen(false);
-    setReviewForm({ name: "", city: "", rating: 5, title: "", comment: "" });
-    showToast("Thank you! Your customer review has been recorded.");
+
+    setIsSubmittingReview(true);
+    try {
+      const res = await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: product.id,
+          slug: product.slug,
+          customerName: reviewForm.name.trim(),
+          rating: reviewForm.rating,
+          title: reviewForm.title.trim(),
+          comment: reviewForm.comment.trim(),
+          city: reviewForm.city.trim() || "India",
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        showToast(data.error || "Failed to submit review", "warning");
+        setIsSubmittingReview(false);
+        return;
+      }
+
+      if (data.review) {
+        setUserReviews((prev) => [data.review, ...prev.filter((r) => r.id !== data.review.id)]);
+      }
+      if (data.product) {
+        if (typeof data.product.rating === "number") setLiveRating(data.product.rating);
+        if (typeof data.product.reviewsCount === "number") setLiveReviewsCount(data.product.reviewsCount);
+      }
+
+      setIsReviewModalOpen(false);
+      setReviewForm({ name: "", city: "", rating: 5, title: "", comment: "" });
+      showToast("Thank you! Your verified review has been published. 🎉");
+    } catch (err: any) {
+      console.error("Submit review error:", err);
+      showToast("Network error. Please try again.", "warning");
+    } finally {
+      setIsSubmittingReview(false);
+    }
   };
+
+  React.useEffect(() => {
+    if (product) {
+      trackViewItem(product);
+    }
+  }, [product]);
 
   const wishlisted = isWishlisted(product.id);
   const discountPercent = Math.round(
     ((product.originalPrice - product.price) / product.originalPrice) * 100
   );
-  const savingsAmount = (product.originalPrice - product.price) * quantity;
 
   const handleAddToCart = () => {
     const discountedProduct = activeTier && activeTier.unitPrice !== product.price
       ? { ...product, price: activeTier.unitPrice }
       : product;
     addToCart(discountedProduct, quantity);
+    trackAddToCart(discountedProduct, quantity);
     openCart();
-  };
-
-  const handleBuyNow = () => {
-    const discountedProduct = activeTier && activeTier.unitPrice !== product.price
-      ? { ...product, price: activeTier.unitPrice }
-      : product;
-    addToCart(discountedProduct, quantity);
-    if (!user) {
-      router.push("/account?redirect=/checkout");
-    } else {
-      router.push("/checkout");
-    }
   };
 
   const handleShare = () => {
@@ -311,17 +360,31 @@ export default function ProductDetailsClient({
     }
   };
 
-  const handleCheckPincode = () => {
+  const handleCheckPincode = async () => {
     if (pincode.length === 6 && /^\d{6}$/.test(pincode)) {
-      setPincodeChecked(true);
+      setIsPincodeLoading(true);
       try {
-        localStorage.setItem("km_user_pincode", pincode);
-      } catch {
-        // ignore
+        const res = await fetch(`/api/pincode/${pincode}`);
+        const data = await res.json();
+        if (data.success && data.city && data.state) {
+          setPincodeLocation({ district: data.city, state: data.state });
+          setPincodeChecked(true);
+          try {
+            localStorage.setItem("km_user_pincode", pincode);
+          } catch {}
+          showToast(`Express Delivery available to ${data.city}, ${data.state} (${pincode})! 🚀`);
+        } else {
+          setPincodeChecked(true);
+          showToast(`Express Delivery available to Pincode ${pincode}! 🚀`);
+        }
+      } catch (err) {
+        setPincodeChecked(true);
+        showToast(`Express Delivery available to Pincode ${pincode}! 🚀`);
+      } finally {
+        setIsPincodeLoading(false);
       }
-      showToast(`Express Delivery available to Pincode ${pincode}! 🚀`);
     } else {
-      showToast("Please enter a valid 6-digit pincode", "warning");
+      showToast("Please enter a valid 6-digit Indian PIN code", "warning");
     }
   };
 
@@ -560,10 +623,10 @@ export default function ProductDetailsClient({
                   ))}
                 </div>
                 <span className="font-space font-bold text-sm text-[#0b1c30]">
-                  {product.rating}
+                  {liveRating.toFixed(1)}
                 </span>
                 <span className="text-xs text-[#584237]">
-                  ({product.reviewsCount} verified reviews)
+                  ({liveReviewsCount} verified {liveReviewsCount === 1 ? "review" : "reviews"})
                 </span>
                 <span className="text-[#584237]/30">|</span>
                 <span className="text-xs font-semibold text-[#15803d] flex items-center gap-1">
@@ -691,7 +754,6 @@ export default function ProductDetailsClient({
                       <div
                         key={tier.tier}
                         onClick={() => {
-                          setSelectedBundle(tier.tier);
                           setQuantity(tier.qty);
                         }}
                         className={`relative p-3.5 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between ${
@@ -809,27 +871,46 @@ export default function ProductDetailsClient({
                       type="text"
                       maxLength={6}
                       value={pincode}
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const val = e.target.value.replace(/\D/g, "");
                         setPincode(val);
                         if (val.length === 6) {
-                          setPincodeChecked(true);
+                          setIsPincodeLoading(true);
                           try {
-                            localStorage.setItem("km_user_pincode", val);
+                            const res = await fetch(`/api/pincode/${val}`);
+                            const data = await res.json();
+                            if (data.success && data.city && data.state) {
+                              setPincodeLocation({ district: data.city, state: data.state });
+                              setPincodeChecked(true);
+                              try {
+                                localStorage.setItem("km_user_pincode", val);
+                              } catch {}
+                            } else {
+                              setPincodeChecked(true);
+                            }
                           } catch {
-                            // ignore
+                            setPincodeChecked(true);
+                          } finally {
+                            setIsPincodeLoading(false);
                           }
                         }
                       }}
                       placeholder="Enter 6-digit Pincode"
-                      className="w-full pl-9 pr-3 py-2.5 bg-[#fdfbf7] rounded-xl text-xs font-space font-semibold text-[#2b1f1a] border border-[#eddcd1] focus:outline-none focus:ring-2 focus:ring-[#e06b5b]"
+                      className="w-full pl-9 pr-8 py-2.5 bg-[#fdfbf7] rounded-xl text-xs font-space font-semibold text-[#2b1f1a] border border-[#eddcd1] focus:outline-none focus:ring-2 focus:ring-[#e06b5b]"
                     />
+                    {isPincodeLoading && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-[#e06b5b]/30 border-t-[#e06b5b] rounded-full animate-spin" />
+                    )}
                   </div>
                   <button
                     onClick={handleCheckPincode}
-                    className="px-4 py-2.5 bg-[#2b1f1a] hover:bg-[#3d2c25] active:scale-[0.98] text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs"
+                    disabled={isPincodeLoading}
+                    className="px-4 py-2.5 bg-[#2b1f1a] hover:bg-[#3d2c25] active:scale-[0.98] text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs disabled:opacity-60 flex items-center gap-1.5"
                   >
-                    Check
+                    {isPincodeLoading ? (
+                      <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    ) : null}
+                    <span>Check</span>
                   </button>
                 </div>
 
@@ -845,7 +926,14 @@ export default function ProductDetailsClient({
                           </span>
                         </p>
                         <p className="text-[11px] text-[#6b5850] mt-0.5">
-                          Shipping to <strong>{getDeliveryEstimate(pincode).region} ({pincode})</strong> via Bluedart / Delhivery Air
+                          Shipping to{" "}
+                          <strong>
+                            {pincodeLocation
+                              ? `${pincodeLocation.district}, ${pincodeLocation.state}`
+                              : getDeliveryEstimate(pincode).region}{" "}
+                            ({pincode})
+                          </strong>{" "}
+                          via Bluedart / Delhivery Air
                         </p>
                       </div>
                     </div>
@@ -1027,7 +1115,7 @@ export default function ProductDetailsClient({
                   : "text-[#584237] hover:text-[#0b1c30]"
               }`}
             >
-              <span>Customer Reviews ({product.reviewsCount})</span>
+              <span>Customer Reviews ({liveReviewsCount})</span>
               {activeTab === "reviews" && (
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#f97316]"></span>
               )}
@@ -1282,9 +1370,17 @@ export default function ProductDetailsClient({
                     </button>
                     <button
                       type="submit"
-                      className="px-6 py-2.5 bg-[#f97316] hover:bg-[#ea580c] text-white font-bold text-xs rounded-xl shadow-xs transition-all"
+                      disabled={isSubmittingReview}
+                      className="px-6 py-2.5 bg-[#f97316] hover:bg-[#ea580c] active:scale-[0.98] text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
                     >
-                      Submit Review
+                      {isSubmittingReview ? (
+                        <>
+                          <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                          <span>Publishing Review...</span>
+                        </>
+                      ) : (
+                        <span>Submit Review</span>
+                      )}
                     </button>
                   </div>
                 </form>

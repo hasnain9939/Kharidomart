@@ -1,12 +1,8 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import crypto from "crypto";
+import { hashPassword } from "@/lib/auth";
+import { createUserSessionToken } from "@/lib/session";
 
-function hashPassword(password: string): string {
-  const salt = crypto.randomBytes(16).toString("hex");
-  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
-  return `${salt}:${hash}`;
-}
 
 export async function POST(req: Request) {
   try {
@@ -72,8 +68,17 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json({
+    // Create signed user session token
+    const token = await createUserSessionToken({
+      userId: user.id,
+      email: user.email,
+      role: "user",
+      issuedAt: Date.now(),
+    });
+
+    const res = NextResponse.json({
       success: true,
+      token,
       user: {
         id: user.id,
         name: user.name,
@@ -94,6 +99,17 @@ export async function POST(req: Request) {
           : undefined,
       },
     });
+
+    res.cookies.set("km_user_session", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 30 * 24 * 60 * 60,
+      path: "/",
+    });
+
+    return res;
+
   } catch (err: any) {
     console.error("Registration error:", err);
     return NextResponse.json(

@@ -14,7 +14,9 @@ import {
   CheckCircle,
   TruckFast,
   Location,
+  User,
 } from "reicon-react";
+import { trackBeginCheckout } from "@/lib/analytics";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -31,12 +33,14 @@ export default function CheckoutPage() {
     isAuthLoaded,
   } = useStore();
 
-  // Redirect unauthenticated customers to login/signup page with redirect back to /checkout
   useEffect(() => {
-    if (isAuthLoaded && !user) {
-      router.replace("/account?redirect=/checkout");
+    if (cart.length > 0) {
+      trackBeginCheckout(cart, subtotal);
     }
-  }, [isAuthLoaded, user, router]);
+  }, []);
+
+  // Note: Guest checkout is fully supported with optional sign in for saved addresses
+
 
   // Contact form state
   const [phone, setPhone] = useState(user?.phone?.replace("+91", "").trim() || "");
@@ -97,27 +101,28 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "upi" | "card">("upi");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Auto-populate city & state from pincode
-  const handlePincodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [isPincodeLoading, setIsPincodeLoading] = useState(false);
+
+  // Auto-populate city & state from live Pan-India Pincode API
+  const handlePincodeChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value.replace(/\D/g, "");
     setPincode(val);
     if (val.length === 6) {
-      const pin = parseInt(val, 10);
-      if (pin >= 110000 && pin <= 119999) {
-        setCity("New Delhi");
-        setState("Delhi");
-      } else if (pin >= 400000 && pin <= 400099) {
-        setCity("Mumbai");
-        setState("Maharashtra");
-      } else if (pin >= 560000 && pin <= 560099) {
-        setCity("Bengaluru");
-        setState("Karnataka");
-      } else if (pin >= 700000 && pin <= 700099) {
-        setCity("Kolkata");
-        setState("West Bengal");
-      } else if (pin >= 600000 && pin <= 600099) {
-        setCity("Chennai");
-        setState("Tamil Nadu");
+      setIsPincodeLoading(true);
+      try {
+        const res = await fetch(`/api/pincode/${val}`);
+        const data = await res.json();
+        if (data.success && data.city && data.state) {
+          setCity(data.city);
+          setState(data.state);
+          try {
+            localStorage.setItem("km_user_pincode", val);
+          } catch {}
+        }
+      } catch (err) {
+        console.warn("Pincode lookup error:", err);
+      } finally {
+        setIsPincodeLoading(false);
       }
     }
   };
@@ -156,6 +161,22 @@ export default function CheckoutPage() {
   const upiDiscount = paymentMethod === "upi" ? 50 : 0;
   const grandTotal = Math.max(0, finalTotal + shippingFee - upiDiscount);
 
+  // Helper to load Razorpay checkout script dynamically
+  const loadRazorpayScript = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if (typeof window !== "undefined" && (window as any).Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateCheckout()) {
@@ -165,11 +186,158 @@ export default function CheckoutPage() {
 
     setIsSubmitting(true);
 
+    // ==========================================
+    // 1. ONLINE PAYMENT VIA RAZORPAY (UPI / CARD)
+    // ==========================================
+    if (paymentMethod === "upi" || paymentMethod === "card") {
+      try {
+        const orderRes = await fetch("/api/create-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amount: grandTotal,
+            receipt: `km_${Date.now()}`,
+            notes: {
+              customerEmail: email,
+              customerPhone: phone,
+              paymentType: paymentMethod,
+            },
+          }),
+        });
+
+        const orderData = await orderRes.json();
+
+        // If Razorpay API keys are not yet configured in .env
+        if (!orderRes.ok || !orderData.success) {
+          showToast(orderData.error || "Failed to initialize payment gateway.", "warning");
+          setIsSubmitting(false);
+          return;
+        }
+
+        const isLoaded = await loadRazorpayScript();
+        if (!isLoaded || !(window as any).Razorpay) {
+          showToast("Failed to load Razorpay payment window. Please check your internet connection.", "warning");
+          setIsSubmitting(false);
+          return;
+        }
+
+        const options = {
+          key: orderData.key_id || orderData.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+          amount: orderData.amount,
+          currency: orderData.currency || "INR",
+          name: "Kharido Mart",
+          description: paymentMethod === "upi" ? "UPI Instant Payment (₹50 OFF Applied)" : "Online Payment",
+          image: "/assets/images/kharidomart-cart-icon.svg",
+          order_id: orderData.order_id || orderData.orderId,
+          handler: async function (response: any) {
+            try {
+              setIsSubmitting(true);
+              const verifyRes = await fetch("/api/verify-payment", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                  userId: user?.id || null,
+                  customer: { firstName, lastName, email, phone, whatsappOptIn },
+                  address: { address, city, state, pincode, landmark, addressType },
+                  items: cart,
+                  subtotal,
+                  discountAmount,
+                  shippingFee,
+                  grandTotal,
+                  paymentMethod,
+                }),
+              });
+
+              const verifyData = await verifyRes.json();
+              if (!verifyRes.ok || !verifyData.success) {
+                throw new Error(verifyData.error || "Payment verification failed.");
+              }
+
+              const createdOrder = verifyData.order;
+              const finalOrderId = createdOrder.orderNumber;
+
+              try {
+                localStorage.setItem("km_latest_order", JSON.stringify({
+                  orderId: createdOrder.orderNumber,
+                  date: createdOrder.createdAt,
+                  createdAt: createdOrder.createdAt,
+                  awbNumber: createdOrder.awbNumber,
+                  status: createdOrder.status,
+                  courier: createdOrder.courier,
+                  paymentId: verifyData.paymentId,
+                  customer: { firstName, lastName, email, phone, whatsappOptIn },
+                  address: { address, city, state, pincode, landmark, addressType },
+                  items: cart,
+                  paymentMethod: paymentMethod === "card" ? "Card (Razorpay)" : "UPI (Razorpay Verified)",
+                  shippingMethod: "standard",
+                  subtotal,
+                  discountAmount,
+                  shippingFee,
+                  upiDiscount,
+                  grandTotal,
+                }));
+
+                const existing = localStorage.getItem("km_all_orders");
+                const list = existing ? JSON.parse(existing) : [];
+                list.unshift(createdOrder);
+                localStorage.setItem("km_all_orders", JSON.stringify(list));
+              } catch {
+                // ignore quota issues
+              }
+
+              clearCart();
+              showToast("🎉 Payment Successful! Order Placed.");
+              router.push(`/checkout/success?orderId=${finalOrderId}`);
+            } catch (vErr: any) {
+              console.error("Payment verification error:", vErr);
+              showToast(vErr.message || "Payment verification failed. Please contact customer support.", "warning");
+              setIsSubmitting(false);
+            }
+          },
+          prefill: {
+            name: `${firstName} ${lastName}`.trim(),
+            email: email.trim(),
+            contact: phone.trim().startsWith("+91") ? phone.trim() : `+91${phone.trim()}`,
+          },
+          theme: {
+            color: "#0b1c30",
+          },
+          modal: {
+            ondismiss: function () {
+              setIsSubmitting(false);
+              showToast("Payment window closed. Your cart is preserved.", "info");
+            },
+          },
+        };
+
+        const rzp = new (window as any).Razorpay(options);
+        rzp.on("payment.failed", function (failResponse: any) {
+          console.error("Razorpay Payment Failed:", failResponse.error);
+          showToast(`Payment Failed: ${failResponse.error?.description || "Transaction declined"}`, "warning");
+          setIsSubmitting(false);
+        });
+
+        rzp.open();
+      } catch (gatewayErr: any) {
+        console.error("Gateway error:", gatewayErr);
+        showToast(gatewayErr.message || "Failed to initialize payment gateway.", "warning");
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    // ==========================================
+    // 2. CASH ON DELIVERY (COD) DIRECT ORDER
+    // ==========================================
     try {
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          userId: user?.id || null,
           customer: {
             firstName,
             lastName,
@@ -262,14 +430,7 @@ export default function CheckoutPage() {
     );
   }
 
-  if (!user) {
-    return (
-      <div className="w-full min-h-[70vh] flex flex-col items-center justify-center p-6 text-center bg-[#f8f9ff]">
-        <div className="w-10 h-10 border-3 border-orange-500/20 border-t-[#ea580c] rounded-full animate-spin mb-4" />
-        <p className="text-xs font-semibold text-[#584237]">Redirecting to sign in...</p>
-      </div>
-    );
-  }
+
 
   if (cart.length === 0) {
     return (
@@ -278,7 +439,7 @@ export default function CheckoutPage() {
           <div className="w-16 h-16 rounded-2xl bg-orange-100 text-[#ea580c] flex items-center justify-center mx-auto">
             <ShieldCheck size={32} weight="Filled" />
           </div>
-          <h2 className="text-xl font-bold text-[#0b1c30]">Your Cart is Empty</h2>
+          <h1 className="text-xl font-bold text-[#0b1c30]">Your Cart is Empty</h1>
           <p className="text-sm text-[#584237]">
             Please add items to your cart before proceeding to checkout.
           </p>
@@ -338,6 +499,29 @@ export default function CheckoutPage() {
 
       {/* Main 2-Column Checkout Layout */}
       <div className="max-w-[1360px] mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <div className="mb-6">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0b1c30] tracking-tight">
+            Secure Checkout
+          </h1>
+          <p className="text-xs sm:text-sm text-[#584237] mt-1">
+            Complete your order with Pan-India Cash on Delivery or Instant UPI discount.
+          </p>
+        </div>
+
+        {!user && (
+          <div className="mb-6 p-4 rounded-2xl bg-amber-50 border border-amber-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs sm:text-sm text-amber-900 shadow-xs">
+            <div className="flex items-center gap-2">
+              <User size={18} weight="Filled" className="text-amber-600 shrink-0" />
+              <span>Checking out as guest. Have an account? <strong>Sign in</strong> for saved addresses & fast tracking.</span>
+            </div>
+            <Link
+              href="/account?redirect=/checkout"
+              className="px-3.5 py-1.5 bg-amber-600 text-white rounded-xl font-bold hover:bg-amber-700 transition shrink-0 text-center"
+            >
+              Sign In
+            </Link>
+          </div>
+        )}
         <form onSubmit={handlePlaceOrder} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* LEFT COLUMN: Customer, Shipping & Payment (7 cols) */}
           <div className="lg:col-span-7 space-y-6">
@@ -591,7 +775,10 @@ export default function CheckoutPage() {
                           : "border-[#ebdcd3] bg-[#f8fafc] text-[#0b1c30] focus:outline-none focus:ring-2 focus:ring-[#e06b5b]"
                       }`}
                     />
-                    {pincode.length === 6 && !formErrors.pincode && (
+                    {isPincodeLoading && (
+                      <span className="absolute right-3 w-4 h-4 border-2 border-orange-500/30 border-t-[#ea580c] rounded-full animate-spin" />
+                    )}
+                    {!isPincodeLoading && pincode.length === 6 && !formErrors.pincode && (
                       <span className="absolute right-3 text-[#15803d]">
                         <CheckCircle size={18} weight="Filled" />
                       </span>
@@ -930,8 +1117,12 @@ export default function CheckoutPage() {
                   <Lock size={16} weight="Filled" />
                   <span>
                     {isSubmitting
-                      ? "Confirming Order..."
-                      : `Place Order — ₹${grandTotal.toLocaleString("en-IN")}`}
+                      ? "Processing..."
+                      : paymentMethod === "upi"
+                      ? `Pay via UPI (Save ₹50) — ₹${grandTotal.toLocaleString("en-IN")}`
+                      : paymentMethod === "card"
+                      ? `Pay via Card / NetBanking — ₹${grandTotal.toLocaleString("en-IN")}`
+                      : `Place COD Order — ₹${grandTotal.toLocaleString("en-IN")}`}
                   </span>
                 </button>
               </div>

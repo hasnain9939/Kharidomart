@@ -19,18 +19,18 @@ export interface AdminOrder {
   createdAt: string;
   dispatchTime?: string;
   trackingStep: number;
-  // Dropshipping Specific Fields
-  supplierName: "Roposo Clout" | "CJ Dropshipping" | "IndiaDropship" | "Shiprocket 3PL";
-  supplierCost: number; // COGS
-  supplierStatus: "Pushed to Supplier" | "Awaiting 1-Click Push" | "Supplier Dispatched";
-  codVerification: "WhatsApp OTP Confirmed" | "IVR Confirmed" | "Prepaid Verified" | "Awaiting Confirmation";
-  estimatedNetProfit: number;
+  // Dropshipping / Fulfillment Specific Fields
+  supplierName?: "Shopify Warehouse" | "Roposo Clout" | "CJ Dropshipping" | "IndiaDropship" | "Shiprocket 3PL" | string;
+  supplierCost?: number; // COGS
+  supplierStatus?: "Pushed to Supplier" | "Awaiting 1-Click Push" | "Supplier Dispatched" | "Pushed to Shopify";
+  codVerification?: "WhatsApp OTP Confirmed" | "IVR Confirmed" | "Prepaid Verified" | "Awaiting Confirmation";
+  estimatedNetProfit?: number;
 }
 
 export interface AdminSupplier {
   id: string;
   name: string;
-  type: "Roposo Clout" | "CJ Dropshipping" | "IndiaDropship" | "Shiprocket 3PL" | "Private Agent";
+  type: "Shopify Store API" | "Shopify Warehouse" | "Roposo Clout" | "CJ Dropshipping" | "IndiaDropship" | "Shiprocket 3PL" | "Private Agent" | string;
   city: string;
   state: string;
   currentStock: number;
@@ -127,50 +127,18 @@ export const ADMIN_ORDERS: AdminOrder[] = [];
 
 export const DROPSHIP_SUPPLIERS: AdminSupplier[] = [
   {
-    id: "sup-1",
-    name: "Roposo Clout Fulfillment",
-    type: "Roposo Clout",
-    city: "Gurugram Node",
-    state: "Haryana",
-    currentStock: 0,
+    id: "shopify-central",
+    name: "Shopify Central Warehouse",
+    type: "Shopify Store API",
+    city: "cgxx12-ek.myshopify.com",
+    state: "India Central Hub",
+    currentStock: 100,
     capacityPercentage: 100,
     dispatchesToday: 0,
     status: "Optimal",
-    courierPartners: ["BlueDart Express", "Delhivery Direct", "Shadowfax"],
-    apiStatus: "Not Connected",
-    avgDispatchTime: "24 Hours",
-    pendingOrders: 0,
-    walletBalance: 0,
-  },
-  {
-    id: "sup-2",
-    name: "CJ Dropshipping India Express",
-    type: "CJ Dropshipping",
-    city: "Mumbai Air Node",
-    state: "Maharashtra",
-    currentStock: 0,
-    capacityPercentage: 100,
-    dispatchesToday: 0,
-    status: "Optimal",
-    courierPartners: ["BlueDart Air", "Delhivery Air"],
-    apiStatus: "Not Connected",
-    avgDispatchTime: "24 Hours",
-    pendingOrders: 0,
-    walletBalance: 0,
-  },
-  {
-    id: "sup-3",
-    name: "IndiaDropship Sourcing Node",
-    type: "IndiaDropship",
-    city: "Surat / Bengaluru",
-    state: "Karnataka",
-    currentStock: 0,
-    capacityPercentage: 100,
-    dispatchesToday: 0,
-    status: "Optimal",
-    courierPartners: ["XpressBees", "BlueDart"],
-    apiStatus: "Not Connected",
-    avgDispatchTime: "24 Hours",
+    courierPartners: ["BlueDart Express", "Delhivery Direct", "Shadowfax", "XpressBees"],
+    apiStatus: "Connected (Live)",
+    avgDispatchTime: "Same Day / 24 Hours",
     pendingOrders: 0,
     walletBalance: 0,
   },

@@ -143,13 +143,26 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-[#e06b5b] transition-colors">
-                  Contact Us
-                </Link>
+                <a
+                  href="https://wa.me/918540017572?text=Hi%20Kharido%20Mart%20Support"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-[#25D366] transition-colors inline-flex items-center gap-1"
+                >
+                  <span>💬 WhatsApp: +91 85400 17572</span>
+                </a>
+              </li>
+              <li>
+                <a
+                  href="mailto:kharidomartsupport@gmail.com"
+                  className="hover:text-[#e06b5b] transition-colors inline-flex items-center gap-1 truncate max-w-full"
+                >
+                  <span>✉️ kharidomartsupport@gmail.com</span>
+                </a>
               </li>
               <li>
                 <Link href="/contact" className="hover:text-[#e06b5b] transition-colors">
-                  Help Center &amp; FAQs
+                  Help Center &amp; Contact Us
                 </Link>
               </li>
               <li>

@@ -25,9 +25,20 @@ export async function generateMetadata({ params }: PolicyPageProps): Promise<Met
     };
   }
 
+  const canonicalUrl = `https://kharidomart.com/policies/${policySlug}`;
+
   return {
     title: `${policy.title} | Kharido Mart Legal & Compliance`,
     description: policy.summary || `${policy.title} of Kharido Mart Direct`,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title: `${policy.title} | Kharido Mart Legal & Compliance`,
+      description: policy.summary || `${policy.title} of Kharido Mart Direct`,
+      url: canonicalUrl,
+      images: [{ url: "/assets/stitch/hero_showcase.jpg", width: 1200, height: 630, alt: policy.title }],
+    },
   };
 }
 

@@ -35,16 +35,38 @@ export default function CreateDiscountPage() {
     setCode(`${randomPrefix}${randomNum}`);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/discounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code,
+          type: discountType === "percentage" ? "percentage" : "fixed",
+          value,
+          minOrder: minSpend,
+          description: `${value}${discountType === "percentage" ? "%" : "₹"} Off (Min Order ₹${minSpend})`,
+          active: true,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setToastMessage(`Discount code ${code} saved to database & activated!`);
+        setTimeout(() => {
+          router.push("/admin/marketing");
+        }, 1200);
+      } else {
+        setToastMessage(data.error || "Failed to create discount");
+        setTimeout(() => setToastMessage(null), 3000);
+      }
+    } catch {
+      setToastMessage("Failed to reach server to create discount");
+      setTimeout(() => setToastMessage(null), 3000);
+    } finally {
       setIsSubmitting(false);
-      setToastMessage(`Discount code ${code} activated successfully!`);
-      setTimeout(() => {
-        router.push("/admin/marketing");
-      }, 1500);
-    }, 800);
+    }
   };
 
   return (

@@ -1,23 +1,38 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import crypto from "crypto";
+import { hashPassword, verifyPassword } from "@/lib/auth";
+import { verifyUserSessionToken } from "@/lib/session";
 
-function hashPassword(password: string): string {
-  const salt = crypto.randomBytes(16).toString("hex");
-  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
-  return `${salt}:${hash}`;
-}
+// In-memory rate limiting: max 5 attempts per email per 15 minutes
+const resetAttempts = new Map<string, { count: number; expiresAt: number }>();
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { email, newPassword } = body;
+    const { email, newPassword, currentPassword, phone } = body;
 
     if (!email || typeof email !== "string" || !email.includes("@")) {
       return NextResponse.json(
         { success: false, error: "Please enter a valid registered email address" },
         { status: 400 }
       );
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const now = Date.now();
+
+    // Check rate limit
+    const attemptRecord = resetAttempts.get(cleanEmail);
+    if (attemptRecord && attemptRecord.expiresAt > now) {
+      if (attemptRecord.count >= 5) {
+        return NextResponse.json(
+          { success: false, error: "Too many password reset attempts. Please wait 15 minutes before trying again." },
+          { status: 429 }
+        );
+      }
+      attemptRecord.count += 1;
+    } else {
+      resetAttempts.set(cleanEmail, { count: 1, expiresAt: now + 15 * 60 * 1000 });
     }
 
     if (!newPassword || typeof newPassword !== "string" || newPassword.length < 6) {
@@ -27,18 +42,46 @@ export async function POST(req: Request) {
       );
     }
 
-    const cleanEmail = email.trim().toLowerCase();
-
     // Check if user exists
     const user = await prisma.user.findUnique({
       where: { email: cleanEmail },
-      select: { id: true, name: true },
+      select: { id: true, name: true, phone: true, passwordHash: true },
     });
 
     if (!user) {
       return NextResponse.json(
         { success: false, error: "No account found with this email address. Please create an account." },
         { status: 404 }
+      );
+    }
+
+    // Identity Verification Challenge: Prevent account takeover
+    const sessionCookie = req.cookies.get("km_user_session")?.value;
+    const session = await verifyUserSessionToken(sessionCookie);
+    const isSessionOwner = session && session.email.toLowerCase() === cleanEmail;
+
+    let isVerified = false;
+
+    if (isSessionOwner) {
+      isVerified = true;
+    } else if (user.passwordHash && currentPassword && typeof currentPassword === "string") {
+      isVerified = verifyPassword(currentPassword, user.passwordHash);
+    } else if (user.phone && phone && typeof phone === "string") {
+      const cleanInputPhone = phone.replace(/\D/g, "");
+      const cleanUserPhone = user.phone.replace(/\D/g, "");
+      isVerified = cleanInputPhone.length >= 10 && cleanUserPhone.endsWith(cleanInputPhone.slice(-10));
+    } else if (!user.passwordHash) {
+      // OAuth-only user setting their first password
+      isVerified = true;
+    }
+
+    if (!isVerified) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Identity verification failed. Please enter your registered mobile number or current password to verify ownership before resetting.",
+        },
+        { status: 401 }
       );
     }
 
@@ -50,10 +93,14 @@ export async function POST(req: Request) {
       data: { passwordHash: newPasswordHash },
     });
 
+    // Clear rate limit record upon success
+    resetAttempts.delete(cleanEmail);
+
     return NextResponse.json({
       success: true,
       message: "Password updated successfully. You can now sign in with your new password.",
     });
+
   } catch (err: any) {
     console.error("Password reset error:", err);
     return NextResponse.json(

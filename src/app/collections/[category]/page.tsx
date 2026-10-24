@@ -81,18 +81,55 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
   const categoryProducts = dbProducts.map(formatProduct);
 
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://kharidomart.com",
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Shop",
+        "item": "https://kharidomart.com/shop",
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": category.name,
+        "item": `https://kharidomart.com/collections/${category.slug}`,
+      },
+    ],
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10 bg-[#fdfbf7]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       {/* Back button & Breadcrumb */}
-      <div className="flex items-center gap-2">
+      <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs font-semibold text-[#6b5850]">
+        <Link
+          href="/"
+          className="hover:text-[#e06b5b] transition-colors"
+        >
+          Home
+        </Link>
+        <span className="text-stone-300">/</span>
         <Link
           href="/shop"
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-[#6b5850] hover:text-[#e06b5b] transition-colors"
+          className="hover:text-[#e06b5b] transition-colors"
         >
-          <ArrowLeft size={16} weight="Outline" />
-          <span>All Categories</span>
+          Shop
         </Link>
-      </div>
+        <span className="text-stone-300">/</span>
+        <span className="text-[#2b1f1a] font-bold">{category.name}</span>
+      </nav>
 
       {/* Category Hero Header with Warm Mom & Baby Tokens */}
       <div className="bg-gradient-to-r from-[#fdedeb] via-[#fbf7f0] to-white p-8 sm:p-12 rounded-3xl border border-[#eddcd1] space-y-3 shadow-2xs">

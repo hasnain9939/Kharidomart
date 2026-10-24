@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   ShieldCheck,
   User,
@@ -15,8 +14,6 @@ import {
 } from "reicon-react";
 
 export default function AdminLoginPage() {
-  const router = useRouter();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -63,9 +60,8 @@ export default function AdminLoginPage() {
 
       setAuthSuccess(true);
       setTimeout(() => {
-        router.push("/admin");
-        router.refresh();
-      }, 500);
+        window.location.href = "/admin";
+      }, 250);
     } catch {
       setAuthError("Network error while connecting to authentication service. Please try again.");
       setIsLoading(false);
@@ -86,73 +82,73 @@ export default function AdminLoginPage() {
       ></div>
 
       {/* Top Header */}
-      <header className="relative z-20 px-6 py-5 max-w-7xl mx-auto w-full flex items-center justify-between">
+      <header className="relative z-20 px-6 py-4 max-w-7xl mx-auto w-full flex items-center justify-between">
         <Link
           href="/"
           className="flex items-center gap-3 group transition-transform active:scale-95"
           title="Return to Customer Storefront"
         >
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#f97316] to-[#ea580c] flex items-center justify-center font-black text-white text-xl shadow-[0_4px_16px_rgba(249,115,22,0.4)] ring-2 ring-white/10 group-hover:ring-[#f97316]/50 transition-all">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#f97316] to-[#ea580c] flex items-center justify-center font-black text-white text-lg shadow-[0_4px_16px_rgba(249,115,22,0.4)] ring-2 ring-white/10 group-hover:ring-[#f97316]/50 transition-all">
             K
           </div>
           <div className="flex flex-col">
-            <span className="font-extrabold text-lg tracking-tight text-white leading-none">
+            <span className="font-extrabold text-base tracking-tight text-white leading-none">
               Kharido Mart
             </span>
-            <span className="text-[10px] text-[#ffedd5] font-bold uppercase tracking-wider mt-1">
-              Store Administrator Console
+            <span className="text-[10px] text-[#ffedd5] font-bold uppercase tracking-wider mt-0.5">
+              Admin HQ Console
             </span>
           </div>
         </Link>
 
         <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-white/80">
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-white/80">
             <span className="w-2 h-2 rounded-full bg-[#15803d] animate-pulse"></span>
             <span>Database Online</span>
             <span className="text-white/30">•</span>
-            <span className="text-white/60">Prisma Engine</span>
+            <span className="text-white/60">HMAC-SHA256 Auth</span>
           </div>
           <Link
             href="/"
-            className="text-xs font-semibold px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-white transition-colors flex items-center gap-1.5"
+            className="text-xs font-semibold px-3 py-1 rounded-xl bg-white/10 hover:bg-white/15 text-white transition-colors flex items-center gap-1.5"
           >
-            <span>Customer Store</span>
+            <span>Storefront</span>
             <ArrowRight size={12} weight="Outline" />
           </Link>
         </div>
       </header>
 
       {/* Main Form Container */}
-      <main className="relative z-20 flex-1 flex items-center justify-center px-4 py-8">
+      <main className="relative z-20 flex-1 flex items-center justify-center px-4 py-4 sm:py-6">
         <div className="w-full max-w-md">
-          <div className="relative rounded-3xl bg-[#0b1c30]/95 backdrop-blur-2xl border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.6)] p-6 sm:p-9 overflow-hidden">
+          <div className="relative rounded-3xl bg-[#0b1c30]/95 backdrop-blur-2xl border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.6)] p-5 sm:p-7 overflow-hidden">
             {/* Top decorative accent line */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#f97316] to-transparent"></div>
 
             {/* Header info */}
-            <div className="text-center mb-7">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#f97316]/10 border border-[#f97316]/20 text-[#ffedd5] text-xs font-semibold mb-3">
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#f97316]/10 border border-[#f97316]/20 text-[#ffedd5] text-xs font-semibold mb-2">
                 <ShieldCheck size={14} weight="Filled" className="text-[#f97316]" />
                 <span>Restricted Access Console</span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
                 Store Administrator Login
               </h1>
-              <p className="text-xs sm:text-sm text-slate-400 mt-2 max-w-sm mx-auto">
-                Sign in with your verified administrator credentials to manage inventory, fulfill customer orders, and control store settings.
+              <p className="text-xs text-slate-400 mt-1.5">
+                Sign in with verified administrator credentials to access store controls.
               </p>
             </div>
 
             {/* Error / Success Banners */}
             {authError && (
-              <div className="mb-5 p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-200 text-xs flex items-center gap-2.5">
+              <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-200 text-xs flex items-center gap-2.5">
                 <CloseCircle size={16} weight="Filled" className="text-red-400 shrink-0" />
                 <span>{authError}</span>
               </div>
             )}
 
             {authSuccess && (
-              <div className="mb-5 p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-200 text-xs flex items-center gap-2.5">
+              <div className="mb-4 p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-200 text-xs flex items-center gap-2.5">
                 <CheckCircle size={16} weight="Filled" className="text-emerald-400 shrink-0" />
                 <span className="font-semibold">
                   Administrator verified. Redirecting to Management Console...
@@ -161,7 +157,7 @@ export default function AdminLoginPage() {
             )}
 
             {/* Authentication Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3.5">
               {/* Work Email */}
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1.5">
@@ -174,6 +170,7 @@ export default function AdminLoginPage() {
                     className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
                   />
                   <input
+                    id="admin-email"
                     type="email"
                     required
                     autoFocus
@@ -199,6 +196,7 @@ export default function AdminLoginPage() {
                     className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
                   />
                   <input
+                    id="admin-password"
                     type={showPassword ? "text" : "password"}
                     required
                     value={password}
@@ -237,6 +235,7 @@ export default function AdminLoginPage() {
 
               {/* Submit CTA */}
               <button
+                id="admin-submit-btn"
                 type="submit"
                 disabled={isLoading || authSuccess}
                 className="w-full h-12 rounded-xl bg-gradient-to-r from-[#f97316] to-[#ea580c] hover:from-[#ea580c] hover:to-[#c2410c] text-white font-bold text-sm shadow-[0_4px_20px_rgba(249,115,22,0.35)] transition-all active:scale-[0.99] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer mt-2"

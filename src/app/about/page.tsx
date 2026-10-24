@@ -2,11 +2,22 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Star, ShieldCheck, Heart } from "reicon-react";
+import type { Metadata } from "next";
 
-export const metadata = {
-  title: "About Us | Kharido Mart - Explore More, Learn More, Smile More!",
+export const metadata: Metadata = {
+  title: "About Us | Kharido Mart India",
   description:
-    "Learn about Kharido Mart's mission to bring delightful educational books, screen-free sound books, and smart gadgets to families across India.",
+    "Learn about Kharido Mart's mission to bring gentle baby care essentials, screen-free Montessori educational toys, and postpartum mom wellness to families across India.",
+  alternates: {
+    canonical: "https://kharidomart.com/about",
+  },
+  openGraph: {
+    title: "About Kharido Mart | Gentle Baby Care & Montessori Toys",
+    description:
+      "Tear-free grooming, screen-free sound books, and non-toxic nursery essentials with Pan-India delivery.",
+    url: "https://kharidomart.com/about",
+    images: [{ url: "/assets/stitch/hero_showcase.jpg", width: 1200, height: 630, alt: "About Kharido Mart" }],
+  },
 };
 
 export default function AboutPage() {

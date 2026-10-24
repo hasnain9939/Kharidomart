@@ -51,6 +51,7 @@ function AccountContent() {
   // Forgot / Reset Password State
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotPhone, setForgotPhone] = useState("");
   const [forgotNewPassword, setForgotNewPassword] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotSubmitted, setForgotSubmitted] = useState(false);
@@ -88,6 +89,7 @@ function AccountContent() {
   const [formCity, setFormCity] = useState("");
   const [formState, setFormState] = useState("");
   const [formPincode, setFormPincode] = useState("");
+  const [isPincodeLoading, setIsPincodeLoading] = useState(false);
   const [formIsDefault, setFormIsDefault] = useState(true);
 
   // Profile edit state
@@ -100,7 +102,13 @@ function AccountContent() {
   useEffect(() => {
     const loadOrders = async () => {
       try {
-        const res = await fetch("/api/orders");
+        const queryParams = new URLSearchParams();
+        if (user?.phone) queryParams.set("phone", user.phone);
+        if (user?.email) queryParams.set("email", user.email);
+        if (user?.id) queryParams.set("userId", user.id);
+
+        const queryString = queryParams.toString();
+        const res = await fetch(queryString ? `/api/orders?${queryString}` : "/api/orders");
         const data = await res.json();
         if (data.success && Array.isArray(data.orders)) {
           const serverOrders = data.orders.map((o: any) => ({
@@ -294,7 +302,9 @@ function AccountContent() {
                     name: userInfo.name || userInfo.email.split("@")[0],
                     googleId: userInfo.sub,
                     picture: userInfo.picture,
+                    accessToken: tokenResponse.access_token,
                   });
+
                   if (success && redirectUrl) {
                     router.push(redirectUrl);
                   }
@@ -349,36 +359,23 @@ function AccountContent() {
     setIsAddressModalOpen(true);
   };
 
-  // Auto-fill City & State on typing 6 digit PIN
-  const handleFormPincodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Auto-fill City & State on typing 6 digit PIN via live Pan-India Pincode API
+  const handleFormPincodeChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value.replace(/\D/g, "");
     setFormPincode(val);
     if (val.length === 6) {
-      const pin = parseInt(val, 10);
-      if (pin >= 110000 && pin <= 119999) {
-        if (!formCity) setFormCity("New Delhi");
-        if (!formState) setFormState("Delhi");
-      } else if (pin >= 400000 && pin <= 400099) {
-        if (!formCity) setFormCity("Mumbai");
-        if (!formState) setFormState("Maharashtra");
-      } else if (pin >= 560000 && pin <= 560099) {
-        if (!formCity) setFormCity("Bengaluru");
-        if (!formState) setFormState("Karnataka");
-      } else if (pin >= 700000 && pin <= 700099) {
-        if (!formCity) setFormCity("Kolkata");
-        if (!formState) setFormState("West Bengal");
-      } else if (pin >= 600000 && pin <= 600099) {
-        if (!formCity) setFormCity("Chennai");
-        if (!formState) setFormState("Tamil Nadu");
-      } else if (pin >= 500000 && pin <= 500099) {
-        if (!formCity) setFormCity("Hyderabad");
-        if (!formState) setFormState("Telangana");
-      } else if (pin >= 380000 && pin <= 380099) {
-        if (!formCity) setFormCity("Ahmedabad");
-        if (!formState) setFormState("Gujarat");
-      } else if (pin >= 302000 && pin <= 302099) {
-        if (!formCity) setFormCity("Jaipur");
-        if (!formState) setFormState("Rajasthan");
+      setIsPincodeLoading(true);
+      try {
+        const res = await fetch(`/api/pincode/${val}`);
+        const data = await res.json();
+        if (data.success && data.city && data.state) {
+          setFormCity(data.city);
+          setFormState(data.state);
+        }
+      } catch (err) {
+        console.warn("Pincode lookup error:", err);
+      } finally {
+        setIsPincodeLoading(false);
       }
     }
   };
@@ -561,7 +558,11 @@ function AccountContent() {
       const res = await fetch("/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: forgotEmail, newPassword: forgotNewPassword }),
+        body: JSON.stringify({
+          email: forgotEmail,
+          phone: forgotPhone,
+          newPassword: forgotNewPassword,
+        }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
@@ -1163,7 +1164,7 @@ function AccountContent() {
                         maxLength={10}
                         value={formPhone}
                         onChange={(e) => setFormPhone(e.target.value.replace(/\D/g, ""))}
-                        placeholder="9876543210"
+                        placeholder="8540017572"
                         className="w-full px-3 py-2.5 text-xs sm:text-sm focus:outline-none bg-transparent font-mono"
                       />
                     </div>
@@ -1219,15 +1220,20 @@ function AccountContent() {
                     <label className="block text-xs font-bold text-[#0b1c30] mb-1">
                       PIN Code <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="text"
-                      required
-                      maxLength={6}
-                      value={formPincode}
-                      onChange={handleFormPincodeChange}
-                      placeholder="560038"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#e2e8f0] text-xs sm:text-sm focus:border-[#f97316] focus:outline-none bg-[#f8fafc] font-mono"
-                    />
+                    <div className="relative">
+                      <input
+                        type="text"
+                        required
+                        maxLength={6}
+                        value={formPincode}
+                        onChange={handleFormPincodeChange}
+                        placeholder="560038"
+                        className="w-full pl-3.5 pr-8 py-2.5 rounded-xl border border-[#e2e8f0] text-xs sm:text-sm focus:border-[#f97316] focus:outline-none bg-[#f8fafc] font-mono"
+                      />
+                      {isPincodeLoading && (
+                        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-[#f97316]/30 border-t-[#f97316] rounded-full animate-spin" />
+                      )}
+                    </div>
                   </div>
 
                   <div>
@@ -1675,6 +1681,18 @@ function AccountContent() {
                     value={forgotEmail}
                     onChange={(e) => setForgotEmail(e.target.value)}
                     placeholder="you@gmail.com"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[#e2e8f0] text-xs sm:text-sm focus:border-[#f97316] focus:outline-none bg-[#f8fafc]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-[#0b1c30] mb-1">
+                    Registered Mobile Number (Verification)
+                  </label>
+                  <input
+                    type="tel"
+                    value={forgotPhone}
+                    onChange={(e) => setForgotPhone(e.target.value)}
+                    placeholder="e.g. 8540017572"
                     className="w-full px-4 py-2.5 rounded-xl border border-[#e2e8f0] text-xs sm:text-sm focus:border-[#f97316] focus:outline-none bg-[#f8fafc]"
                   />
                 </div>

@@ -171,6 +171,15 @@ export default function CartPage() {
           </div>
         ) : (
           <>
+            <div className="mb-6">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0b1c30] tracking-tight">
+                Shopping Cart ({cartCount} {cartCount === 1 ? "item" : "items"})
+              </h1>
+              <p className="text-xs sm:text-sm text-[#584237] mt-1">
+                Review your items and proceed to secure checkout with free express delivery.
+              </p>
+            </div>
+
             {/* Dynamic Free Shipping Unlock Banner */}
             <div className="w-full bg-white rounded-2xl p-4 sm:p-5 shadow-xs border border-[#e2e8f0] mb-8 relative overflow-hidden">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">

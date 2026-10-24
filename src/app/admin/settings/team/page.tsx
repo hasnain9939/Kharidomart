@@ -20,25 +20,40 @@ export default function InviteTeamMemberPage() {
   const [role, setRole] = useState<
     "Super Admin" | "Operations Lead" | "Catalog Manager" | "Customer Support Lead"
   >("Operations Lead");
-  const [hubAccess, setHubAccess] = useState("All Hubs");
+  const [hubAccess, setHubAccess] = useState("Shopify Central Warehouse");
   const [enforce2FA, setEnforce2FA] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const handleSendInvite = (e: React.FormEvent) => {
+  const handleSendInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email) {
-      alert("Please provide member name and work email.");
+      setToastMessage("Please provide member name and work email.");
       return;
     }
     setIsSending(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/admin/team", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, role, hubAccess, enforce2FA }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setToastMessage(`Team member ${name} added & credentials dispatched!`);
+        setTimeout(() => {
+          router.push("/admin/settings");
+        }, 1200);
+      } else {
+        setToastMessage(data.error || "Failed to add team member");
+        setTimeout(() => setToastMessage(null), 3000);
+      }
+    } catch {
+      setToastMessage("Failed to reach server to save team member");
+      setTimeout(() => setToastMessage(null), 3000);
+    } finally {
       setIsSending(false);
-      setToastMessage(`Invitation dispatched to ${email}!`);
-      setTimeout(() => {
-        router.push("/admin/settings");
-      }, 1500);
-    }, 800);
+    }
   };
 
   return (
@@ -185,10 +200,11 @@ export default function InviteTeamMemberPage() {
             onChange={(e) => setHubAccess(e.target.value)}
             className="w-full h-10 px-3 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-xs font-semibold text-[#0b1c30]"
           >
-            <option value="All Hubs">All Regional Hubs (Gurugram, Mumbai, Bengaluru)</option>
-            <option value="Gurugram Central Hub">North Only: Gurugram Central Hub</option>
-            <option value="Mumbai Bhiwandi Hub">West Only: Mumbai Bhiwandi Hub</option>
-            <option value="Bengaluru Whitefield Hub">South Only: Bengaluru Whitefield Hub</option>
+            <option value="Shopify Central Warehouse">Primary: Shopify Central Warehouse (cgxx12-ek.myshopify.com)</option>
+            <option value="All Hubs">All Regional Hubs &amp; Fulfillment Centers</option>
+            <option value="Gurugram Central Hub">North Hub (Gurugram)</option>
+            <option value="Mumbai Bhiwandi Hub">West Hub (Mumbai)</option>
+            <option value="Bengaluru Whitefield Hub">South Hub (Bengaluru)</option>
           </select>
         </div>
 

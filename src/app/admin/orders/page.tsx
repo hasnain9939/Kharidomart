@@ -21,7 +21,7 @@ import {
   Add,
   Box,
 } from "reicon-react";
-import { ADMIN_ORDERS, AdminOrder } from "@/data/adminData";
+import { AdminOrder } from "@/data/adminData";
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<AdminOrder[]>([]);

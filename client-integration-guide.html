@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Technical Setup Guide: Shopify & WhatsApp Cloud API | Kharido Mart</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --wa-green: #25D366;
+      --wa-dark: #075E54;
+      --wa-teal: #128C7E;
+      --shopify-green: #008060;
+      --shopify-dark: #004c3f;
+      --shopify-light: #f0fdf4;
+      --meta-blue: #0866FF;
+      --slate-900: #0f172a;
+      --slate-800: #1e293b;
+      --slate-700: #334155;
+      --slate-600: #475569;
+      --slate-500: #64748b;
+      --slate-200: #e2e8f0;
+      --slate-100: #f1f5f9;
+      --slate-50: #f8fafc;
+      --amber-500: #f59e0b;
+      --amber-50: #fffbeb;
+      --red-500: #ef4444;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+      --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.04);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8faff;
+      color: var(--slate-900);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 80px;
+    }
+
+    /* Header Nav */
+    header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--slate-200);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 14px 24px;
+    }
+
+    .nav-inner {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 1.15rem;
+      color: var(--slate-900);
+      text-decoration: none;
+    }
+
+    .brand-badges {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .brand-logo-shopify {
+      width: 32px;
+      height: 32px;
+      background: #008060;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+
+    .brand-logo-wa {
+      width: 32px;
+      height: 32px;
+      background: #25D366;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+
+    .nav-tabs {
+      display: flex;
+      align-items: center;
+      background: var(--slate-100);
+      padding: 4px;
+      border-radius: 10px;
+      gap: 4px;
+    }
+
+    .nav-tab-btn {
+      background: transparent;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 7px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--slate-600);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nav-tab-btn:hover {
+      color: var(--slate-900);
+    }
+
+    .nav-tab-btn.active {
+      background: white;
+      color: var(--slate-900);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-secondary {
+      background: white;
+      border: 1px solid var(--slate-200);
+      color: var(--slate-700);
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+      background: var(--slate-50);
+      border-color: var(--slate-500);
+    }
+
+    .btn-primary {
+      background: var(--slate-900);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary:hover {
+      background: black;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 44px 0 32px;
+    }
+
+    .pill-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #f0fdf4;
+      color: #008060;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 6px 16px;
+      border-radius: 100px;
+      margin-bottom: 16px;
+      border: 1px solid rgba(0, 128, 96, 0.25);
+    }
+
+    .hero h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.25;
+      color: var(--slate-900);
+      margin-bottom: 14px;
+    }
+
+    .hero h1 span.shopify-txt {
+      color: var(--shopify-green);
+    }
+
+    .hero h1 span.wa-txt {
+      color: var(--wa-teal);
+    }
+
+    .hero-desc {
+      font-size: 1.1rem;
+      color: var(--slate-600);
+      max-width: 760px;
+      margin: 0 auto 28px;
+    }
+
+    .perks-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .perk-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: white;
+      border: 1px solid var(--slate-200);
+      padding: 8px 16px;
+      border-radius: 100px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--slate-700);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Quick Jump Banner */
+    .summary-banner {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      border-radius: var(--radius-lg);
+      padding: 24px 32px;
+      color: white;
+      margin-bottom: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
+    }
+
+    .summary-banner h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .summary-banner p {
+      font-size: 0.925rem;
+      color: #94a3b8;
+    }
+
+    .jump-btn {
+      background: white;
+      color: var(--slate-900);
+      padding: 12px 22px;
+      border-radius: var(--radius-md);
+      font-weight: 700;
+      font-size: 0.9rem;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .jump-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-xl);
+    }
+
+    /* Section Headers */
+    .module-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid var(--slate-200);
+      padding-bottom: 14px;
+      margin: 48px 0 28px;
+    }
+
+    .module-header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .module-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+
+    .module-icon.shopify-bg {
+      background: var(--shopify-green);
+      box-shadow: 0 4px 12px rgba(0, 128, 96, 0.3);
+    }
+
+    .module-icon.wa-bg {
+      background: var(--wa-teal);
+      box-shadow: 0 4px 12px rgba(18, 140, 126, 0.3);
+    }
+
+    .module-header h2 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--slate-900);
+      letter-spacing: -0.02em;
+    }
+
+    .module-header p {
+      font-size: 0.9rem;
+      color: var(--slate-500);
+    }
+
+    .module-time {
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      background: var(--slate-100);
+      border-radius: 100px;
+      color: var(--slate-600);
+    }
+
+    /* Step Card */
+    .step-card {
+      background: white;
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-xl);
+      padding: 36px;
+      margin-bottom: 28px;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.25s ease;
+      position: relative;
+    }
+
+    .step-card:hover {
+      box-shadow: var(--shadow-md);
+      border-color: #cbd5e1;
+    }
+
+    .step-card.shopify-accent {
+      border-left: 5px solid var(--shopify-green);
+    }
+
+    .step-card.wa-accent {
+      border-left: 5px solid var(--wa-green);
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .step-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: white;
+      font-size: 0.825rem;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 100px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .step-badge.shopify-badge {
+      background: var(--shopify-green);
+    }
+
+    .step-badge.wa-badge {
+      background: var(--wa-dark);
+    }
+
+    .step-time {
+      font-size: 0.85rem;
+      color: var(--slate-500);
+      font-weight: 600;
+    }
+
+    .step-card h3 {
+      font-size: 1.45rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+      color: var(--slate-900);
+      line-height: 1.3;
+    }
+
+    .step-card p {
+      font-size: 0.975rem;
+      color: var(--slate-700);
+      margin-bottom: 20px;
+    }
+
+    .instruction-list {
+      list-style: none;
+      counter-reset: sub-step;
+      margin-bottom: 24px;
+    }
+
+    .instruction-list li {
+      counter-increment: sub-step;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 14px;
+      font-size: 0.95rem;
+      color: var(--slate-800);
+    }
+
+    .instruction-list li::before {
+      content: counter(sub-step);
+      background: var(--slate-100);
+      color: var(--slate-700);
+      border: 1px solid var(--slate-200);
+      font-weight: 800;
+      font-size: 0.825rem;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .instruction-list strong {
+      color: var(--slate-900);
+    }
+
+    /* Mockup box */
+    .mockup-box {
+      background: #0f172a;
+      border-radius: var(--radius-md);
+      padding: 20px 24px;
+      color: #e2e8f0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      line-height: 1.7;
+      margin: 16px 0 24px;
+      position: relative;
+      overflow-x: auto;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .mockup-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--slate-500);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .highlight-green {
+      color: #4ade80;
+      font-weight: 600;
+    }
+
+    .highlight-blue {
+      color: #60a5fa;
+      font-weight: 600;
+    }
+
+    /* Callout Note */
+    .callout {
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      margin: 20px 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      font-size: 0.9rem;
+    }
+
+    .callout.warning {
+      background: #fffbeb;
+      border-left: 4px solid var(--amber-500);
+      color: #92400e;
+    }
+
+    .callout.tip {
+      background: #ecfdf5;
+      border-left: 4px solid var(--wa-green);
+      color: #065f46;
+    }
+
+    .callout.shopify-tip {
+      background: #f0fdf4;
+      border-left: 4px solid var(--shopify-green);
+      color: #004c3f;
+    }
+
+    .callout.danger {
+      background: #fef2f2;
+      border-left: 4px solid var(--red-500);
+      color: #991b1b;
+    }
+
+    .callout .icon {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      margin-top: 2px;
+    }
+
+    /* Scopes Badges Grid */
+    .scopes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+      margin: 16px 0 22px;
+    }
+
+    .scope-item {
+      background: var(--slate-50);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .scope-item.checked {
+      background: #f0fdf4;
+      border-color: #86efac;
+    }
+
+    .scope-check {
+      width: 20px;
+      height: 20px;
+      background: var(--shopify-green);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .scope-item code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--slate-900);
+    }
+
+    .scope-item p {
+      font-size: 0.8rem;
+      color: var(--slate-600);
+      margin: 4px 0 0 0;
+    }
+
+    /* Submission Form Box */
+    .submission-section {
+      background: white;
+      border: 2px solid var(--slate-900);
+      border-radius: var(--radius-xl);
+      padding: 40px;
+      box-shadow: 0 20px 35px -10px rgba(15, 23, 42, 0.15);
+      margin: 48px 0;
+      position: relative;
+    }
+
+    .submission-badge {
+      position: absolute;
+      top: -14px;
+      left: 36px;
+      background: var(--slate-900);
+      color: white;
+      font-weight: 800;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 6px 16px;
+      border-radius: 100px;
+    }
+
+    .submission-section h2 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+      color: var(--slate-900);
+    }
+
+    .submission-section p {
+      font-size: 1rem;
+      color: var(--slate-600);
+      margin-bottom: 24px;
+    }
+
+    .checklist-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .checklist-item {
+      background: var(--slate-50);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-md);
+      padding: 16px;
+    }
+
+    .checklist-item.shopify-type {
+      border-top: 3px solid var(--shopify-green);
+    }
+
+    .checklist-item.wa-type {
+      border-top: 3px solid var(--wa-green);
+    }
+
+    .checklist-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .tag-pill {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .tag-shopify {
+      background: #e6f4ea;
+      color: #008060;
+    }
+
+    .tag-wa {
+      background: #dcf8c6;
+      color: #075E54;
+    }
+
+    .checklist-item h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--slate-900);
+    }
+
+    .checklist-item p {
+      font-size: 0.8rem;
+      color: var(--slate-500);
+      margin-bottom: 8px;
+    }
+
+    .checklist-item .example {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.775rem;
+      background: white;
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      color: var(--slate-800);
+      border: 1px dashed var(--slate-300);
+      display: block;
+      word-break: break-all;
+    }
+
+    /* Template Copy Box */
+    .template-box {
+      background: var(--slate-900);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      color: white;
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .template-actions {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .copy-btn {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+      font-size: 0.825rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .copy-btn.all-btn {
+      background: var(--wa-green);
+      color: #075E54;
+    }
+
+    .copy-btn:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .template-pre {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      line-height: 1.8;
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: #cbd5e1;
+    }
+
+    /* FAQ */
+    .faq-section {
+      margin-top: 48px;
+    }
+
+    .faq-card {
+      background: white;
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-md);
+      padding: 20px 24px;
+      margin-bottom: 14px;
+    }
+
+    .faq-card h4 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--slate-900);
+      margin-bottom: 8px;
+    }
+
+    .faq-card p {
+      font-size: 0.925rem;
+      color: var(--slate-600);
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--slate-900);
+      color: white;
+      padding: 12px 24px;
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      font-weight: 600;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 40px 0;
+      color: var(--slate-500);
+      font-size: 0.875rem;
+      border-top: 1px solid var(--slate-200);
+      margin-top: 48px;
+    }
+
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 2rem; }
+      .step-card { padding: 24px; }
+      .summary-banner { flex-direction: column; align-items: flex-start; }
+      .submission-section { padding: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Nav -->
+  <header>
+    <div class="nav-inner">
+      <a href="#" class="brand">
+        <div class="brand-badges">
+          <div class="brand-logo-shopify" title="Shopify Integration">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M15.337 3.036c-.027-.083-.11-.125-.194-.125-.014 0-.028 0-.042.014l-1.954.582c-.375.111-.79.055-1.123-.153a1.953 1.953 0 0 0-1.898-.083L8.683 4.02c-.083.042-.125.139-.083.222l2.675 7.973c.042.097.139.153.236.139l3.825-1.137c.097-.028.153-.125.125-.222l-2.675-7.973c-.014-.028-.014-.055 0-.083.014-.028.028-.055.055-.055.042 0 .069.028.083.055l1.622 4.823c.028.097.139.153.236.111l1.58-.471c.097-.028.139-.139.111-.236L15.337 3.036z"/>
+            </svg>
+          </div>
+          <div class="brand-logo-wa" title="WhatsApp Integration">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+            </svg>
+          </div>
+        </div>
+        <span>Kharido Mart</span>
+      </a>
+
+      <!-- Quick Section Tabs -->
+      <nav class="nav-tabs">
+        <a href="#shopify-section" class="nav-tab-btn">🛍️ 1. Shopify Setup</a>
+        <a href="#whatsapp-section" class="nav-tab-btn">💬 2. WhatsApp Setup</a>
+        <a href="#submit" class="nav-tab-btn">📋 3. Send Credentials</a>
+      </nav>
+
+      <div class="nav-actions">
+        <button class="btn-secondary" onclick="window.print()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+            <rect x="6" y="14" width="12" height="8"></rect>
+          </svg>
+          Print / Save PDF
+        </button>
+        <a href="#submit" class="btn-primary">Copy Form</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    
+    <!-- Hero -->
+    <div class="hero">
+      <div class="pill-badge">Client Onboarding & Technical Setup Guide</div>
+      <h1>
+        Connect Your <span class="shopify-txt">Shopify Warehouse</span> &amp;<br>
+        <span class="wa-txt">WhatsApp Cloud API</span>
+      </h1>
+      <p class="hero-desc">
+        Follow this simple visual guide to grant Kharido Mart API access to your <strong>Shopify Store</strong> (for automatic dropshipping order routing & courier tracking) and <strong>WhatsApp Business API</strong> (for instant customer dispatch alerts).
+      </p>
+
+      <div class="perks-bar">
+        <div class="perk-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#008060" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          Auto-push COD & UPI orders to Shopify
+        </div>
+        <div class="perk-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#008060" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          Auto-import Delhivery / BlueDart AWB tracking
+        </div>
+        <div class="perk-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#25D366" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          1,000 Free WhatsApp notifications every month
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Jump Banner -->
+    <div class="summary-banner">
+      <div>
+        <h3>Ready to send your credentials?</h3>
+        <p>If you already have your Shopify Token or WhatsApp IDs, jump directly to the submission form.</p>
+      </div>
+      <a href="#submit" class="jump-btn">
+        Jump to Checklist Box
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </a>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- PART 1: SHOPIFY INTEGRATION               -->
+    <!-- ========================================== -->
+    <div class="module-header" id="shopify-section">
+      <div class="module-header-left">
+        <div class="module-icon shopify-bg">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <path d="M16 10a4 4 0 0 1-8 0"></path>
+          </svg>
+        </div>
+        <div>
+          <h2>Part 1: Shopify Store Warehouse Integration</h2>
+          <p>Sync Kharido Mart checkout directly with your dropshipping supplier / Shopify inventory.</p>
+        </div>
+      </div>
+      <div class="module-time">⏱️ ~4 Minutes</div>
+    </div>
+
+    <!-- Shopify Step 1 -->
+    <div class="step-card shopify-accent">
+      <div class="step-header">
+        <span class="step-badge shopify-badge">Shopify Step 1</span>
+        <span class="step-time">⏱️ 1 minute</span>
+      </div>
+      <h3>Copy Your Shopify Store Domain</h3>
+      <p>Your Shopify store domain is the unique <code>.myshopify.com</code> address used to connect via API.</p>
+
+      <ol class="instruction-list">
+        <li>Log into your <strong><a href="https://admin.shopify.com" target="_blank" style="color:var(--shopify-green); font-weight:700;">Shopify Admin Panel</a></strong>.</li>
+        <li>Look at your browser's address bar, or click <strong>Settings</strong> (bottom-left gear icon) ➔ <strong>Domains</strong>.</li>
+        <li>
+          Copy your primary <code>myshopify.com</code> domain.
+        </li>
+      </ol>
+
+      <div class="mockup-box">
+        <div class="mockup-label">Example Shopify Store URL</div>
+        <div>Store Domain: <span class="highlight-green">your-store-name.myshopify.com</span></div>
+        <div style="font-size:0.75rem; color:#94a3b8; margin-top:4px;">(Note: You do NOT need the custom domain like mybrand.in here, the API requires the .myshopify.com URL)</div>
+      </div>
+    </div>
+
+    <!-- Shopify Step 2 -->
+    <div class="step-card shopify-accent">
+      <div class="step-header">
+        <span class="step-badge shopify-badge">Shopify Step 2</span>
+        <span class="step-time">⏱️ 3 minutes</span>
+      </div>
+      <h3>Create a Custom App & Generate Admin API Access Token</h3>
+      <p>This allows Kharido Mart to push placed customer orders into your warehouse and receive courier tracking numbers when fulfilled.</p>
+
+      <ol class="instruction-list">
+        <li>
+          In Shopify Admin, click <strong>Settings</strong> (gear icon bottom-left) ➔ <strong>Apps and sales channels</strong>.
+        </li>
+        <li>
+          Click the <strong>Develop apps</strong> button (top right).<br>
+          <span style="font-size:0.85rem; color:var(--slate-500);">(If this is your first time, click <em>"Allow custom app development"</em> to enable it).</span>
+        </li>
+        <li>
+          Click <strong>Create an app</strong>:
+          <ul style="margin-left: 20px; margin-top: 4px; list-style: disc;">
+            <li>App Name: <code>Kharido Mart Sync</code></li>
+            <li>App developer: Your email address</li>
+          </ul>
+          Click <strong>Create app</strong>.
+        </li>
+        <li>
+          Under the <strong>Overview</strong> or <strong>Configuration</strong> tab, click <strong>Configure Admin API scopes</strong>.
+        </li>
+      </ol>
+
+      <p style="font-weight:700; margin-bottom: 8px;">Select and check the following 4 scopes:</p>
+      <div class="scopes-grid">
+        <div class="scope-item checked">
+          <div class="scope-check">✓</div>
+          <div>
+            <code>write_orders</code>
+            <p>Pushes confirmed orders to your Shopify warehouse</p>
+          </div>
+        </div>
+        <div class="scope-item checked">
+          <div class="scope-check">✓</div>
+          <div>
+            <code>read_orders</code>
+            <p>Reads order updates & fulfillment status</p>
+          </div>
+        </div>
+        <div class="scope-item checked">
+          <div class="scope-check">✓</div>
+          <div>
+            <code>write_fulfillments</code>
+            <p>Manages shipment status</p>
+          </div>
+        </div>
+        <div class="scope-item checked">
+          <div class="scope-check">✓</div>
+          <div>
+            <code>read_fulfillments</code>
+            <p>Captures Delhivery / BlueDart AWB tracking numbers</p>
+          </div>
+        </div>
+      </div>
+
+      <ol class="instruction-list" style="margin-top: 20px;">
+        <li>Click <strong>Save</strong> in the top-right corner.</li>
+        <li>Click on the <strong>API credentials</strong> tab at the top.</li>
+        <li>Click the green <strong>Install app</strong> button, then click <strong>Install</strong> to confirm.</li>
+        <li>
+          Under <strong>Admin API access token</strong>, click <strong>Reveal token once</strong>.
+        </li>
+      </ol>
+
+      <div class="mockup-box">
+        <div class="mockup-label">Shopify Admin API Access Token Format</div>
+        <div>Admin API token: <span class="highlight-green">shpat_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6</span></div>
+      </div>
+
+      <div class="callout danger">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        <div>
+          <strong>Important:</strong> Copy the token immediately! Shopify only reveals the <code>shpat_...</code> token once for security purposes. Save it in your notepad.
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PART 2: META WHATSAPP CLOUD API           -->
+    <!-- ========================================== -->
+    <div class="module-header" id="whatsapp-section">
+      <div class="module-header-left">
+        <div class="module-icon wa-bg">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+          </svg>
+        </div>
+        <div>
+          <h2>Part 2: Meta WhatsApp Cloud API Setup</h2>
+          <p>Send automated WhatsApp order confirmations, AWB tracking links, and delivery notifications.</p>
+        </div>
+      </div>
+      <div class="module-time">⏱️ ~6 Minutes</div>
+    </div>
+
+    <!-- WA Step 1 -->
+    <div class="step-card wa-accent">
+      <div class="step-header">
+        <span class="step-badge wa-badge">WhatsApp Step 1</span>
+        <span class="step-time">⏱️ 2 minutes</span>
+      </div>
+      <h3>Create a Meta Developer Account & Business App</h3>
+      <p>Meta provides direct, free cloud hosting for WhatsApp Business API via their developer portal.</p>
+
+      <ol class="instruction-list">
+        <li>
+          Open <strong><a href="https://developers.facebook.com" target="_blank" style="color:var(--meta-blue); font-weight:700;">developers.facebook.com</a></strong> and click <strong>Log In</strong> with your personal Facebook account.
+        </li>
+        <li>
+          Click <strong>My Apps</strong> in the top-right corner ➔ Click the green <strong>Create App</strong> button.
+        </li>
+        <li>
+          Select <strong>Other</strong> ➔ click <strong>Next</strong>.
+        </li>
+        <li>
+          Select <strong>Business</strong> as app type ➔ click <strong>Next</strong>.
+        </li>
+        <li>
+          Enter your App Display Name: <code>Kharido Mart Notifications</code> and your email, then click <strong>Create App</strong>.
+        </li>
+      </ol>
+    </div>
+
+    <!-- WA Step 2 -->
+    <div class="step-card wa-accent">
+      <div class="step-header">
+        <span class="step-badge wa-badge">WhatsApp Step 2</span>
+        <span class="step-time">⏱️ 2 minutes</span>
+      </div>
+      <h3>Add WhatsApp & Copy Your Phone Number ID & WABA ID</h3>
+      <p>Enable WhatsApp Cloud Messaging and locate your developer IDs.</p>
+
+      <ol class="instruction-list">
+        <li>On the <strong>Add products to your app</strong> page, find <strong>WhatsApp</strong> and click <strong>Set up</strong>.</li>
+        <li>On the left sidebar, click <strong>WhatsApp ➔ API Setup</strong>.</li>
+        <li>
+          You will see the <strong>Phone number ID</strong> and <strong>WhatsApp Business Account ID</strong> displayed.
+        </li>
+      </ol>
+
+      <div class="mockup-box">
+        <div class="mockup-label">Meta Developer Console ➔ WhatsApp ➔ API Setup</div>
+        <div>From: Test Number (+1 555 055 1234)</div>
+        <div style="margin-top: 6px;">
+          <span style="color:#94a3b8;">Phone number ID:</span> <span class="highlight-green">105928172938123</span> &nbsp;<span style="color:#64748b;">(👈 Copy this)</span>
+        </div>
+        <div style="margin-top: 4px;">
+          <span style="color:#94a3b8;">WhatsApp Business Account ID:</span> <span class="highlight-blue">102938475610293</span> &nbsp;<span style="color:#64748b;">(👈 Copy this)</span>
+        </div>
+      </div>
+
+      <div class="callout tip">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <div>
+          <strong>Real Business Phone Number:</strong> If you wish to use your real customer care number (+91...), scroll down to Step 5 on that page, click <em>"Add phone number"</em>, and verify it via SMS OTP.
+        </div>
+      </div>
+    </div>
+
+    <!-- WA Step 3 -->
+    <div class="step-card wa-accent">
+      <div class="step-header">
+        <span class="step-badge wa-badge">WhatsApp Step 3 (Crucial!)</span>
+        <span class="step-time">⏱️ 2 minutes</span>
+      </div>
+      <h3>Generate a Permanent System User Token</h3>
+      <p>
+        The default temporary access token expires every 24 hours. To ensure your automated notifications run 24/7/365 without stopping, generate a permanent token.
+      </p>
+
+      <ol class="instruction-list">
+        <li>
+          Open <strong><a href="https://business.facebook.com/settings/system-users" target="_blank" style="color:var(--meta-blue); font-weight:700;">business.facebook.com/settings/system-users</a></strong> (Meta Business Settings ➔ System Users).
+        </li>
+        <li>
+          Click <strong>Add</strong>:
+          <ul style="margin-left: 20px; margin-top: 4px; list-style: disc;">
+            <li>System Username: <code>Kharido Mart Bot</code></li>
+            <li>System User Role: <strong>Admin</strong></li>
+          </ul>
+          Click <strong>Create system user</strong>.
+        </li>
+        <li>
+          Click <strong>Add Assets</strong>:
+          <ul style="margin-left: 20px; margin-top: 4px; list-style: disc;">
+            <li>Select <strong>Apps</strong> on the left ➔ Select <code>Kharido Mart Notifications</code>.</li>
+            <li>Turn on <strong>Full Control (Manage app)</strong> ➔ Click <strong>Save Changes</strong>.</li>
+          </ul>
+        </li>
+        <li>
+          Click <strong>Generate new token</strong>:
+          <ul style="margin-left: 20px; margin-top: 4px; list-style: disc;">
+            <li>Select App: <code>Kharido Mart Notifications</code></li>
+            <li>Token Expiration: Select <strong>Never</strong> (Permanent)</li>
+            <li>Check both permissions: <code>whatsapp_business_messaging</code> and <code>whatsapp_business_management</code>.</li>
+          </ul>
+        </li>
+        <li>
+          Click <strong>Generate Token</strong> and copy the token string (starts with <code>EAAB...</code>).
+        </li>
+      </ol>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- SUBMISSION / CHECKLIST SECTION             -->
+    <!-- ========================================== -->
+    <div class="submission-section" id="submit">
+      <div class="submission-badge">Final Step • Send Details</div>
+      <h2>What to Send to Your Development Team</h2>
+      <p>
+        Once you have retrieved the credentials, use the copy buttons below to copy the pre-formatted checklist, fill in your values, and send it to your developers.
+      </p>
+
+      <div class="checklist-grid">
+        <!-- Item 1 -->
+        <div class="checklist-item shopify-type">
+          <div class="checklist-header">
+            <span class="tag-pill tag-shopify">Shopify</span>
+            <h4>1. Store Domain</h4>
+          </div>
+          <p>Your myshopify domain</p>
+          <span class="example">e.g. your-store.myshopify.com</span>
+        </div>
+
+        <!-- Item 2 -->
+        <div class="checklist-item shopify-type">
+          <div class="checklist-header">
+            <span class="tag-pill tag-shopify">Shopify</span>
+            <h4>2. Admin API Token</h4>
+          </div>
+          <p>Generated in Apps &gt; Develop apps</p>
+          <span class="example">e.g. shpat_a1b2c3d4e5f6...</span>
+        </div>
+
+        <!-- Item 3 -->
+        <div class="checklist-item wa-type">
+          <div class="checklist-header">
+            <span class="tag-pill tag-wa">WhatsApp</span>
+            <h4>3. Phone Number ID</h4>
+          </div>
+          <p>From WhatsApp &gt; API Setup</p>
+          <span class="example">e.g. 105928172938123</span>
+        </div>
+
+        <!-- Item 4 -->
+        <div class="checklist-item wa-type">
+          <div class="checklist-header">
+            <span class="tag-pill tag-wa">WhatsApp</span>
+            <h4>4. WABA Account ID</h4>
+          </div>
+          <p>WhatsApp Business Account ID</p>
+          <span class="example">e.g. 102938475610293</span>
+        </div>
+
+        <!-- Item 5 -->
+        <div class="checklist-item wa-type">
+          <div class="checklist-header">
+            <span class="tag-pill tag-wa">WhatsApp</span>
+            <h4>5. Permanent Token</h4>
+          </div>
+          <p>Generated in System Users (Never expires)</p>
+          <span class="example">e.g. EAABqwertyuiop...</span>
+        </div>
+
+        <!-- Item 6 -->
+        <div class="checklist-item wa-type">
+          <div class="checklist-header">
+            <span class="tag-pill tag-wa">WhatsApp</span>
+            <h4>6. WhatsApp Number</h4>
+          </div>
+          <p>The verified mobile number</p>
+          <span class="example">e.g. +91 85400 17572</span>
+        </div>
+      </div>
+
+      <!-- Copy Box -->
+      <div class="template-box">
+        <div class="template-actions">
+          <button class="copy-btn all-btn" onclick="copyFullTemplate()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            <span id="copy-btn-all-text">Copy Complete Checklist (Shopify + WhatsApp)</span>
+          </button>
+          <button class="copy-btn" onclick="copyShopifyOnly()">
+            Copy Shopify Only
+          </button>
+          <button class="copy-btn" onclick="copyWhatsAppOnly()">
+            Copy WhatsApp Only
+          </button>
+        </div>
+
+        <pre class="template-pre" id="template-full">Hi Team,
+
+Here are the integration credentials for Kharido Mart:
+
+=== SHOPIFY WAREHOUSE INTEGRATION ===
+1. Shopify Store Domain:
+[PASTE YOUR STORE NAME.myshopify.com HERE]
+
+2. Shopify Admin API Access Token:
+[PASTE YOUR shpat_... TOKEN HERE]
+
+=== META WHATSAPP CLOUD API ===
+3. WhatsApp Phone Number ID:
+[PASTE YOUR PHONE NUMBER ID HERE]
+
+4. WhatsApp Business Account ID (WABA ID):
+[PASTE YOUR BUSINESS ACCOUNT ID HERE]
+
+5. WhatsApp Permanent Access Token:
+[PASTE YOUR EAAB... TOKEN HERE]
+
+6. Official WhatsApp Phone Number:
++91 [ENTER PHONE NUMBER HERE]
+
+Please activate the warehouse sync and automated dispatch notifications.</pre>
+      </div>
+    </div>
+
+    <!-- FAQ -->
+    <div class="faq-section">
+      <h3 style="font-size:1.4rem; font-weight:800; margin-bottom:20px;">Frequently Asked Questions</h3>
+
+      <div class="faq-card">
+        <h4>1. How does the Shopify Warehouse Sync work?</h4>
+        <p>When a customer places an order on Kharido Mart (either COD or prepaid UPI), our backend calls Shopify's Order API and automatically creates the order in your Shopify backend. Your dropshipping supplier/warehouse will fulfill it directly. When they add a tracking number (Delhivery, BlueDart, Shadowfax), Kharido Mart automatically imports the tracking status.</p>
+      </div>
+
+      <div class="faq-card">
+        <h4>2. Is the Meta WhatsApp API free?</h4>
+        <p>Yes, Meta gives <strong>1,000 free service conversations every month</strong>. After that, utility dispatch messages in India cost roughly ₹0.40 to ₹0.75 per message with zero monthly platform subscriptions.</p>
+      </div>
+
+      <div class="faq-card">
+        <h4>3. Can I send only Shopify details now and WhatsApp later?</h4>
+        <p>Yes! The systems are independent. You can provide your Shopify Store URL and Token first to start order sync immediately, and set up WhatsApp whenever you are ready.</p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>Kharido Mart • E-Commerce Technical Setup Guide</p>
+      <p style="margin-top: 6px; font-size: 0.8rem; color: #94a3b8;">
+        For technical assistance, contact: kharidomartsupport@gmail.com | +91 85400 17572
+      </p>
+    </div>
+  </footer>
+
+  <!-- Toast Notification -->
+  <div id="toast">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#25D366" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    <span id="toast-text">Copied checklist to clipboard!</span>
+  </div>
+
+  <script>
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      const toastText = document.getElementById('toast-text');
+      toastText.innerText = message;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    function copyFullTemplate() {
+      const text = document.getElementById('template-full').innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('Copied full checklist (Shopify + WhatsApp) to clipboard!');
+      });
+    }
+
+    function copyShopifyOnly() {
+      const text = `Hi Team,
+
+Here are the Shopify Warehouse credentials for Kharido Mart:
+
+1. Shopify Store Domain:
+[PASTE YOUR STORE NAME.myshopify.com HERE]
+
+2. Shopify Admin API Access Token:
+[PASTE YOUR shpat_... TOKEN HERE]
+
+Please connect this to Kharido Mart warehouse sync.`;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('Copied Shopify credentials template to clipboard!');
+      });
+    }
+
+    function copyWhatsAppOnly() {
+      const text = `Hi Team,
+
+Here are the Meta WhatsApp Cloud API credentials for Kharido Mart:
+
+1. WhatsApp Phone Number ID:
+[PASTE YOUR PHONE NUMBER ID HERE]
+
+2. WhatsApp Business Account ID (WABA ID):
+[PASTE YOUR BUSINESS ACCOUNT ID HERE]
+
+3. WhatsApp Permanent Access Token:
+[PASTE YOUR EAAB... TOKEN HERE]
+
+4. Official WhatsApp Phone Number:
++91 [ENTER PHONE NUMBER HERE]
+
+Please activate automated WhatsApp dispatch notifications.`;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('Copied WhatsApp credentials template to clipboard!');
+      });
+    }
+  </script>
+</body>
+</html>

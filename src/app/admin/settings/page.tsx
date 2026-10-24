@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Setting,
@@ -8,42 +8,169 @@ import {
   ShieldCheck,
   TruckFast,
   CheckCircle,
+  CloseCircle,
   Copy,
-  Edit,
   Add,
   ArrowRight,
   Phone,
   Sparkles,
   TicketDiscount,
   Lock,
+  Refresh,
+  Box,
 } from "reicon-react";
 import { ADMIN_TEAM, AdminTeamMember } from "@/data/adminData";
 
 export default function AdminSettingsPage() {
-  const [activeTab, setActiveTab] = useState<"shopify" | "cod" | "suppliers" | "team">("shopify");
+  const [activeTab, setActiveTab] = useState<"shopify" | "pixel" | "cod" | "team">("shopify");
   const [team, setTeam] = useState<AdminTeamMember[]>(ADMIN_TEAM);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isTestingShopify, setIsTestingShopify] = useState(false);
 
   // Settings form states
   const [storeName, setStoreName] = useState("Kharido Mart");
-  const [shopifyDomain, setShopifyDomain] = useState("");
+  const [shopifyDomain, setShopifyDomain] = useState("cgxx12-ek.myshopify.com");
   const [metaPixelId, setMetaPixelId] = useState("");
   const [capiToken, setCapiToken] = useState("");
-  const [supportEmail, setSupportEmail] = useState("");
-  const [supportPhone, setSupportPhone] = useState("");
+  const [testEventCode, setTestEventCode] = useState("");
+  const [supportEmail, setSupportEmail] = useState("kharidomartsupport@gmail.com");
+  const [supportPhone, setSupportPhone] = useState("+91 85400 17572");
   const [codOtpRequired, setCodOtpRequired] = useState(true);
   const [upiDiscountEnabled, setUpiDiscountEnabled] = useState(true);
   const [upiDiscountAmount, setUpiDiscountAmount] = useState(50);
   const [autoCancelHours, setAutoCancelHours] = useState(24);
-  const [roposoApiKey, setRoposoApiKey] = useState("");
-  const [cjApiToken, setCjApiToken] = useState("");
-  const [autoFulfillThreshold, setAutoFulfillThreshold] = useState(5000);
+  const [autoPushCod, setAutoPushCod] = useState(true);
+  const [autoPushPrepaid, setAutoPushPrepaid] = useState(true);
 
-  const handleSaveSettings = (e: React.FormEvent) => {
-    e.preventDefault();
-    setToastMessage("Shopify dropshipping configuration saved & synced! 🚀");
-    setTimeout(() => setToastMessage(null), 3000);
+  // Live Shopify connection status
+  const [shopifyStatus, setShopifyStatus] = useState<{
+    configured: boolean;
+    connected: boolean;
+    shopName?: string;
+    myshopifyDomain?: string;
+    currency?: string;
+  } | null>(null);
+
+  const fetchShopifyStatus = async () => {
+    try {
+      const res = await fetch("/api/shopify/status");
+      const data = await res.json();
+      setShopifyStatus(data);
+      if (data?.myshopifyDomain) {
+        setShopifyDomain((prev) => prev || data.myshopifyDomain);
+      }
+      if (data?.shopName) {
+        setStoreName((prev) => (prev === "Kharido Mart" ? data.shopName : prev));
+      }
+      return data;
+    } catch {
+      return null;
+    }
   };
+
+  useEffect(() => {
+    fetchShopifyStatus();
+
+    const loadSettings = async () => {
+      try {
+        const res = await fetch("/api/admin/settings");
+        const data = await res.json();
+        if (data.success && data.settings) {
+          const s = data.settings;
+          if (s.storeName) setStoreName(s.storeName);
+          if (s.shopifyDomain) setShopifyDomain(s.shopifyDomain);
+          if (s.metaPixelId) setMetaPixelId(s.metaPixelId);
+          if (s.capiToken) setCapiToken(s.capiToken);
+          if (s.testEventCode) setTestEventCode(s.testEventCode);
+          if (s.supportEmail) setSupportEmail(s.supportEmail);
+          if (s.supportPhone) setSupportPhone(s.supportPhone);
+          if (s.codOtpRequired !== undefined) setCodOtpRequired(s.codOtpRequired === "true");
+          if (s.upiDiscountEnabled !== undefined) setUpiDiscountEnabled(s.upiDiscountEnabled === "true");
+          if (s.upiDiscountAmount) setUpiDiscountAmount(Number(s.upiDiscountAmount));
+          if (s.autoCancelHours) setAutoCancelHours(Number(s.autoCancelHours));
+          if (s.autoPushCod !== undefined) setAutoPushCod(s.autoPushCod === "true");
+          if (s.autoPushPrepaid !== undefined) setAutoPushPrepaid(s.autoPushPrepaid === "true");
+        }
+      } catch (err) {
+        console.error("Failed to load settings:", err);
+      }
+
+      try {
+        const teamRes = await fetch("/api/admin/team");
+        const teamData = await teamRes.json();
+        if (teamData.success && Array.isArray(teamData.team)) {
+          setTeam(teamData.team);
+        }
+      } catch (err) {
+        console.error("Failed to load team:", err);
+      }
+    };
+    loadSettings();
+  }, []);
+
+  const handleTestShopify = async () => {
+    setIsTestingShopify(true);
+    try {
+      const data = await fetchShopifyStatus();
+      if (data?.connected) {
+        setToastMessage(`Shopify connection verified! Store: ${data.shopName} (${data.myshopifyDomain}) 🚀`);
+      } else {
+        setToastMessage("Shopify connection check: Pending or error.");
+      }
+    } catch {
+      setToastMessage("Could not verify Shopify API connection.");
+    } finally {
+      setIsTestingShopify(false);
+      setTimeout(() => setToastMessage(null), 3500);
+    }
+  };
+
+  const handleSaveSettings = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setIsSaving(true);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          storeName,
+          shopifyDomain,
+          metaPixelId,
+          capiToken,
+          testEventCode,
+          supportEmail,
+          supportPhone,
+          codOtpRequired: String(codOtpRequired),
+          upiDiscountEnabled: String(upiDiscountEnabled),
+          upiDiscountAmount: String(upiDiscountAmount),
+          autoCancelHours: String(autoCancelHours),
+          autoPushCod: String(autoPushCod),
+          autoPushPrepaid: String(autoPushPrepaid),
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setToastMessage("Settings saved & synced to PostgreSQL database! 🚀");
+      } else {
+        setToastMessage("Failed to save settings: " + (data.error || "Unknown error"));
+      }
+    } catch {
+      setToastMessage("Error saving settings to server");
+    } finally {
+      setIsSaving(false);
+      setTimeout(() => setToastMessage(null), 3500);
+    }
+  };
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setToastMessage(`${label} copied to clipboard! 📋`);
+    setTimeout(() => setToastMessage(null), 2500);
+  };
+
+  const isConnected = Boolean(shopifyStatus?.connected);
+  const activeDomain = shopifyStatus?.myshopifyDomain || shopifyDomain || "cgxx12-ek.myshopify.com";
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-6xl mx-auto min-w-0 pb-12">
@@ -63,21 +190,29 @@ export default function AdminSettingsPage() {
               Dashboard
             </Link>
             <span>/</span>
-            <span className="font-bold text-[#0b1c30]">Settings &amp; Shopify Sync</span>
+            <span className="font-bold text-[#0b1c30]">Settings &amp; Warehouse Sync</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-black text-[#0b1c30] tracking-tight">
-            Shopify Dropship Storefront Settings
+            Store &amp; Shopify Warehouse Settings
           </h1>
           <p className="text-xs text-[#565e74] mt-0.5">
-            Configure Shopify app connection, Meta Pixel tracking, WhatsApp COD anti-RTO bot, and dropship supplier API keys.
+            Manage your connected Shopify store fulfillment, Meta Pixel CAPI tracking, WhatsApp anti-RTO bot, and staff access.
           </p>
         </div>
 
         <button
-          onClick={handleSaveSettings}
-          className="px-5 py-2.5 rounded-xl bg-[#f97316] hover:bg-[#ea580c] text-white text-xs font-bold shadow-[0_4px_14px_0_rgba(249,115,22,0.35)] transition-all cursor-pointer"
+          onClick={() => handleSaveSettings()}
+          disabled={isSaving}
+          className="px-5 py-2.5 rounded-xl bg-[#f97316] hover:bg-[#ea580c] text-white text-xs font-bold shadow-[0_4px_14px_0_rgba(249,115,22,0.35)] transition-all cursor-pointer disabled:opacity-60 flex items-center gap-1.5"
         >
-          Save All Changes
+          {isSaving ? (
+            <>
+              <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+              <span>Saving Changes...</span>
+            </>
+          ) : (
+            <span>Save All Changes</span>
+          )}
         </button>
       </div>
 
@@ -91,8 +226,26 @@ export default function AdminSettingsPage() {
               : "text-[#565e74] hover:bg-[#f8fafc] hover:text-[#0b1c30]"
           }`}
         >
-          <Sparkles size={16} weight={activeTab === "shopify" ? "Filled" : "Outline"} />
-          <span>Shopify &amp; Meta Pixel</span>
+          <Box size={16} weight={activeTab === "shopify" ? "Filled" : "Outline"} />
+          <span>Shopify Warehouse</span>
+          {isConnected && (
+            <span className="w-2 h-2 rounded-full bg-[#15803d]"></span>
+          )}
+        </button>
+
+        <button
+          onClick={() => setActiveTab("pixel")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            activeTab === "pixel"
+              ? "bg-[#0b1c30] text-white shadow-xs"
+              : "text-[#565e74] hover:bg-[#f8fafc] hover:text-[#0b1c30]"
+          }`}
+        >
+          <Sparkles size={16} weight={activeTab === "pixel" ? "Filled" : "Outline"} />
+          <span>Meta Pixel &amp; CAPI</span>
+          {metaPixelId && (
+            <span className="w-2 h-2 rounded-full bg-[#15803d]"></span>
+          )}
         </button>
 
         <button
@@ -105,18 +258,6 @@ export default function AdminSettingsPage() {
         >
           <ShieldCheck size={16} weight={activeTab === "cod" ? "Filled" : "Outline"} />
           <span>COD &amp; WhatsApp Bot Defense</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab("suppliers")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            activeTab === "suppliers"
-              ? "bg-[#0b1c30] text-white shadow-xs"
-              : "text-[#565e74] hover:bg-[#f8fafc] hover:text-[#0b1c30]"
-          }`}
-        >
-          <TruckFast size={16} weight={activeTab === "suppliers" ? "Filled" : "Outline"} />
-          <span>Supplier API Credentials</span>
         </button>
 
         <button
@@ -135,27 +276,87 @@ export default function AdminSettingsPage() {
         </button>
       </div>
 
-      {/* Tab 1: Shopify & Pixels */}
+      {/* Tab 1: Shopify Warehouse Integration */}
       {activeTab === "shopify" && (
         <form onSubmit={handleSaveSettings} className="flex flex-col gap-6">
-          <div className="p-6 rounded-2xl bg-white border border-[#e2e8f0] shadow-xs flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-bold text-[#0b1c30] uppercase tracking-wider flex items-center gap-2">
-                <span className="w-2 h-4 rounded-full bg-[#f97316]"></span>
-                Shopify Store Sync &amp; Webhooks
-              </h2>
-              {shopifyDomain ? (
-                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#15803d] bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#15803d] animate-pulse"></span>
-                  Connected (GraphQL API v2026-10)
+          {/* Live Status Card */}
+          <div className="p-6 rounded-2xl bg-white border border-emerald-300 shadow-xs flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-md">
+                  Exclusive Fulfillment Partner
                 </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#64748b] bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200">
-                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                  Not Connected (Enter Domain Below)
-                </span>
-              )}
+                <h2 className="text-base font-extrabold text-[#0b1c30] mt-1.5 flex items-center gap-2">
+                  <span>Shopify Store &amp; Warehouse Sync</span>
+                </h2>
+                <p className="text-xs text-[#565e74] font-mono mt-0.5">
+                  Connected Domain: <strong>{activeDomain}</strong>
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                {isConnected ? (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#15803d] bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                    <span className="w-2 h-2 rounded-full bg-[#15803d] animate-pulse"></span>
+                    Connected (Live)
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+                    <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                    Connecting...
+                  </span>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleTestShopify}
+                  disabled={isTestingShopify}
+                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#0b1c30] text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  <Refresh size={13} weight="Outline" className={isTestingShopify ? "animate-spin" : ""} />
+                  <span>{isTestingShopify ? "Testing..." : "Test Connection"}</span>
+                </button>
+
+                <a
+                  href={`https://admin.shopify.com/store/${activeDomain.replace(".myshopify.com", "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-xl bg-[#0b1c30] hover:bg-[#1a2d45] text-white text-xs font-bold transition-all"
+                >
+                  Shopify Admin ↗
+                </a>
+
+                <Link
+                  href="/api/shopify/install"
+                  className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-[#565e74] border border-[#e2e8f0] text-xs font-semibold transition-colors"
+                >
+                  Re-Authorize
+                </Link>
+              </div>
             </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-[#f8fafc] text-xs">
+              <div>
+                <span className="text-[11px] text-[#565e74] block">Store Name:</span>
+                <span className="font-bold text-[#0b1c30]">{shopifyStatus?.shopName || storeName}</span>
+              </div>
+              <div>
+                <span className="text-[11px] text-[#565e74] block">Admin API Token:</span>
+                <span className="font-mono font-bold text-[#15803d]">shpat_••••••••8d0f (Active)</span>
+              </div>
+              <div>
+                <span className="text-[11px] text-[#565e74] block">API Version:</span>
+                <span className="font-mono text-[#0b1c30]">2024-01 REST API</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Store Details Form */}
+          <div className="p-6 rounded-2xl bg-white border border-[#e2e8f0] shadow-xs flex flex-col gap-4">
+            <h2 className="text-sm font-bold text-[#0b1c30] uppercase tracking-wider flex items-center gap-2">
+              <span className="w-2 h-4 rounded-full bg-[#f97316]"></span>
+              Store &amp; Domain Configuration
+            </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -166,7 +367,7 @@ export default function AdminSettingsPage() {
                   type="text"
                   value={shopifyDomain}
                   onChange={(e) => setShopifyDomain(e.target.value)}
-                  placeholder="e.g. your-store.myshopify.com"
+                  placeholder="e.g. cgxx12-ek.myshopify.com"
                   className="w-full h-10 px-3.5 rounded-xl bg-[#f8fafc] text-xs font-mono font-bold text-[#0b1c30] border border-[#e2e8f0] focus:border-[#f97316] focus:bg-white focus:outline-none"
                 />
               </div>
@@ -185,28 +386,67 @@ export default function AdminSettingsPage() {
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-[#eff4ff] border border-[#e2e8f0] flex items-center justify-between text-xs">
-              <div>
-                <span className="font-bold text-[#0b1c30] block">Order Creation Webhook Endpoint:</span>
-                <span className="font-mono text-[#565e74] text-[11px]">https://kharidomart.com/api/webhooks/shopify-orders</span>
+            {/* Auto-Dispatch Rules Toggles */}
+            <div className="pt-3 border-t border-[#f1f5f9] flex flex-col gap-3">
+              <span className="text-xs font-bold text-[#0b1c30]">Automated Dispatch Rules:</span>
+
+              <div className="flex items-center justify-between p-3 rounded-xl bg-[#f8fafc] border border-[#e2e8f0]">
+                <div>
+                  <span className="text-xs font-bold text-[#0b1c30] block">Auto-Push Verified COD Orders</span>
+                  <span className="text-[11px] text-[#565e74]">When WhatsApp OTP is confirmed, automatically push order into Shopify warehouse for courier booking.</span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={autoPushCod}
+                  onChange={(e) => setAutoPushCod(e.target.checked)}
+                  className="w-4 h-4 accent-[#f97316] cursor-pointer"
+                />
               </div>
-              {shopifyDomain ? (
-                <span className="text-[11px] font-bold text-[#15803d] bg-emerald-100/70 px-2 py-0.5 rounded">
-                  Listening 200 OK
-                </span>
-              ) : (
-                <span className="text-[11px] font-semibold text-[#64748b] bg-slate-200/70 px-2 py-0.5 rounded">
-                  Pending Setup
-                </span>
-              )}
+
+              <div className="flex items-center justify-between p-3 rounded-xl bg-[#f8fafc] border border-[#e2e8f0]">
+                <div>
+                  <span className="text-xs font-bold text-[#0b1c30] block">Auto-Push Prepaid / UPI Orders</span>
+                  <span className="text-[11px] text-[#565e74]">Instantly push Razorpay/UPI paid orders into Shopify with zero delay for priority express packing.</span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={autoPushPrepaid}
+                  onChange={(e) => setAutoPushPrepaid(e.target.checked)}
+                  className="w-4 h-4 accent-[#f97316] cursor-pointer"
+                />
+              </div>
+            </div>
+
+            {/* Webhook Endpoint */}
+            <div className="p-4 rounded-xl bg-[#eff4ff] border border-blue-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div>
+                <span className="font-bold text-[#0b1c30] block">Shopify Order &amp; Fulfillment Webhook:</span>
+                <span className="font-mono text-[#565e74] text-[11px]">https://kharidomart.in/api/webhooks/shopify-orders</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => copyToClipboard("https://kharidomart.in/api/webhooks/shopify-orders", "Webhook URL")}
+                className="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-[#0b1c30] text-xs font-bold border border-[#e2e8f0] flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
+              >
+                <Copy size={13} weight="Outline" />
+                <span>Copy URL</span>
+              </button>
             </div>
           </div>
+        </form>
+      )}
 
+      {/* Tab 2: Meta Pixel & CAPI */}
+      {activeTab === "pixel" && (
+        <form onSubmit={handleSaveSettings} className="flex flex-col gap-6">
           <div className="p-6 rounded-2xl bg-white border border-[#e2e8f0] shadow-xs flex flex-col gap-4">
             <h2 className="text-sm font-bold text-[#0b1c30] uppercase tracking-wider flex items-center gap-2">
               <span className="w-2 h-4 rounded-full bg-[#f97316]"></span>
               Meta Facebook &amp; Instagram Ad Tracking Pixels
             </h2>
+            <p className="text-xs text-[#565e74]">
+              Feed high-intent conversion data back to Meta Ads Manager for Purchase, AddToCart, and InitiateCheckout events.
+            </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -234,12 +474,25 @@ export default function AdminSettingsPage() {
                   className="w-full h-10 px-3.5 rounded-xl bg-[#f8fafc] text-xs font-mono text-[#0b1c30] border border-[#e2e8f0] focus:border-[#f97316] focus:bg-white focus:outline-none"
                 />
               </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#0b1c30] mb-1">
+                  Test Event Code (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={testEventCode}
+                  onChange={(e) => setTestEventCode(e.target.value)}
+                  placeholder="e.g. TEST12345"
+                  className="w-full h-10 px-3.5 rounded-xl bg-[#f8fafc] text-xs font-mono text-[#0b1c30] border border-[#e2e8f0] focus:border-[#f97316] focus:bg-white focus:outline-none"
+                />
+              </div>
             </div>
 
             {metaPixelId ? (
               <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs text-[#15803d] font-semibold flex items-center gap-2">
                 <CheckCircle size={16} weight="Filled" />
-                <span>Pixel &amp; CAPI Active (Tracking PageViews, AddToCart, InitiateCheckout &amp; Purchase).</span>
+                <span>Pixel &amp; CAPI Active (Tracking PageViews, ViewContent, AddToCart, InitiateCheckout &amp; Purchase).</span>
               </div>
             ) : (
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-[#64748b] font-medium flex items-center gap-2">
@@ -251,7 +504,7 @@ export default function AdminSettingsPage() {
         </form>
       )}
 
-      {/* Tab 2: COD & Anti-RTO Defense */}
+      {/* Tab 3: COD & WhatsApp Bot Defense */}
       {activeTab === "cod" && (
         <form onSubmit={handleSaveSettings} className="flex flex-col gap-6">
           <div className="p-6 rounded-2xl bg-white border border-[#e2e8f0] shadow-xs flex flex-col gap-5">
@@ -280,13 +533,26 @@ export default function AdminSettingsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[#f1f5f9]">
               <div>
                 <label className="block text-xs font-bold text-[#0b1c30] mb-1">
-                  WhatsApp Support / Bot Sender Number
+                  Customer Support WhatsApp / Helpline Number
                 </label>
                 <input
                   type="text"
                   value={supportPhone}
                   onChange={(e) => setSupportPhone(e.target.value)}
-                  placeholder="e.g. +91 98XXXXXXXX (configure your verified WABA number)"
+                  placeholder="+91 85400 17572"
+                  className="w-full h-10 px-3.5 rounded-xl bg-[#f8fafc] text-xs font-mono font-bold text-[#0b1c30] border border-[#e2e8f0] focus:border-[#f97316] focus:bg-white focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#0b1c30] mb-1">
+                  Customer Support Email Address
+                </label>
+                <input
+                  type="email"
+                  value={supportEmail}
+                  onChange={(e) => setSupportEmail(e.target.value)}
+                  placeholder="kharidomartsupport@gmail.com"
                   className="w-full h-10 px-3.5 rounded-xl bg-[#f8fafc] text-xs font-mono font-bold text-[#0b1c30] border border-[#e2e8f0] focus:border-[#f97316] focus:bg-white focus:outline-none"
                 />
               </div>
@@ -302,91 +568,30 @@ export default function AdminSettingsPage() {
                   className="w-full h-10 px-3.5 rounded-xl bg-[#f8fafc] text-xs font-mono font-bold text-[#0b1c30] border border-[#e2e8f0] focus:border-[#f97316] focus:bg-white focus:outline-none"
                 />
               </div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-orange-50/60 border border-orange-200 flex items-center justify-between text-xs">
-              <div className="space-y-0.5">
-                <span className="font-bold text-[#0b1c30]">Instant ₹50 Prepaid UPI Incentive</span>
-                <p className="text-[#565e74] text-[11px]">
-                  Encourage buyers to convert COD to UPI with an instant ₹50 discount, eliminating courier RTO risk.
-                </p>
-              </div>
-              <span className="text-xs font-bold text-[#15803d] bg-emerald-100/80 px-2.5 py-1 rounded-md">
-                Active (Instant ₹50 UPI discount applied at checkout)
-              </span>
-            </div>
-          </div>
-        </form>
-      )}
-
-      {/* Tab 3: Dropship Supplier API Credentials */}
-      {activeTab === "suppliers" && (
-        <form onSubmit={handleSaveSettings} className="flex flex-col gap-6">
-          <div className="p-6 rounded-2xl bg-white border border-[#e2e8f0] shadow-xs flex flex-col gap-4">
-            <h2 className="text-sm font-bold text-[#0b1c30] uppercase tracking-wider flex items-center gap-2">
-              <span className="w-2 h-4 rounded-full bg-[#f97316]"></span>
-              Roposo Clout Direct API Credentials
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-[#0b1c30] mb-1">
-                  API Key / Secret Token
-                </label>
-                <input
-                  type="password"
-                  value={roposoApiKey}
-                  onChange={(e) => setRoposoApiKey(e.target.value)}
-                  placeholder="Enter Roposo Clout API key"
-                  className="w-full h-10 px-3.5 rounded-xl bg-[#f8fafc] text-xs font-mono text-[#0b1c30] border border-[#e2e8f0] focus:border-[#f97316] focus:bg-white focus:outline-none"
-                />
-              </div>
 
               <div>
                 <label className="block text-xs font-bold text-[#0b1c30] mb-1">
-                  Low Balance Notification Trigger (INR)
+                  Instant Prepaid UPI Discount (INR)
                 </label>
                 <input
                   type="number"
-                  value={autoFulfillThreshold}
-                  onChange={(e) => setAutoFulfillThreshold(Number(e.target.value))}
+                  value={upiDiscountAmount}
+                  onChange={(e) => setUpiDiscountAmount(Number(e.target.value))}
                   className="w-full h-10 px-3.5 rounded-xl bg-[#f8fafc] text-xs font-mono font-bold text-[#0b1c30] border border-[#e2e8f0] focus:border-[#f97316] focus:bg-white focus:outline-none"
                 />
               </div>
             </div>
-          </div>
 
-          <div className="p-6 rounded-2xl bg-white border border-[#e2e8f0] shadow-xs flex flex-col gap-4">
-            <h2 className="text-sm font-bold text-[#0b1c30] uppercase tracking-wider flex items-center gap-2">
-              <span className="w-2 h-4 rounded-full bg-[#f97316]"></span>
-              CJ Dropshipping Global API
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-[#0b1c30] mb-1">
-                  Access Token
-                </label>
-                <input
-                  type="password"
-                  value={cjApiToken}
-                  onChange={(e) => setCjApiToken(e.target.value)}
-                  placeholder="Enter CJ Dropshipping access token"
-                  className="w-full h-10 px-3.5 rounded-xl bg-[#f8fafc] text-xs font-mono text-[#0b1c30] border border-[#e2e8f0] focus:border-[#f97316] focus:bg-white focus:outline-none"
-                />
+            <div className="p-4 rounded-xl bg-orange-50/60 border border-orange-200 flex items-center justify-between text-xs">
+              <div className="space-y-0.5">
+                <span className="font-bold text-[#0b1c30]">Instant ₹{upiDiscountAmount} Prepaid UPI Incentive</span>
+                <p className="text-[#565e74] text-[11px]">
+                  Encourage buyers to convert COD to UPI with an instant ₹{upiDiscountAmount} discount, eliminating courier RTO risk.
+                </p>
               </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#0b1c30] mb-1">
-                  Target Destination Currency
-                </label>
-                <input
-                  type="text"
-                  disabled
-                  value="INR (₹) - Auto Real-time Converted"
-                  className="w-full h-10 px-3.5 rounded-xl bg-[#f1f5f9] text-xs font-bold text-[#565e74] border border-[#e2e8f0]"
-                />
-              </div>
+              <span className="text-xs font-bold text-[#15803d] bg-emerald-100/80 px-2.5 py-1 rounded-md">
+                Active at checkout
+              </span>
             </div>
           </div>
         </form>
@@ -396,10 +601,22 @@ export default function AdminSettingsPage() {
       {activeTab === "team" && (
         <div className="p-6 rounded-2xl bg-white border border-[#e2e8f0] shadow-xs flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-[#0b1c30] uppercase tracking-wider flex items-center gap-2">
-              <span className="w-2 h-4 rounded-full bg-[#f97316]"></span>
-              Merchant Store Admins &amp; Media Buyers
-            </h2>
+            <div>
+              <h2 className="text-sm font-bold text-[#0b1c30] uppercase tracking-wider flex items-center gap-2">
+                <span className="w-2 h-4 rounded-full bg-[#f97316]"></span>
+                Merchant Store Admins &amp; Staff
+              </h2>
+              <p className="text-xs text-[#565e74]">
+                Staff members with access to your store orders, inventory, and analytics.
+              </p>
+            </div>
+            <Link
+              href="/admin/settings/team"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#f97316] hover:bg-[#ea580c] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+            >
+              <Add size={15} weight="Outline" />
+              <span>Invite Team Member</span>
+            </Link>
           </div>
 
           <div className="divide-y divide-[#f1f5f9]">
@@ -413,7 +630,10 @@ export default function AdminSettingsPage() {
                   <span className="text-[10px] font-bold uppercase tracking-wider text-[#ea580c] bg-orange-100/70 px-2 py-0.5 rounded">
                     {member.role}
                   </span>
-                  <span className="text-xs text-[#15803d] font-bold">Active</span>
+                  <span className="text-xs text-[#15803d] font-bold flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#15803d]"></span>
+                    Active
+                  </span>
                 </div>
               </div>
             ))}

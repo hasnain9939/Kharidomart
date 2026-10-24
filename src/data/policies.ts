@@ -126,7 +126,7 @@ export const POLICIES: Record<string, Policy> = {
         title: "5. How to Submit a 24-Hour Replacement Request",
         paragraphs: [
           "Step 1: Immediately upon receiving the delivery, record your uncut unboxing video showing the outer shipping label.",
-          "Step 2: Within 24 hours of delivery, contact our official support team via WhatsApp (+91 99394 85740) or through our Contact page (kharidomart.com/contact).",
+          "Step 2: Within 24 hours of delivery, contact our official support team via WhatsApp / Helpline (+91 85400 17572), email (kharidomartsupport@gmail.com), or through our Contact page (kharidomart.com/contact).",
           "Step 3: Provide your Order ID, registered phone number, a clear photo of the courier shipping label, and the continuous unboxing video.",
           "Step 4: Our quality assurance team will inspect the footage within 12 to 24 business hours.",
           "Step 5: Upon validation, an identical brand-new replacement unit will be dispatched to your address with priority express shipping at zero cost to you."
@@ -290,6 +290,8 @@ export const POLICIES: Record<string, Policy> = {
       {
         title: "1. Dedicated Customer Support Channels",
         paragraphs: [
+          "Email Support: Reach our official customer care inbox at kharidomartsupport@gmail.com.",
+          "WhatsApp & Phone Helpline: Message or call +91 85400 17572 for quick order assistance.",
           "Online Support Desk: Submit your inquiry anytime via our Contact page for priority assistance.",
           "Live Order Tracking: Track your shipment in real time at kharidomart.com/track-order.",
           "Response Time: Our team typically responds to all customer inquiries within 12 to 24 business hours.",
@@ -313,6 +315,7 @@ export const POLICIES: Record<string, Policy> = {
     ],
     content: [
       "Have questions, feedback, or need help with your order? Our customer support team is here for you!",
+      "Direct Email: kharidomartsupport@gmail.com | Helpline / WhatsApp: +91 85400 17572",
       "Submit an inquiry anytime through our online Contact form or track your parcel directly on our Track Order page."
     ]
   },

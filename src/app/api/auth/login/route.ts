@@ -1,17 +1,10 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import crypto from "crypto";
+import { verifyPassword } from "@/lib/auth";
+import { createUserSessionToken } from "@/lib/session";
 
-function verifyPassword(password: string, combinedHash: string): boolean {
-  try {
-    const [salt, key] = combinedHash.split(":");
-    if (!salt || !key) return false;
-    const derivedKey = crypto.scryptSync(password, salt, 64).toString("hex");
-    return crypto.timingSafeEqual(Buffer.from(key, "hex"), Buffer.from(derivedKey, "hex"));
-  } catch {
-    return false;
-  }
-}
+// In-memory rate limiting: max 5 failed attempts per email per 15 minutes
+const loginAttempts = new Map<string, { count: number; expiresAt: number }>();
 
 export async function POST(req: Request) {
   try {
@@ -26,6 +19,21 @@ export async function POST(req: Request) {
     }
 
     const cleanEmail = email.trim().toLowerCase();
+    const now = Date.now();
+
+    // Check rate limit
+    const attemptRecord = loginAttempts.get(cleanEmail);
+    if (attemptRecord && attemptRecord.expiresAt > now) {
+      if (attemptRecord.count >= 5) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Too many failed login attempts. Please wait 15 minutes before trying again.",
+          },
+          { status: 429 }
+        );
+      }
+    }
 
     const user = await prisma.user.findUnique({
       where: { email: cleanEmail },
@@ -43,7 +51,17 @@ export async function POST(req: Request) {
       },
     });
 
+    const recordFailedAttempt = () => {
+      const current = loginAttempts.get(cleanEmail);
+      if (current && current.expiresAt > now) {
+        current.count += 1;
+      } else {
+        loginAttempts.set(cleanEmail, { count: 1, expiresAt: now + 15 * 60 * 1000 });
+      }
+    };
+
     if (!user || !user.passwordHash) {
+      recordFailedAttempt();
       return NextResponse.json(
         { success: false, error: "Invalid email or password. Please check your credentials." },
         { status: 401 }
@@ -52,14 +70,27 @@ export async function POST(req: Request) {
 
     const isValid = verifyPassword(password, user.passwordHash);
     if (!isValid) {
+      recordFailedAttempt();
       return NextResponse.json(
         { success: false, error: "Invalid email or password. Please check your credentials." },
         { status: 401 }
       );
     }
 
-    return NextResponse.json({
+    // Reset failed counter on success
+    loginAttempts.delete(cleanEmail);
+
+    // Create signed user session token
+    const token = await createUserSessionToken({
+      userId: user.id,
+      email: user.email,
+      role: "user",
+      issuedAt: Date.now(),
+    });
+
+    const res = NextResponse.json({
       success: true,
+      token,
       user: {
         id: user.id,
         name: user.name,
@@ -80,6 +111,17 @@ export async function POST(req: Request) {
           : undefined,
       },
     });
+
+    res.cookies.set("km_user_session", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 30 * 24 * 60 * 60,
+      path: "/",
+    });
+
+    return res;
+
   } catch (err: any) {
     console.error("Login error:", err);
     return NextResponse.json(

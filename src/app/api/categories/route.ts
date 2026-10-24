@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { verifyAdminSessionToken } from "@/lib/session";
 
 // GET /api/categories
 export async function GET() {
@@ -21,9 +22,17 @@ export async function GET() {
   }
 }
 
-// POST /api/categories
+// POST /api/categories (Admin only)
 export async function POST(req: NextRequest) {
   try {
+    const sessionCookie = req.cookies.get("km_admin_session")?.value;
+    if (!(await verifyAdminSessionToken(sessionCookie))) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized: Administrator access required to create categories" },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json();
     const { name, slug, description, image } = body;
 
@@ -33,6 +42,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
 
     const cleanSlug =
       slug?.trim() ||

@@ -1,24 +1,14 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { verifyAdminSessionToken } from "@/lib/session";
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Protect all /admin routes
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
     const sessionCookie = request.cookies.get("km_admin_session")?.value;
-
-    let isAuthenticated = false;
-    if (sessionCookie) {
-      try {
-        const decoded = JSON.parse(Buffer.from(sessionCookie, "base64").toString("utf-8"));
-        if (decoded && decoded.role === "admin") {
-          isAuthenticated = true;
-        }
-      } catch {
-        isAuthenticated = false;
-      }
-    }
+    const isAuthenticated = Boolean(await verifyAdminSessionToken(sessionCookie));
 
     // If accessing login page while already authenticated -> redirect to dashboard
     if (pathname === "/admin/login") {

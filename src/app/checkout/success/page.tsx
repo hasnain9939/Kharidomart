@@ -14,6 +14,19 @@ import {
   ShieldCheck,
   Location,
 } from "reicon-react";
+import { trackPurchase } from "@/lib/analytics";
+
+function getDeterministicTrackingNumber(orderId: string, awb?: string): string {
+  if (awb) return awb;
+  if (!orderId) return "Pending Dispatch";
+  let hash = 0;
+  for (let i = 0; i < orderId.length; i++) {
+    hash = (hash << 5) - hash + orderId.charCodeAt(i);
+    hash |= 0;
+  }
+  const positiveNum = (Math.abs(hash) % 90000000) + 10000000;
+  return `KM-BLU-${positiveNum}-IN`;
+}
 
 interface SavedOrder {
   orderId: string;
@@ -134,7 +147,7 @@ function CheckoutSuccessContent() {
   }, [queryOrderId]);
 
   const orderId = order?.orderId || queryOrderId || "";
-  const trackingNumber = order?.awbNumber || (orderId ? "KM-BLU-" + Math.floor(10000000 + Math.random() * 90000000) + "-IN" : "Pending Dispatch");
+  const trackingNumber = getDeterministicTrackingNumber(orderId, order?.awbNumber);
   const customerName = [order?.customer.firstName, order?.customer.lastName].filter(Boolean).join(" ") || "Valued Customer";
   const customerEmail = order?.customer.email || "";
   const customerPhone = order?.customer.phone || "";
@@ -142,6 +155,18 @@ function CheckoutSuccessContent() {
   // Dynamic delivery estimate (3 business days ahead)
   const [arrivalDateStr, setArrivalDateStr] = useState("In 3–4 Business Days");
   const [orderTimeStr, setOrderTimeStr] = useState("Just now");
+
+  useEffect(() => {
+    if (order) {
+      trackPurchase({
+        orderId: order.orderId,
+        grandTotal: order.grandTotal,
+        items: order.items,
+        shippingFee: order.shippingFee,
+        paymentMethod: order.paymentMethod,
+      });
+    }
+  }, [order?.orderId]);
 
   useEffect(() => {
     const arrival = new Date();

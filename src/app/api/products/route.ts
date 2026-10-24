@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { formatProduct } from "@/lib/products";
+import { verifyAdminSessionToken } from "@/lib/auth";
 
 export { formatProduct };
 
@@ -49,9 +50,17 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST /api/products
+// POST /api/products (Admin only)
 export async function POST(req: NextRequest) {
   try {
+    const sessionCookie = req.cookies.get("km_admin_session")?.value;
+    if (!(await verifyAdminSessionToken(sessionCookie))) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized: Administrator access required" },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json();
 
     const {

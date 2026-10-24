@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { formatProduct } from "../route";
+import { verifyAdminSessionToken } from "@/lib/auth";
 
 // GET /api/products/[id]
 export async function GET(
@@ -44,12 +45,20 @@ export async function GET(
   }
 }
 
-// PUT /api/products/[id]
+// PUT /api/products/[id] (Admin only)
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const sessionCookie = req.cookies.get("km_admin_session")?.value;
+    if (!(await verifyAdminSessionToken(sessionCookie))) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized: Administrator access required" },
+        { status: 401 }
+      );
+    }
+
     const { id } = await params;
     const body = await req.json();
 
@@ -109,12 +118,20 @@ export async function PUT(
   }
 }
 
-// DELETE /api/products/[id]
+// DELETE /api/products/[id] (Admin only)
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const sessionCookie = req.cookies.get("km_admin_session")?.value;
+    if (!(await verifyAdminSessionToken(sessionCookie))) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized: Administrator access required" },
+        { status: 401 }
+      );
+    }
+
     const { id } = await params;
 
     const existing = await prisma.product.findFirst({

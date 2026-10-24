@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { MessageDots, CloseCircle, CheckCircle, ShieldCheck, ArrowRight, Sparkles } from "reicon-react";
+import { MessageDots, CloseCircle, CheckCircle, ShieldCheck, Sparkles } from "reicon-react";
 
 export default function WhatsAppMomWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -135,13 +135,30 @@ export default function WhatsAppMomWidget() {
             </div>
 
             {/* Footer */}
-            <div className="p-3 bg-[#fbf7f0] border-t border-[#eddcd1] text-center">
-              <button
-                onClick={() => setIsOpen(false)}
-                className="w-full py-2 bg-[#2b1f1a] hover:bg-[#3d2c25] active:scale-[0.98] text-white text-xs font-bold rounded-xl transition-all cursor-pointer"
+            <div className="p-3 bg-[#fbf7f0] border-t border-[#eddcd1] space-y-2">
+              <a
+                href="https://wa.me/918540017572?text=Hi%20Kharido%20Mart%20Support%2C%20I%20have%20a%20question%20about%20an%20order"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-2.5 bg-[#25D366] hover:bg-[#20bd5a] active:scale-[0.98] text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm"
               >
-                Continue Browsing
-              </button>
+                <MessageDots size={16} weight="Filled" />
+                <span>Chat on WhatsApp (+91 85400 17572)</span>
+              </a>
+              <div className="flex items-center justify-between text-[11px] text-[#6b5850] px-1">
+                <a
+                  href="mailto:kharidomartsupport@gmail.com"
+                  className="hover:text-[#e06b5b] underline"
+                >
+                  kharidomartsupport@gmail.com
+                </a>
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="hover:text-[#2b1f1a] font-semibold cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>

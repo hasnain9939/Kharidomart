@@ -107,6 +107,50 @@ export default function ContactPage() {
             </h3>
 
             <div className="space-y-5 text-sm text-stone-600">
+              {/* Direct Support Helpline & WhatsApp */}
+              <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-2">
+                <div className="flex items-center gap-2 text-emerald-900 font-bold text-sm">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Direct Customer Support</span>
+                </div>
+                <p className="text-xs text-stone-600 leading-relaxed">
+                  Call or chat directly with our customer happiness team for immediate assistance:
+                </p>
+                <div className="pt-1 flex flex-wrap gap-2">
+                  <a
+                    href="https://wa.me/918540017572?text=Hi%20Kharido%20Mart%20Support%2C%20I%20need%20assistance%20with%20an%20order"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#25D366] hover:bg-[#20bd5a] text-white text-xs font-bold rounded-xl transition-all shadow-xs"
+                  >
+                    <span>💬 WhatsApp +91 85400 17572</span>
+                  </a>
+                  <a
+                    href="tel:+918540017572"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-stone-50 border border-stone-200 text-stone-900 text-xs font-bold rounded-xl transition-all shadow-2xs"
+                  >
+                    <span>📞 Call +91 85400 17572</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Official Support Email */}
+              <div className="flex items-start gap-3.5">
+                <span className="text-xl">✉️</span>
+                <div>
+                  <p className="font-bold text-stone-900">Email Customer Support</p>
+                  <p className="text-xs text-stone-500 mt-0.5 leading-relaxed">
+                    Send us your inquiries, order questions, or feedback anytime:
+                  </p>
+                  <a
+                    href="mailto:kharidomartsupport@gmail.com"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 hover:text-amber-800 mt-1 font-mono underline underline-offset-2"
+                  >
+                    <span>kharidomartsupport@gmail.com</span>
+                  </a>
+                </div>
+              </div>
+
               <div className="flex items-start gap-3.5">
                 <span className="text-xl">📦</span>
                 <div>

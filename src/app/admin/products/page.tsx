@@ -19,6 +19,7 @@ import {
   Trash,
   Sparkles,
   Copy,
+  Refresh,
 } from "reicon-react";
 import { Product } from "@/data/products";
 import { useStore } from "@/context/StoreContext";
@@ -32,6 +33,83 @@ export default function AdminProductsPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [productToDelete, setProductToDelete] = useState<{ id: string; title: string } | null>(null);
+
+  // 1-Click Shopify Import states
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isLoadingShopify, setIsLoadingShopify] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [shopifyProducts, setShopifyProducts] = useState<any[]>([]);
+  const [selectedShopifyIds, setSelectedShopifyIds] = useState<number[]>([]);
+  const [shopifyError, setShopifyError] = useState<string | null>(null);
+  const [shopifyScopeNeeded, setShopifyScopeNeeded] = useState(false);
+
+  const openShopifyImportModal = async () => {
+    setIsImportModalOpen(true);
+    setIsLoadingShopify(true);
+    setShopifyError(null);
+    setShopifyScopeNeeded(false);
+    try {
+      const res = await fetch("/api/shopify/products");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.products)) {
+        setShopifyProducts(data.products);
+        // Pre-select products that are not yet imported
+        const unimported = data.products.filter((p: any) => !p.isAlreadyImported).map((p: any) => p.id);
+        setSelectedShopifyIds(unimported);
+      } else {
+        if (data.scopeNeeded) {
+          setShopifyScopeNeeded(true);
+        }
+        setShopifyError(data.error || "Could not load products from Shopify");
+      }
+    } catch (err: any) {
+      setShopifyError("Failed to reach server: " + err.message);
+    } finally {
+      setIsLoadingShopify(false);
+    }
+  };
+
+  const handleToggleSelectShopify = (id: number) => {
+    setSelectedShopifyIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAllShopify = () => {
+    if (selectedShopifyIds.length === shopifyProducts.length) {
+      setSelectedShopifyIds([]);
+    } else {
+      setSelectedShopifyIds(shopifyProducts.map((p) => p.id));
+    }
+  };
+
+  const handleImportFromShopify = async () => {
+    if (selectedShopifyIds.length === 0) {
+      alert("Please select at least one product to import.");
+      return;
+    }
+    setIsImporting(true);
+    try {
+      const res = await fetch("/api/shopify/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productIds: selectedShopifyIds }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setToastMessage(`🎉 ${data.message || "Products imported successfully!"}`);
+        setIsImportModalOpen(false);
+        await fetchProducts();
+        await refreshProducts();
+      } else {
+        alert(data.error || "Failed to import products from Shopify");
+      }
+    } catch (err: any) {
+      alert("Error importing from Shopify: " + err.message);
+    } finally {
+      setIsImporting(false);
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -118,11 +196,11 @@ export default function AdminProductsPage() {
             Products ({products.length})
           </h1>
           <p className="text-xs text-[#565e74] mt-0.5">
-            Real products stored in your local Prisma SQLite database.
+            Active product catalog published to your storefront and synchronized to Shopify Warehouse.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
           <Link
             href="/shop"
             target="_blank"
@@ -131,6 +209,15 @@ export default function AdminProductsPage() {
             <Eye size={15} weight="Outline" />
             <span>View Storefront</span>
           </Link>
+          <button
+            type="button"
+            onClick={openShopifyImportModal}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0b1c30] hover:bg-[#1a2d45] text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
+          >
+            <Box size={16} weight="Outline" className="text-emerald-400" />
+            <span>1-Click Import from Shopify</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          </button>
           <Link
             href="/admin/products/new"
             className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#f97316] hover:bg-[#ea580c] text-white text-xs font-bold shadow-[0_4px_14px_0_rgba(249,115,22,0.35)] transition-all"
@@ -299,6 +386,225 @@ export default function AdminProductsPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* 1-Click Shopify Import Modal */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 z-50 bg-[#0b1c30]/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-[#e2e8f0] flex flex-col gap-5 max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95">
+            {/* Header */}
+            <div className="flex items-start justify-between pb-3 border-b border-[#f1f5f9]">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200">
+                  <Box size={22} weight="Filled" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-[#0b1c30] flex items-center gap-2">
+                    <span>1-Click Import from Shopify</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-md">
+                      cgxx12-ek
+                    </span>
+                  </h3>
+                  <p className="text-xs text-[#565e74] mt-0.5">
+                    Sync items from your connected Shopify warehouse catalog directly into Kharido Mart.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsImportModalOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-[#0b1c30] hover:bg-slate-100 transition-colors"
+              >
+                <CloseCircle size={20} weight="Outline" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto min-h-[220px]">
+              {isLoadingShopify ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-3">
+                  <div className="w-8 h-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                  <span className="text-xs font-semibold text-[#565e74]">
+                    Connecting to Shopify Admin API &amp; fetching products...
+                  </span>
+                </div>
+              ) : shopifyScopeNeeded ? (
+                <div className="p-5 rounded-2xl bg-amber-50/70 border border-amber-200 flex flex-col items-center text-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center">
+                    <ShieldCheck size={22} weight="Filled" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-amber-900">
+                      Product Catalog Authorization Required
+                    </h4>
+                    <p className="text-xs text-amber-700 mt-1 max-w-md">
+                      Your app needs permission to read products from Shopify. Click below to approve and return here.
+                    </p>
+                  </div>
+                  <Link
+                    href="/api/shopify/install"
+                    target="_blank"
+                    className="px-4 py-2 rounded-xl bg-[#0b1c30] text-white text-xs font-bold hover:bg-[#1a2d45] transition-all"
+                  >
+                    Authorize Product Sync ↗
+                  </Link>
+                </div>
+              ) : shopifyError ? (
+                <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex flex-col gap-2">
+                  <div className="font-bold flex items-center gap-1.5">
+                    <CloseCircle size={15} weight="Filled" />
+                    <span>Failed to load products:</span>
+                  </div>
+                  <p>{shopifyError}</p>
+                  <button
+                    type="button"
+                    onClick={openShopifyImportModal}
+                    className="self-start px-3 py-1.5 rounded-lg bg-red-600 text-white font-bold text-xs hover:bg-red-700"
+                  >
+                    Retry Connection
+                  </button>
+                </div>
+              ) : shopifyProducts.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center">
+                    <Box size={24} weight="Outline" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-[#0b1c30]">
+                      No Products Found in Shopify
+                    </h4>
+                    <p className="text-xs text-[#565e74] mt-1 max-w-sm">
+                      Your Shopify store (<code className="font-mono text-emerald-700">cgxx12-ek.myshopify.com</code>) currently has no products listed. Add products in Shopify first or add them directly in Kharido Mart.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 mt-2">
+                    <a
+                      href="https://admin.shopify.com/store/cgxx12-ek/products/new"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 rounded-xl bg-[#0b1c30] text-white text-xs font-bold hover:bg-[#1a2d45] transition-all"
+                    >
+                      Add in Shopify ↗
+                    </a>
+                    <button
+                      type="button"
+                      onClick={openShopifyImportModal}
+                      className="px-3.5 py-2 rounded-xl bg-white border border-[#e2e8f0] text-xs font-bold text-[#0b1c30] hover:bg-slate-50 transition-all flex items-center gap-1"
+                    >
+                      <Refresh size={14} weight="Outline" />
+                      <span>Refresh</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {/* Select All Row */}
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 text-xs text-[#565e74]">
+                    <span>
+                      Found <strong>{shopifyProducts.length}</strong> products in Shopify
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleSelectAllShopify}
+                      className="font-bold text-[#f97316] hover:underline cursor-pointer"
+                    >
+                      {selectedShopifyIds.length === shopifyProducts.length
+                        ? "Deselect All"
+                        : "Select All Unimported"}
+                    </button>
+                  </div>
+
+                  {/* List of Products */}
+                  <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1">
+                    {shopifyProducts.map((p) => {
+                      const isSelected = selectedShopifyIds.includes(p.id);
+                      return (
+                        <div
+                          key={p.id}
+                          onClick={() => handleToggleSelectShopify(p.id)}
+                          className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center gap-3.5 ${
+                            isSelected
+                              ? "border-emerald-500 bg-emerald-50/40"
+                              : "border-[#e2e8f0] hover:border-slate-300 bg-white"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {}} // handled by parent div
+                            className="w-4 h-4 accent-emerald-600 rounded cursor-pointer"
+                          />
+                          <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-[#e2e8f0]">
+                            <Image
+                              src={p.imageUrl}
+                              alt={p.title}
+                              width={48}
+                              height={48}
+                              unoptimized
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-xs font-bold text-[#0b1c30] truncate">
+                              {p.title}
+                            </h4>
+                            <div className="flex items-center gap-2 text-[11px] text-[#565e74] mt-0.5">
+                              <span className="font-mono text-emerald-800 font-bold">
+                                ₹{p.price.toLocaleString("en-IN")}
+                              </span>
+                              <span>•</span>
+                              <span>Stock: {p.stock}</span>
+                              <span>•</span>
+                              <span className="font-mono text-[10px] text-slate-400">
+                                {p.sku}
+                              </span>
+                            </div>
+                          </div>
+                          {p.isAlreadyImported && (
+                            <span className="text-[10px] font-bold text-[#15803d] bg-emerald-100/80 px-2 py-0.5 rounded-md shrink-0">
+                              Synced
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between pt-3 border-t border-[#f1f5f9]">
+              <span className="text-xs text-[#565e74]">
+                {selectedShopifyIds.length} item{selectedShopifyIds.length === 1 ? "" : "s"} selected
+              </span>
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setIsImportModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl border border-[#e2e8f0] text-xs font-bold text-[#565e74] hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={selectedShopifyIds.length === 0 || isImporting}
+                  onClick={handleImportFromShopify}
+                  className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 disabled:opacity-50 transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  {isImporting ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                      <span>Importing...</span>
+                    </>
+                  ) : (
+                    <span>Import Selected ({selectedShopifyIds.length})</span>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

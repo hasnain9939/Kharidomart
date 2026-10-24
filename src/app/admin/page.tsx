@@ -62,6 +62,12 @@ export default function AdminDashboardPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [cancelConfirmOrder, setCancelConfirmOrder] = useState<DbOrder | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [shopifyStatus, setShopifyStatus] = useState<{
+    configured: boolean;
+    connected: boolean;
+    shopName?: string;
+    myshopifyDomain?: string;
+  } | null>(null);
 
   const fetchOrders = async () => {
     setIsLoadingOrders(true);
@@ -80,6 +86,10 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     fetchOrders();
+    fetch("/api/shopify/status")
+      .then((r) => r.json())
+      .then((d) => setShopifyStatus(d))
+      .catch(() => {});
   }, []);
 
   const cancelledOrders = orders.filter((o) => o.status?.toLowerCase() === "cancelled");
@@ -154,14 +164,23 @@ export default function AdminDashboardPage() {
       <div className="flex flex-col gap-4">
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
           <div className="min-w-0">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex flex-wrap items-center gap-2 mb-1">
               <span className="px-2.5 py-0.5 rounded-full bg-[#ffedd5] text-[#ea580c] text-[11px] font-bold tracking-wider uppercase">
                 Store Operations Live
               </span>
-              <span className="inline-block w-2 h-2 rounded-full bg-[#15803d] animate-ping"></span>
-              <span className="text-[#565e74] text-xs font-medium">
-                Connected to SQLite DB • Live
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 text-[#565e74] text-xs font-medium border border-slate-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#15803d]"></span>
+                Prisma • PostgreSQL
               </span>
+              {shopifyStatus?.connected && (
+                <Link
+                  href="/admin/inventory"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-bold border border-emerald-200 hover:bg-emerald-100 transition-colors"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#15803d] animate-pulse"></span>
+                  Shopify Warehouse Live ({shopifyStatus.myshopifyDomain})
+                </Link>
+              )}
             </div>
             <h1 className="text-xl sm:text-2xl font-extrabold text-[#0b1c30] tracking-tight">
               Kharido Mart Store Overview &amp; Control

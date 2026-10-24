@@ -25,12 +25,44 @@ export default function AdminMarketingPage() {
   const [orders, setOrders] = useState<any[]>([]);
 
   React.useEffect(() => {
+    const fetchDiscounts = async () => {
+      try {
+        const res = await fetch("/api/discounts");
+        const data = await res.json();
+        if (data.success && Array.isArray(data.discounts)) {
+          setDiscounts(
+            data.discounts.map((d: any) => ({
+              id: d.id,
+              code: d.code,
+              type: d.type === "fixed" ? "fixed_amount" : "percentage",
+              value: d.value,
+              status: d.active ? "Active" : "Expired",
+              usageCount: d.usageCount || 0,
+              minSpend: d.minOrder || 0,
+              validTill: d.expiresAt
+                ? new Date(d.expiresAt).toLocaleDateString("en-IN", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })
+                : "No Expiry",
+            }))
+          );
+        }
+      } catch (err) {
+        console.error("Failed to load discounts from database", err);
+      }
+    };
+    fetchDiscounts();
+
     const fetchOrders = async () => {
       try {
         const res = await fetch("/api/orders");
         const data = await res.json();
         if (data.success && Array.isArray(data.orders)) {
           setOrders(data.orders);
+        } else if (Array.isArray(data)) {
+          setOrders(data);
         }
       } catch (e) {
         console.error("Failed to load orders for marketing", e);

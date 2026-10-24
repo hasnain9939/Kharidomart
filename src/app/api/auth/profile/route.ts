@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { verifyUserSessionToken, verifyAdminSessionToken } from "@/lib/session";
 
-export async function PUT(req: Request) {
+export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
     const { email, name, phone, address } = body;
@@ -14,6 +15,25 @@ export async function PUT(req: Request) {
     }
 
     const cleanEmail = email.trim().toLowerCase();
+
+    // Verify caller session to prevent IDOR / Account Hijacking
+    const userSessionCookie = req.cookies.get("km_user_session")?.value;
+    const adminSessionCookie = req.cookies.get("km_admin_session")?.value;
+
+    const userSession = await verifyUserSessionToken(userSessionCookie);
+    const adminSession = await verifyAdminSessionToken(adminSessionCookie);
+
+    const isAuthorized =
+      (userSession && userSession.email.toLowerCase() === cleanEmail) ||
+      Boolean(adminSession);
+
+    if (!isAuthorized) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized: Active user session required to modify profile." },
+        { status: 401 }
+      );
+    }
+
 
     const updated = await prisma.user.update({
       where: { email: cleanEmail },

@@ -117,3 +117,17 @@ model StoreSetting {
   value     String
   updatedAt DateTime @updatedAt
 }
+
+model Discount {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  type        String    @default("percentage") // "percentage" | "fixed"
+  value       Float
+  minOrder    Float     @default(0)
+  description String?
+  active      Boolean   @default(true)
+  expiresAt   DateTime?
+  usageCount  Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}

@@ -120,6 +120,44 @@ export default function RootLayout({
           "target": "https://kharidomart.com/shop?q={search_term_string}",
           "query-input": "required name=search_term_string"
         }
+      },
+      {
+        "@type": ["LocalBusiness", "Store"],
+        "@id": "https://kharidomart.com/#localbusiness",
+        "name": "Kharido Mart",
+        "url": "https://kharidomart.com",
+        "logo": "https://kharidomart.com/assets/images/kharidomart-cart-icon.svg",
+        "image": "https://kharidomart.com/assets/stitch/hero_showcase.jpg",
+        "description": "India's trusted online store for gentle baby care, tear-free electric trimmers, screen-free Montessori sound books, and postpartum mom wellness.",
+        "telephone": "+91 85400 17572",
+        "email": "kharidomartsupport@gmail.com",
+        "priceRange": "₹₹",
+        "currenciesAccepted": "INR",
+        "paymentAccepted": "Cash on Delivery, UPI, Credit Card, Debit Card, Net Banking",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Plot 42, Marol Industrial Area, Andheri East",
+          "addressLocality": "Mumbai",
+          "addressRegion": "Maharashtra",
+          "postalCode": "400093",
+          "addressCountry": "IN"
+        },
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": "19.1197",
+          "longitude": "72.8841"
+        },
+        "openingHoursSpecification": [
+          {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+            "opens": "09:00",
+            "closes": "21:00"
+          }
+        ],
+        "sameAs": [
+          "https://kharidomart.com"
+        ]
       }
     ]
   };

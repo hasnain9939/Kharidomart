@@ -1,4 +1,4 @@
-import React from "react";
+import React, { cache } from "react";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Product } from "@/data/products";
@@ -10,13 +10,17 @@ interface ProductPageProps {
   params: Promise<{ slug: string }>;
 }
 
-export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const dbProduct = await prisma.product.findFirst({
+const getProduct = cache(async (slug: string) => {
+  return prisma.product.findFirst({
     where: {
       OR: [{ slug }, { id: slug }],
     },
   });
+});
+
+export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const dbProduct = await getProduct(slug);
 
   if (!dbProduct) {
     return {
@@ -73,11 +77,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 
 export default async function ProductDetailPage({ params }: ProductPageProps) {
   const { slug } = await params;
-  const dbProduct = await prisma.product.findFirst({
-    where: {
-      OR: [{ slug }, { id: slug }],
-    },
-  });
+  const dbProduct = await getProduct(slug);
 
   if (!dbProduct) {
     notFound();

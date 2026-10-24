@@ -1,7 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { Product, PRODUCTS } from "@/data/products";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { Product } from "@/data/products";
 
 export interface CartItem {
   product: Product;
@@ -74,11 +74,11 @@ interface StoreContextType {
   closeQuickView: () => void;
   toggleWishlist: (productId: string) => void;
   isWishlisted: (productId: string) => boolean;
-  applyCoupon: (code: string) => boolean;
+  applyCoupon: (code: string) => boolean | Promise<boolean>;
   removeCoupon: () => void;
   showToast: (message: string, type?: "success" | "info" | "warning") => void;
   removeToast: (id: string) => void;
-  loginWithGoogle: (googleData?: { name?: string; email: string; googleId?: string; picture?: string }) => Promise<boolean>;
+  loginWithGoogle: (googleData?: { name?: string; email: string; googleId?: string; picture?: string; accessToken?: string }) => Promise<boolean>;
   loginWithEmail: (email: string, password?: string, name?: string) => Promise<boolean>;
   signupWithEmail: (name: string, email: string, password?: string, phone?: string) => Promise<boolean>;
   logout: () => void;
@@ -98,11 +98,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [discountCode, setDiscountCode] = useState<string>("");
+  const [appliedDiscount, setAppliedDiscount] = useState<{
+    code: string;
+    type: "percentage" | "fixed";
+    value: number;
+    minOrder?: number;
+    description?: string;
+  } | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isAuthLoaded, setIsAuthLoaded] = useState(false);
 
-  const refreshProducts = async () => {
+  const refreshProducts = useCallback(async () => {
     try {
       setIsLoadingProducts(true);
       const res = await fetch("/api/products");
@@ -115,28 +122,47 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoadingProducts(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    refreshProducts();
+    let isMounted = true;
+    fetch("/api/products")
+      .then((res) => res.json())
+      .then((data) => {
+        if (isMounted && data.success && Array.isArray(data.products)) {
+          setProducts(data.products);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch products:", err);
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingProducts(false);
+      });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Load from localStorage
   useEffect(() => {
-    try {
-      const savedUser = localStorage.getItem("km_user");
-      if (savedUser) setUser(JSON.parse(savedUser));
+    const timer = setTimeout(() => {
+      try {
+        const savedUser = localStorage.getItem("km_user");
+        if (savedUser) setUser(JSON.parse(savedUser));
 
-      const savedCart = localStorage.getItem("km_cart");
-      if (savedCart) setCart(JSON.parse(savedCart));
+        const savedCart = localStorage.getItem("km_cart");
+        if (savedCart) setCart(JSON.parse(savedCart));
 
-      const savedWishlist = localStorage.getItem("km_wishlist");
-      if (savedWishlist) setWishlist(JSON.parse(savedWishlist));
-    } catch {
-      // ignore
-    } finally {
-      setIsAuthLoaded(true);
-    }
+        const savedWishlist = localStorage.getItem("km_wishlist");
+        if (savedWishlist) setWishlist(JSON.parse(savedWishlist));
+      } catch {
+        // ignore
+      } finally {
+        setIsAuthLoaded(true);
+      }
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   // Save to localStorage
@@ -235,28 +261,61 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const isWishlisted = (productId: string) => wishlist.includes(productId);
 
-  const applyCoupon = (code: string) => {
+  const applyCoupon = async (code: string): Promise<boolean> => {
     const clean = code.trim().toUpperCase();
+    if (!clean) {
+      showToast("Please enter a coupon code", "warning");
+      return false;
+    }
+
+    try {
+      const res = await fetch(`/api/discounts?code=${encodeURIComponent(clean)}`);
+      const data = await res.json();
+      if (res.ok && data.success && data.discount) {
+        if (data.discount.minOrder && subtotal < data.discount.minOrder) {
+          showToast(`Minimum cart total of ₹${data.discount.minOrder} required for code ${clean}`, "warning");
+          return false;
+        }
+        setDiscountCode(clean);
+        setAppliedDiscount(data.discount);
+        showToast(`Coupon ${clean} applied! ${data.discount.description || ""} 🎉`);
+        return true;
+      }
+    } catch {
+      // Network fallback
+    }
+
+    // Built-in fallback defaults
     if (clean === "MOMFIRST") {
       setDiscountCode(clean);
+      setAppliedDiscount({ code: clean, type: "fixed", value: 50, description: "Flat ₹50 Off" });
       showToast("Coupon MOMFIRST applied! Flat ₹50 instant discount added. 🍼");
       return true;
     }
-    if (clean === "KHARIDO10" || clean === "WELCOME10") {
+    if (clean === "FIRST10" || clean === "KHARIDO10" || clean === "WELCOME10") {
       setDiscountCode(clean);
+      setAppliedDiscount({ code: clean, type: "percentage", value: 10, description: "10% Off" });
       showToast("Coupon applied! 10% discount added. 🎉");
       return true;
     }
-    showToast("Invalid promo code. Try MOMFIRST or KHARIDO10!", "warning");
+    if (clean === "PREPAID50") {
+      setDiscountCode(clean);
+      setAppliedDiscount({ code: clean, type: "fixed", value: 50, description: "₹50 Prepaid Off" });
+      showToast("Coupon PREPAID50 applied! Flat ₹50 off. 💳");
+      return true;
+    }
+
+    showToast("Invalid promo code. Try MOMFIRST, FIRST10 or WELCOME10!", "warning");
     return false;
   };
 
   const removeCoupon = () => {
     setDiscountCode("");
+    setAppliedDiscount(null);
     showToast("Coupon removed", "info");
   };
 
-  const loginWithGoogle = async (googleData?: { name?: string; email: string; googleId?: string; picture?: string }): Promise<boolean> => {
+  const loginWithGoogle = async (googleData?: { name?: string; email: string; googleId?: string; picture?: string; accessToken?: string }): Promise<boolean> => {
     if (!googleData?.email) {
       showToast("Google authentication did not provide an email address", "warning");
       return false;
@@ -281,7 +340,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const loginWithEmail = async (email: string, password?: string, name?: string): Promise<boolean> => {
+  const loginWithEmail = async (email: string, password?: string, _name?: string): Promise<boolean> => {
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
@@ -365,12 +424,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     0
   );
 
-  const discountAmount =
-    discountCode === "MOMFIRST"
-      ? Math.min(subtotal, 50)
-      : discountCode === "KHARIDO10" || discountCode === "WELCOME10"
-      ? Math.round(subtotal * 0.1)
-      : 0;
+  const discountAmount = appliedDiscount
+    ? appliedDiscount.type === "percentage"
+      ? Math.round((subtotal * appliedDiscount.value) / 100)
+      : Math.min(subtotal, appliedDiscount.value)
+    : discountCode === "MOMFIRST"
+    ? Math.min(subtotal, 50)
+    : discountCode === "FIRST10" || discountCode === "KHARIDO10" || discountCode === "WELCOME10"
+    ? Math.round(subtotal * 0.1)
+    : 0;
 
   const finalTotal = Math.max(0, subtotal - discountAmount);
   const freeShippingProgress = Math.min(
