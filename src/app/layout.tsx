@@ -45,11 +45,14 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
+      { url: "/favicon.ico", sizes: "48x48 32x32 16x16" },
       { url: "/assets/images/kharidomart-cart-icon.svg", type: "image/svg+xml" },
-      { url: "/favicon.ico", sizes: "any" },
+      { url: "/assets/images/kharidomart-cart-icon.png", sizes: "192x192", type: "image/png" },
     ],
-    apple: "/assets/images/kharidomart-cart-icon.svg",
-    shortcut: "/assets/images/kharidomart-cart-icon.svg",
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
   },
   openGraph: {
     type: "website",
