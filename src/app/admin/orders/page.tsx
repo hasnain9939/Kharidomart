@@ -17,7 +17,6 @@ import {
   ShieldCheck,
   User,
   ArrowRight,
-  ArrowLeft,
   Add,
   Box,
 } from "reicon-react";
@@ -66,8 +65,8 @@ export default function AdminOrdersPage() {
             })),
             total: orderTotal,
             paymentMethod: o.paymentMethod === "COD" ? "COD" : "UPI / Prepaid",
-            courier: o.courier || "BlueDart Express Air",
-            awb: o.awbNumber || `KM-BLU-${o.orderNumber.replace(/\D/g, "")}-IN`,
+            courier: o.courier || "Standard Delivery",
+            awb: o.awbNumber || "",
             status: isDelivered
               ? "Delivered"
               : isInTransit
@@ -83,12 +82,12 @@ export default function AdminOrdersPage() {
               hour: "2-digit",
               minute: "2-digit",
             }),
-            trackingStep: isDelivered ? 5 : isInTransit ? 4 : isCancelled ? 0 : 2,
-            supplierName: "Direct Fulfillment",
-            supplierCost: Math.round(orderTotal * 0.4),
-            supplierStatus: isDelivered ? "Delivered" : isCancelled ? "Cancelled" : "Processing Fulfillment",
+            trackingStep: isDelivered ? 5 : isInTransit ? 3 : isCancelled ? 0 : 2,
+            supplierName: o.supplierName || "Shopify Central Warehouse",
+            supplierCost: o.supplierCost || 0,
+            supplierStatus: isDelivered ? "Delivered" : isCancelled ? "Cancelled" : "Warehouse Sync Active",
             codVerification: o.paymentMethod === "COD" ? "COD Order" : "Prepaid UPI",
-            estimatedNetProfit: Math.round(orderTotal * 0.5),
+            estimatedNetProfit: o.estimatedNetProfit || 0,
           };
         });
         setOrders(mapped);
@@ -141,7 +140,7 @@ export default function AdminOrdersPage() {
   const handlePushToSupplier = async (orderId: string) => {
     const target = orders.find((o) => o.id === orderId);
     if (!target) return;
-    const supName = target.supplierName || "Shiprocket 3PL";
+    const supName = target.supplierName || "Shopify Central Warehouse";
 
     try {
       await fetch(`/api/orders/${orderId}`, {
@@ -328,7 +327,7 @@ export default function AdminOrdersPage() {
           <div className="flex items-center justify-between text-xs text-[#565e74] font-semibold mb-1">
             <span>In Transit</span>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#d3e4fe] text-[#0b1c30]">
-              BlueDart
+              Express Air
             </span>
           </div>
           <div className="text-2xl font-black text-[#0b1c30] font-mono tracking-tight">
@@ -445,7 +444,7 @@ export default function AdminOrdersPage() {
           <div>
             <h3 className="text-lg font-bold text-[#0b1c30]">No Customer Orders Yet</h3>
             <p className="text-xs text-[#565e74] max-w-md mx-auto mt-1">
-              Customer orders placed on the live storefront will automatically appear here with shipping addresses, phone numbers, and BlueDart courier tracking.
+              Customer orders placed on the live storefront will automatically appear here with shipping addresses, phone numbers, and express courier tracking.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -565,10 +564,10 @@ export default function AdminOrdersPage() {
                     <td className="py-3.5 px-4">
                       <div className="flex flex-col">
                         <span className="font-bold text-[#0b1c30]">
-                          {order.supplierName || "Roposo Clout"}
+                          {order.supplierName || "Shopify Central Warehouse"}
                         </span>
                         <span className="text-[#565e74] text-[11px]">
-                          COGS: ₹{order.supplierCost || 220}
+                          {order.supplierCost ? `COGS: ₹${order.supplierCost}` : "Warehouse Synced"}
                         </span>
                         <span className="text-[10px] font-bold mt-0.5 flex items-center gap-1">
                           {order.codVerification === "WhatsApp OTP Confirmed" ? (
@@ -759,18 +758,16 @@ export default function AdminOrdersPage() {
                     <span className="font-extrabold text-[#0b1c30]">₹{selectedOrder.total}</span>
                   </div>
                   <div className="p-2 rounded-lg bg-white/80 border border-[#bbf7d0]/60">
-                    <span className="text-[#565e74] text-[11px] block">Supplier COGS:</span>
-                    <span className="font-bold text-[#ba1a1a]">-₹{selectedOrder.supplierCost || 220}</span>
+                    <span className="text-[#565e74] text-[11px] block">Supplier Status:</span>
+                    <span className="font-bold text-[#0b1c30]">{selectedOrder.supplierStatus}</span>
                   </div>
                   <div className="p-2 rounded-lg bg-white/80 border border-[#bbf7d0]/60">
-                    <span className="text-[#565e74] text-[11px] block">Meta CPA &amp; Courier:</span>
-                    <span className="font-bold text-[#565e74]">
-                      -₹{Math.max(0, selectedOrder.total - (selectedOrder.supplierCost || 220) - (selectedOrder.estimatedNetProfit || 200))}
-                    </span>
+                    <span className="text-[#565e74] text-[11px] block">Payment Method:</span>
+                    <span className="font-bold text-[#565e74]">{selectedOrder.paymentMethod}</span>
                   </div>
                   <div className="p-2 rounded-lg bg-[#dcfce7] border border-[#86efac]">
-                    <span className="text-[#15803d] text-[11px] font-bold block">True Net Profit:</span>
-                    <span className="font-black text-[#15803d] text-sm">+₹{selectedOrder.estimatedNetProfit || 200}</span>
+                    <span className="text-[#15803d] text-[11px] font-bold block">Gross Amount:</span>
+                    <span className="font-black text-[#15803d] text-sm">₹{selectedOrder.total}</span>
                   </div>
                 </div>
               </div>
@@ -780,7 +777,7 @@ export default function AdminOrdersPage() {
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-bold uppercase tracking-wider text-[#0b1c30] flex items-center gap-1.5">
                     <Box size={14} weight="Outline" className="text-[#f97316]" />
-                    Supplier: {selectedOrder.supplierName || "Roposo Clout"}
+                    Supplier: {selectedOrder.supplierName || "Shopify Central Warehouse"}
                   </span>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white border border-[#e2e8f0] text-[#0b1c30]">
                     {selectedOrder.supplierStatus}
@@ -809,16 +806,20 @@ export default function AdminOrdersPage() {
                     <TruckFast size={14} weight="Filled" />
                     Courier: {selectedOrder.courier}
                   </span>
-                  <button
-                    onClick={() => handleCopyAwb(selectedOrder.awb)}
-                    className="text-xs text-[#ea580c] hover:underline font-mono font-bold flex items-center gap-1"
-                  >
-                    <Copy size={12} weight="Outline" />
-                    <span>AWB: {selectedOrder.awb}</span>
-                  </button>
+                  {selectedOrder.awb ? (
+                    <button
+                      onClick={() => handleCopyAwb(selectedOrder.awb)}
+                      className="text-xs text-[#ea580c] hover:underline font-mono font-bold flex items-center gap-1"
+                    >
+                      <Copy size={12} weight="Outline" />
+                      <span>AWB: {selectedOrder.awb}</span>
+                    </button>
+                  ) : (
+                    <span className="text-[11px] text-[#565e74] italic">AWB: Pending Dispatch</span>
+                  )}
                 </div>
                 <div className="text-xs text-[#565e74]">
-                  Automated BlueDart tracking sync enabled. Milestone Step {selectedOrder.trackingStep} of 4.
+                  Automated warehouse logistics sync enabled. Milestone Step {selectedOrder.trackingStep} of 5.
                 </div>
               </div>
 
@@ -919,7 +920,7 @@ export default function AdminOrdersPage() {
                         : "bg-white text-[#0b1c30] border-[#e2e8f0] hover:bg-[#f8fafc]"
                     }`}
                   >
-                    In Transit (BlueDart)
+                    In Transit (Courier)
                   </button>
                   <button
                     onClick={() => handleStatusUpdate(selectedOrder.id, "Delivered")}

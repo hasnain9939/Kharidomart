@@ -201,10 +201,7 @@ export default function InviteTeamMemberPage() {
             className="w-full h-10 px-3 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-xs font-semibold text-[#0b1c30]"
           >
             <option value="Shopify Central Warehouse">Primary: Shopify Central Warehouse (cgxx12-ek.myshopify.com)</option>
-            <option value="All Hubs">All Regional Hubs &amp; Fulfillment Centers</option>
-            <option value="Gurugram Central Hub">North Hub (Gurugram)</option>
-            <option value="Mumbai Bhiwandi Hub">West Hub (Mumbai)</option>
-            <option value="Bengaluru Whitefield Hub">South Hub (Bengaluru)</option>
+            <option value="All Locations">All Active Shopify Warehouse Locations</option>
           </select>
         </div>
 

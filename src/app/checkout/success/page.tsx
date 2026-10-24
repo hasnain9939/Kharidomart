@@ -16,16 +16,12 @@ import {
 } from "reicon-react";
 import { trackPurchase } from "@/lib/analytics";
 
-function getDeterministicTrackingNumber(orderId: string, awb?: string): string {
-  if (awb) return awb;
-  if (!orderId) return "Pending Dispatch";
-  let hash = 0;
-  for (let i = 0; i < orderId.length; i++) {
-    hash = (hash << 5) - hash + orderId.charCodeAt(i);
-    hash |= 0;
+// Real tracking helper: returns real AWB if assigned, otherwise null
+function getOrderTrackingNumber(awb?: string | null): string | null {
+  if (awb && typeof awb === "string" && awb.trim() !== "") {
+    return awb.trim();
   }
-  const positiveNum = (Math.abs(hash) % 90000000) + 10000000;
-  return `KM-BLU-${positiveNum}-IN`;
+  return null;
 }
 
 interface SavedOrder {
@@ -93,8 +89,8 @@ function CheckoutSuccessContent() {
               status: dbOrder.status,
               courier: dbOrder.courier,
               customer: {
-                firstName: nameParts[0] || "Valued",
-                lastName: nameParts.slice(1).join(" ") || "Customer",
+                firstName: nameParts[0] || "Customer",
+                lastName: nameParts.slice(1).join(" ") || "",
                 email: dbOrder.customerEmail || "",
                 phone: dbOrder.customerPhone || "",
                 whatsappOptIn: true,
@@ -147,8 +143,8 @@ function CheckoutSuccessContent() {
   }, [queryOrderId]);
 
   const orderId = order?.orderId || queryOrderId || "";
-  const trackingNumber = getDeterministicTrackingNumber(orderId, order?.awbNumber);
-  const customerName = [order?.customer.firstName, order?.customer.lastName].filter(Boolean).join(" ") || "Valued Customer";
+  const trackingNumber = getOrderTrackingNumber(order?.awbNumber);
+  const customerName = [order?.customer.firstName, order?.customer.lastName].filter(Boolean).join(" ") || "Customer";
   const customerEmail = order?.customer.email || "";
   const customerPhone = order?.customer.phone || "";
 
@@ -180,6 +176,7 @@ function CheckoutSuccessContent() {
   }, [order]);
 
   const handleCopyTracking = () => {
+    if (!trackingNumber) return;
     navigator.clipboard.writeText(trackingNumber);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
@@ -296,7 +293,10 @@ function CheckoutSuccessContent() {
                   Estimated Doorstep Arrival
                 </div>
                 <div className="text-lg sm:text-xl font-bold text-[#0b1c30]">
-                  {arrivalDateStr}, by 4:00 PM <span className="text-[#ea580c] text-sm font-semibold">(BlueDart Express)</span>
+                  {arrivalDateStr}
+                  <span className="text-[#ea580c] text-sm font-semibold ml-2">
+                    ({order?.courier || "Standard Express Delivery"})
+                  </span>
                 </div>
               </div>
             </div>
@@ -304,19 +304,27 @@ function CheckoutSuccessContent() {
             <div className="flex items-center gap-3 bg-white px-4 py-2.5 rounded-xl border border-[#e2e8f0] shadow-2xs self-start md:self-auto">
               <div className="flex flex-col">
                 <span className="text-[11px] text-[#584237]">
-                  Carrier: <strong className="text-[#0b1c30]">BlueDart Express Air</strong>
+                  Carrier: <strong className="text-[#0b1c30]">{order?.courier || "Standard Express Delivery"}</strong>
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="font-space font-bold text-xs text-[#0b1c30]">
-                    {trackingNumber}
-                  </span>
-                  <button
-                    onClick={handleCopyTracking}
-                    className="text-[#f97316] hover:text-[#ea580c] transition-colors"
-                    title="Copy tracking number"
-                  >
-                    <Copy size={14} weight="Outline" />
-                  </button>
+                  {trackingNumber ? (
+                    <>
+                      <span className="font-space font-bold text-xs text-[#0b1c30]">
+                        {trackingNumber}
+                      </span>
+                      <button
+                        onClick={handleCopyTracking}
+                        className="text-[#f97316] hover:text-[#ea580c] transition-colors"
+                        title="Copy tracking number"
+                      >
+                        <Copy size={14} weight="Outline" />
+                      </button>
+                    </>
+                  ) : (
+                    <span className="text-xs text-[#584237] italic">
+                      Assigned upon dispatch (Sent via SMS)
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

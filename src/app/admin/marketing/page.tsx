@@ -15,10 +15,10 @@ import {
   Edit,
   Trash,
 } from "reicon-react";
-import { ADMIN_DISCOUNTS, AdminDiscount } from "@/data/adminData";
+import { AdminDiscount } from "@/data/adminData";
 
 export default function AdminMarketingPage() {
-  const [discounts, setDiscounts] = useState<AdminDiscount[]>(ADMIN_DISCOUNTS);
+  const [discounts, setDiscounts] = useState<AdminDiscount[]>([]);
   const [activeTab, setActiveTab] = useState<"vouchers" | "bundles" | "cart_recovery">("vouchers");
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);

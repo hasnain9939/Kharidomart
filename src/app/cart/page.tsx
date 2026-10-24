@@ -498,7 +498,7 @@ export default function CartPage() {
                         {pincodeChecked && pincode ? (
                           <p className="text-xs text-[#584237]">
                             Delivering to <strong>{pincode} ({pincodeCity})</strong> in{" "}
-                            <span className="text-[#15803d] font-bold">2-3 Days via BlueDart Express</span>
+                            <span className="text-[#15803d] font-bold">2-3 Days via Express Courier</span>
                           </p>
                         ) : (
                           <p className="text-xs text-[#584237]">

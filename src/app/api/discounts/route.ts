@@ -89,11 +89,10 @@ export async function GET(req: NextRequest) {
 
     // Auto-seed initial defaults if table is freshly created
     if (discounts.length === 0) {
-      for (const d of DEFAULT_SEED_DISCOUNTS) {
-        await prisma.discount.create({
-          data: d,
-        });
-      }
+      await prisma.discount.createMany({
+        data: DEFAULT_SEED_DISCOUNTS,
+        skipDuplicates: true,
+      });
       discounts = await prisma.discount.findMany({
         orderBy: { createdAt: "desc" },
       });

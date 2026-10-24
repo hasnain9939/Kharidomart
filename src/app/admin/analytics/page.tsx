@@ -121,7 +121,7 @@ export default function AdminAnalyticsPage() {
               {orders.filter((o) => o.status === "Delivered").length} Delivered
             </span>
           </div>
-          <span className="text-[11px] text-[#565e74]">BlueDart tracking integrated</span>
+          <span className="text-[11px] text-[#565e74]">Express courier tracking integrated</span>
         </div>
       </div>
 
@@ -162,7 +162,7 @@ export default function AdminAnalyticsPage() {
           <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
             <span className="text-[11px] font-bold text-[#565e74] uppercase block">3. Courier &amp; Logistics</span>
             <span className="font-space font-extrabold text-lg text-[#565e74] block mt-1">-₹{estimatedFreight.toLocaleString("en-IN")}</span>
-            <span className="text-[10px] text-[#565e74] font-semibold">BlueDart Express</span>
+            <span className="text-[10px] text-[#565e74] font-semibold">Standard Express Courier</span>
           </div>
 
           <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-300">

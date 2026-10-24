@@ -450,7 +450,7 @@ export default function AdminLayout({
                         Fulfillment Engine Ready
                       </div>
                       <div className="text-[#565e74] mt-0.5">
-                        BlueDart courier tracking and auto-AWB generation active.
+                        Shopify Warehouse integration and courier tracking active.
                       </div>
                     </div>
                   </div>

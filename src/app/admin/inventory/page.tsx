@@ -80,21 +80,22 @@ export default function AdminShopifyWarehousePage() {
 
   const warehouseProducts = dbProducts.map((p) => {
     const images = Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : "/assets/stitch/hero_showcase.jpg";
+    const currentStock = typeof p.stock === "number" ? p.stock : 0;
     const margin =
       p.originalPrice && p.originalPrice > p.price
         ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100) + "%"
-        : "55.0%";
+        : "Direct";
     return {
       sku: p.slug ? `KM-${p.slug.toUpperCase().slice(0, 10)}` : `KM-${p.id.slice(0, 8)}`,
       title: p.title,
       supplier: "Shopify Central Warehouse",
-      supplierCogs: Math.round(p.price * 0.4),
+      supplierCogs: p.price,
       sellingPrice: p.price,
       marginPercent: margin,
-      supplierStock: p.stock || 25,
+      supplierStock: currentStock,
       leadTime: "Same Day Dispatch",
       autoFulfill: isShopifyConnected,
-      status: p.stock > 10 ? "In Stock" : p.stock > 0 ? "Low Stock" : "Out of Stock",
+      status: currentStock > 10 ? "In Stock" : currentStock > 0 ? "Low Stock" : "Out of Stock",
       image: images,
     };
   });

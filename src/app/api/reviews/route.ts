@@ -136,17 +136,15 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // 2. Recompute product average rating & total reviews
-    const allReviews = await prisma.review.findMany({
+    // 2. Recompute product average rating & total reviews via database aggregate
+    const agg = await prisma.review.aggregate({
       where: { productId: product.id },
-      select: { rating: true },
+      _avg: { rating: true },
+      _count: { rating: true },
     });
 
-    const totalCount = allReviews.length;
-    const computedAvg =
-      totalCount > 0
-        ? Number((allReviews.reduce((sum, r) => sum + r.rating, 0) / totalCount).toFixed(1))
-        : cleanRating;
+    const totalCount = agg._count.rating;
+    const computedAvg = agg._avg.rating ? Number(agg._avg.rating.toFixed(1)) : cleanRating;
 
     await prisma.product.update({
       where: { id: product.id },

@@ -5,7 +5,6 @@ import React from "react";
 interface KharidoMartLogoProps {
   className?: string;
   markOnly?: boolean;
-  priority?: boolean;
 }
 
 /**

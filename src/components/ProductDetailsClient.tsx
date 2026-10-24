@@ -48,21 +48,47 @@ export default function ProductDetailsClient({
   const videoEmbed = product.videoUrl ? getVideoEmbed(product.videoUrl) : null;
   const [quantity, setQuantity] = useState(1);
 
-  // Dynamic colors: use product.colors if available; fallback to default if undefined
-  const defaultColors = [
-    { name: "Pastel Mint Green", hex: "#B8E2D8", label: "Pastel Mint (Most Popular)" },
-    { name: "Soft Blush Pink", hex: "#F7C6D0", label: "Blush Pink" },
-    { name: "Cloud White", hex: "#FAFAFC", label: "Cloud White" },
-  ];
-  const colorVariants = product.colors && product.colors.length > 0
-    ? product.colors
-    : (product.colors === undefined ? defaultColors : []);
+  // Clean raw markdown if present in highlights
+  const cleanHighlights = (product.highlights || [])
+    .map((h) => h.replace(/^[#*\s-]+/, "").replace(/\*\*/g, "").trim())
+    .filter(
+      (h) =>
+        h.length > 0 &&
+        !h.toLowerCase().startsWith("key features") &&
+        !h.toLowerCase().startsWith("what’s included") &&
+        !h.toLowerCase().startsWith("safety:")
+    );
+
+  // Clean raw markdown syntax from product description
+  const cleanDescription = (product.description || "")
+    .replace(/^##+\s*/gm, "")
+    .replace(/\*\*/g, "")
+    .trim();
+
+  // Concise lead hook for the hero buy-box section
+  const heroHook = React.useMemo(() => {
+    const lines = cleanDescription
+      .split("\n")
+      .map((l) => l.trim().replace(/\s+/g, " "))
+      .filter((l) => l.length > 0 && !l.startsWith("#") && !l.toLowerCase().startsWith("key features"));
+    if (lines.length === 0) return "";
+    let res = lines[0];
+    if (lines[0].length < 35 && lines.length > 1) {
+      res = lines[1];
+    } else if (res.length < 75 && lines.length > 1) {
+      res = `${res} ${lines[1]}`;
+    }
+    return res;
+  }, [cleanDescription]);
+
+  // Dynamic colors: strictly from product.colors data
+  const colorVariants = product.colors && product.colors.length > 0 ? product.colors : [];
 
   const [userSelectedColor, setUserSelectedColor] = useState<string | null>(null);
   const selectedColor =
     userSelectedColor && colorVariants.some((c) => c.name === userSelectedColor)
       ? userSelectedColor
-      : (colorVariants[0]?.name || "Pastel Mint Green");
+      : (colorVariants[0]?.name || "");
   const setSelectedColor = (colorName: string) => setUserSelectedColor(colorName);
 
   const [pincode, setPincode] = useState("");
@@ -70,7 +96,7 @@ export default function ProductDetailsClient({
   const [pincodeLocation, setPincodeLocation] = useState<{ district: string; state: string } | null>(null);
   const [isPincodeLoading, setIsPincodeLoading] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<"features" | "specs" | "reviews">("features");
+  const [activeTab, setActiveTab] = useState<"description" | "specs" | "reviews">("description");
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isLoadingReviews, setIsLoadingReviews] = useState(true);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
@@ -409,7 +435,7 @@ export default function ProductDetailsClient({
           </nav>
           <div className="inline-flex items-center gap-2 text-[#4f775d] font-semibold bg-white px-3 py-1 rounded-full shadow-2xs text-xs border border-[#d2e7d7]">
             <ShieldCheck size={14} weight="Filled" />
-            <span>Pediatrician Tested • 100% Baby-Safe &amp; Non-Toxic</span>
+            <span>Quality Inspected • 100% Genuine &amp; Certified</span>
           </div>
         </div>
       </section>
@@ -424,9 +450,11 @@ export default function ProductDetailsClient({
               <div className="relative bg-white rounded-3xl p-3 sm:p-6 shadow-xs border border-[#eddcd1] overflow-hidden flex flex-col items-center justify-center min-h-[300px] sm:min-h-[420px] md:min-h-[520px]">
                 {/* Floating Badges */}
                 <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
-                  <span className="px-3 py-1 bg-[#e06b5b] text-white font-space font-bold text-[11px] rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1">
-                    🍼 Mom Favorite
-                  </span>
+                  {product.badge && (
+                    <span className="px-3 py-1 bg-[#e06b5b] text-white font-space font-bold text-[11px] rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1">
+                      {product.badge}
+                    </span>
+                  )}
                   {discountPercent > 0 && (
                     <span className="px-3 py-1 bg-[#4f775d] text-white font-space font-bold text-[11px] rounded-full uppercase tracking-wider shadow-sm">
                       Save {discountPercent}%
@@ -509,7 +537,7 @@ export default function ProductDetailsClient({
                 {/* Zoom Cue */}
                 {!showVideo && (
                   <div className="absolute bottom-4 right-4 bg-white/85 backdrop-blur-xs px-3 py-1.5 rounded-full text-[#584237] text-xs font-semibold flex items-center gap-1.5 shadow-2xs border border-[#e2e8f0]/60">
-                    <span>🔍 Hover to inspect cushioned detail</span>
+                    <span>🔍 Hover to inspect high-resolution detail</span>
                   </div>
                 )}
               </div>
@@ -561,15 +589,15 @@ export default function ProductDetailsClient({
                 </div>
               )}
 
-              {/* Pediatrician Endorsement Banner */}
+              {/* Trust & Quality Assurance Banner */}
               <div className="bg-[#f8fafc] rounded-3xl p-5 border border-[#e2e8f0] grid grid-cols-1 sm:grid-cols-3 gap-4 shadow-xs">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-[#15803d] flex items-center justify-center shrink-0">
                     <ShieldCheck size={22} weight="Filled" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-[#0b1c30]">Pediatrician Approved</p>
-                    <p className="text-[11px] text-[#584237]">Zero pinch, anti-cuticle safe</p>
+                    <p className="text-xs font-bold text-[#0b1c30]">100% Quality Inspected</p>
+                    <p className="text-[11px] text-[#584237]">Pre-checked before dispatch</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -577,8 +605,8 @@ export default function ProductDetailsClient({
                     <TruckFast size={22} weight="Filled" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-[#0b1c30]">Cushioned Rotary Care</p>
-                    <p className="text-[11px] text-[#584237]">Gentle micro-grit heads</p>
+                    <p className="text-xs font-bold text-[#0b1c30]">Priority Express Shipping</p>
+                    <p className="text-[11px] text-[#584237]">Ships in {dispatchLeadTime}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -586,8 +614,8 @@ export default function ProductDetailsClient({
                     <CheckCircle size={22} weight="Filled" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-[#0b1c30]">BPA-Free ABS Shell</p>
-                    <p className="text-[11px] text-[#584237]">Non-toxic child safe finish</p>
+                    <p className="text-xs font-bold text-[#0b1c30]">Verified Authentic</p>
+                    <p className="text-[11px] text-[#584237]">24-Hour doorstep replacement</p>
                   </div>
                 </div>
               </div>
@@ -611,7 +639,7 @@ export default function ProductDetailsClient({
                   {product.title}
                 </h1>
                 <p className="text-sm text-[#584237] mt-2.5 leading-relaxed">
-                  {product.description}
+                  {heroHook}
                 </p>
               </div>
 
@@ -630,7 +658,7 @@ export default function ProductDetailsClient({
                 </span>
                 <span className="text-[#584237]/30">|</span>
                 <span className="text-xs font-semibold text-[#15803d] flex items-center gap-1">
-                  <Check size={14} weight="Filled" /> 98% Parents Recommend
+                  <Check size={14} weight="Filled" /> 98% Customer Satisfaction
                 </span>
               </div>
 
@@ -804,14 +832,16 @@ export default function ProductDetailsClient({
               </div>
 
               {/* Highlights Feature Bullets */}
-              <div className="bg-[#f8fafc] p-4 rounded-2xl border border-[#e2e8f0] space-y-2">
-                {product.highlights.map((h, i) => (
-                  <div key={i} className="flex items-start gap-2 text-xs text-[#0b1c30]">
-                    <CheckCircle size={16} weight="Filled" className="text-[#15803d] shrink-0 mt-0.5" />
-                    <span>{h}</span>
-                  </div>
-                ))}
-              </div>
+              {cleanHighlights.length > 0 && (
+                <div className="bg-[#f8fafc] p-4 rounded-2xl border border-[#e2e8f0] space-y-2">
+                  {cleanHighlights.slice(0, 5).map((h, i) => (
+                    <div key={i} className="flex items-start gap-2 text-xs text-[#0b1c30]">
+                      <CheckCircle size={16} weight="Filled" className="text-[#15803d] shrink-0 mt-0.5" />
+                      <span>{h}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* Quantity Stepper & Dual Action Buttons */}
               <div className="space-y-3 pt-1">
@@ -933,7 +963,7 @@ export default function ProductDetailsClient({
                               : getDeliveryEstimate(pincode).region}{" "}
                             ({pincode})
                           </strong>{" "}
-                          via Bluedart / Delhivery Air
+                          via Priority Express Delivery
                         </p>
                       </div>
                     </div>
@@ -968,129 +998,20 @@ export default function ProductDetailsClient({
         </div>
       </section>
 
-      {/* Interactive 6 Grinding Heads Visual Guide */}
-      <section className="w-full py-12 sm:py-16 bg-[#eff4ff]/60 border-y border-[#e2e8f0]">
+      {/* Product Details, Specs & Verified Reviews Section */}
+      <section className="w-full py-12 sm:py-16 bg-white border-t border-[#e2e8f0]">
         <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-          <div className="text-center max-w-2xl mx-auto space-y-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#ea580c] bg-[#ffedd5] px-3 py-1 rounded-full">
-              All Stages Covered
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0b1c30]">
-              The 6-in-1 Precision Filing Matrix
-            </h2>
-            <p className="text-xs sm:text-sm text-[#584237]">
-              Each color head provides the exact grit density required for your baby&apos;s current developmental stage, ensuring zero tears and perfectly smooth cuticles.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            <div className="bg-white rounded-2xl p-5 shadow-xs border border-[#e2e8f0] flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#FDE8EC] flex items-center justify-center shrink-0">
-                <span className="w-6 h-6 rounded-full bg-[#E57373]"></span>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-sm text-[#0b1c30]">Pink Head</h3>
-                  <span className="text-[10px] bg-[#ffedd5] text-[#ea580c] px-2 py-0.5 rounded-full font-bold">0 – 3 Months</span>
-                </div>
-                <p className="text-xs text-[#584237] leading-relaxed">
-                  Ultra-gentle soft sandpaper crafted specially for sensitive newborn skin and micro-nails.
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl p-5 shadow-xs border border-[#e2e8f0] flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#E1F5FE] flex items-center justify-center shrink-0">
-                <span className="w-6 h-6 rounded-full bg-[#4FC3F7]"></span>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-sm text-[#0b1c30]">Blue Head</h3>
-                  <span className="text-[10px] bg-[#eff4ff] text-[#0b1c30] px-2 py-0.5 rounded-full font-bold">3 – 6 Months</span>
-                </div>
-                <p className="text-xs text-[#584237] leading-relaxed">
-                  Fine-cushioned file pad suited for infant fingernails as they begin grasping toys.
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl p-5 shadow-xs border border-[#e2e8f0] flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#E8F5E9] flex items-center justify-center shrink-0">
-                <span className="w-6 h-6 rounded-full bg-[#81C784]"></span>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-sm text-[#0b1c30]">Green Head</h3>
-                  <span className="text-[10px] bg-emerald-50 text-[#15803d] px-2 py-0.5 rounded-full font-bold">6 – 12 Months</span>
-                </div>
-                <p className="text-xs text-[#584237] leading-relaxed">
-                  Medium-grit disc designed for active crawler toes that pick up friction and uneven edges.
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl p-5 shadow-xs border border-[#e2e8f0] flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#FFFDE7] flex items-center justify-center shrink-0">
-                <span className="w-6 h-6 rounded-full bg-[#FDD835]"></span>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-sm text-[#0b1c30]">Yellow Head</h3>
-                  <span className="text-[10px] bg-amber-50 text-[#b45309] px-2 py-0.5 rounded-full font-bold">12+ Months & Toddlers</span>
-                </div>
-                <p className="text-xs text-[#584237] leading-relaxed">
-                  Quickly contours toddler nails after playground playtime. Smooths jagged edges in seconds.
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl p-5 shadow-xs border border-[#e2e8f0] flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#ffedd5] flex items-center justify-center shrink-0">
-                <span className="w-6 h-6 rounded-full bg-[#f97316]"></span>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-sm text-[#0b1c30]">Cylindrical Head</h3>
-                  <span className="text-[10px] bg-slate-100 text-[#0b1c30] px-2 py-0.5 rounded-full font-bold">Mom & Dad</span>
-                </div>
-                <p className="text-xs text-[#584237] leading-relaxed">
-                  Edge trimmer and cuticle smoother for parents. Perfect for tidying natural nails at home.
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl p-5 shadow-xs border border-[#e2e8f0] flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#f1f5f9] flex items-center justify-center shrink-0">
-                <span className="w-6 h-6 rounded-full bg-[#94a3b8]"></span>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-sm text-[#0b1c30]">Metal Polishing Disc</h3>
-                  <span className="text-[10px] bg-slate-100 text-[#0b1c30] px-2 py-0.5 rounded-full font-bold">Adult Grooming</span>
-                </div>
-                <p className="text-xs text-[#584237] leading-relaxed">
-                  Buffs away hardened dead skin and smoothens thick adult toenails.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Specifications & Verified Reviews Section */}
-      <section className="w-full py-12 sm:py-16 bg-white">
-        <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-          <div className="flex items-center justify-center gap-4 border-b border-[#e2e8f0] pb-4">
+          <div className="flex items-center justify-center gap-6 border-b border-[#e2e8f0] pb-4">
             <button
-              onClick={() => setActiveTab("features")}
+              onClick={() => setActiveTab("description")}
               className={`pb-2 text-sm font-bold transition-all relative ${
-                activeTab === "features"
+                activeTab === "description"
                   ? "text-[#f97316]"
                   : "text-[#584237] hover:text-[#0b1c30]"
               }`}
             >
-              <span>Key Features</span>
-              {activeTab === "features" && (
+              <span>Description</span>
+              {activeTab === "description" && (
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#f97316]"></span>
               )}
             </button>
@@ -1122,35 +1043,35 @@ export default function ProductDetailsClient({
             </button>
           </div>
 
-          {activeTab === "features" && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
-              <div className="p-6 bg-[#f8fafc] rounded-3xl border border-[#e2e8f0] space-y-2">
-                <div className="w-10 h-10 rounded-2xl bg-orange-100 text-[#ea580c] flex items-center justify-center font-bold">
-                  35dB
+          {activeTab === "description" && (
+            <div className="max-w-4xl mx-auto space-y-6 pt-2">
+              <div className="bg-[#f8fafc] rounded-3xl p-6 sm:p-8 border border-[#e2e8f0]">
+                <h3 className="font-extrabold text-base text-[#0b1c30] mb-3">
+                  About {product.shortTitle || product.title}
+                </h3>
+                <div className="text-xs sm:text-sm text-[#584237] leading-relaxed whitespace-pre-line">
+                  {cleanDescription}
                 </div>
-                <h3 className="font-bold text-base text-[#0b1c30]">Whisper Acoustic Motor</h3>
-                <p className="text-xs text-[#584237] leading-relaxed">
-                  Operates at a silent 35 decibels — quieter than a gentle nursery whisper. Trim peacefully while baby is sleeping without startling them awake.
-                </p>
               </div>
-              <div className="p-6 bg-[#f8fafc] rounded-3xl border border-[#e2e8f0] space-y-2">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-[#15803d] flex items-center justify-center">
-                  <ShieldCheck size={22} weight="Filled" />
+
+              {cleanHighlights.length > 0 && (
+                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#e2e8f0] shadow-xs space-y-4">
+                  <h3 className="font-extrabold text-base text-[#0b1c30]">
+                    Key Highlights &amp; Features
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {cleanHighlights.map((hl, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-start gap-3 p-3.5 rounded-2xl bg-[#f8fafc] border border-[#e2e8f0]"
+                      >
+                        <CheckCircle size={18} weight="Filled" className="text-[#15803d] shrink-0 mt-0.5" />
+                        <span className="text-xs font-semibold text-[#0b1c30] leading-snug">{hl}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <h3 className="font-bold text-base text-[#0b1c30]">Pressure-Sensing Cushioning</h3>
-                <p className="text-xs text-[#584237] leading-relaxed">
-                  Cushioned foam discs absorb direct pressure. If the spinning head touches soft skin or cuticle, rotary resistance prevents tearing.
-                </p>
-              </div>
-              <div className="p-6 bg-[#f8fafc] rounded-3xl border border-[#e2e8f0] space-y-2">
-                <div className="w-10 h-10 rounded-2xl bg-blue-100 text-[#0b1c30] flex items-center justify-center font-bold">
-                  LED
-                </div>
-                <h3 className="font-bold text-base text-[#0b1c30]">Soft Night-Vision Illumination</h3>
-                <p className="text-xs text-[#584237] leading-relaxed">
-                  Targeted spotlight right over the baby’s fingernail eliminates shadows during midnight nursery grooming.
-                </p>
-              </div>
+              )}
             </div>
           )}
 
@@ -1241,7 +1162,7 @@ export default function ProductDetailsClient({
                   </div>
                   <h4 className="font-bold text-base text-[#0b1c30]">No reviews yet for this product</h4>
                   <p className="text-xs text-[#584237]">
-                    Be the first verified customer to share your thoughts and help other parents!
+                    Be the first verified customer to share your experience with this product!
                   </p>
                   <div className="pt-1">
                     <button
@@ -1341,7 +1262,7 @@ export default function ProductDetailsClient({
                       type="text"
                       value={reviewForm.title}
                       onChange={(e) => setReviewForm({ ...reviewForm, title: e.target.value })}
-                      placeholder="e.g. Absolutely wonderful product for babies!"
+                      placeholder="e.g. Excellent build quality, works exactly as described!"
                       className="w-full px-3 py-2.5 rounded-xl border border-[#e2e8f0] text-xs font-semibold focus:outline-none focus:border-[#f97316]"
                     />
                   </div>
@@ -1355,7 +1276,7 @@ export default function ProductDetailsClient({
                       rows={3}
                       value={reviewForm.comment}
                       onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
-                      placeholder="How has this product helped your baby or home? Any tips for other parents?"
+                      placeholder="What did you like or dislike? How does it perform in daily use?"
                       className="w-full px-3 py-2.5 rounded-xl border border-[#e2e8f0] text-xs font-semibold focus:outline-none focus:border-[#f97316]"
                     ></textarea>
                   </div>
@@ -1400,7 +1321,7 @@ export default function ProductDetailsClient({
                   Recommended For You
                 </span>
                 <h2 className="text-xl sm:text-2xl font-extrabold text-[#0b1c30] mt-2">
-                  Parents Also Loved These Finds
+                  Customers Also Viewed
                 </h2>
               </div>
               <Link

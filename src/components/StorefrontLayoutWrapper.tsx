@@ -9,7 +9,7 @@ import CartDrawer from "@/components/CartDrawer";
 import QuickViewModal from "@/components/QuickViewModal";
 import Toast from "@/components/Toast";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
-import Analytics from "@/components/Analytics";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 import WhatsAppMomWidget from "@/components/WhatsAppMomWidget";
 import ExitIntentModal from "@/components/ExitIntentModal";
 
@@ -48,7 +48,7 @@ function StorefrontLayoutInner({
 
       {/* Compliance & Analytics */}
       <CookieConsentBanner />
-      <Analytics />
+      <GoogleAnalytics />
     </>
   );
 }

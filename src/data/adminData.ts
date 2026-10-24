@@ -19,8 +19,8 @@ export interface AdminOrder {
   createdAt: string;
   dispatchTime?: string;
   trackingStep: number;
-  // Dropshipping / Fulfillment Specific Fields
-  supplierName?: "Shopify Warehouse" | "Roposo Clout" | "CJ Dropshipping" | "IndiaDropship" | "Shiprocket 3PL" | string;
+  // Warehouse / Fulfillment Specific Fields
+  supplierName?: "Shopify Warehouse" | "Shopify Central Warehouse" | string;
   supplierCost?: number; // COGS
   supplierStatus?: "Pushed to Supplier" | "Awaiting 1-Click Push" | "Supplier Dispatched" | "Pushed to Shopify";
   codVerification?: "WhatsApp OTP Confirmed" | "IVR Confirmed" | "Prepaid Verified" | "Awaiting Confirmation";
@@ -30,7 +30,7 @@ export interface AdminOrder {
 export interface AdminSupplier {
   id: string;
   name: string;
-  type: "Shopify Store API" | "Shopify Warehouse" | "Roposo Clout" | "CJ Dropshipping" | "IndiaDropship" | "Shiprocket 3PL" | "Private Agent" | string;
+  type: "Shopify Store API" | "Shopify Warehouse" | "Shopify Central Warehouse" | "Private Warehouse" | string;
   city: string;
   state: string;
   currentStock: number;
@@ -99,52 +99,7 @@ export interface DropshipWinningProduct {
   dailyOrders: number;
 }
 
-export const ADMIN_METRICS = {
-  todaySales: 0,
-  yesterdaySales: 0,
-  salesGrowth: 0,
-  todayAdSpend: 0,
-  todayNetProfit: 0,
-  blendedROAS: 0,
-  cpa: 0,
-  totalOrders: 0,
-  pendingOrders: 0,
-  inTransitOrders: 0,
-  deliveredToday: 0,
-  avgOrderValue: 0,
-  codRate: 0,
-  codConfirmedRate: 0,
-  rtoRate: 0,
-  activeCoupons: 0,
-  stockHealth: 100,
-  storePlatform: "Next.js + Prisma Store Engine",
-};
 
-export const DROPSHIP_WINNING_PRODUCTS: DropshipWinningProduct[] = [];
-
-
-export const ADMIN_ORDERS: AdminOrder[] = [];
-
-export const DROPSHIP_SUPPLIERS: AdminSupplier[] = [
-  {
-    id: "shopify-central",
-    name: "Shopify Central Warehouse",
-    type: "Shopify Store API",
-    city: "cgxx12-ek.myshopify.com",
-    state: "India Central Hub",
-    currentStock: 100,
-    capacityPercentage: 100,
-    dispatchesToday: 0,
-    status: "Optimal",
-    courierPartners: ["BlueDart Express", "Delhivery Direct", "Shadowfax", "XpressBees"],
-    apiStatus: "Connected (Live)",
-    avgDispatchTime: "Same Day / 24 Hours",
-    pendingOrders: 0,
-    walletBalance: 0,
-  },
-];
-
-export const ADMIN_HUBS = DROPSHIP_SUPPLIERS;
 
 export const ADMIN_DISCOUNTS: AdminDiscount[] = [
   {

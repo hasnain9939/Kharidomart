@@ -195,43 +195,89 @@ function TrackOrderContent() {
     location?: string;
   }
 
-  const trackingSteps: TrackingStep[] = [
-    {
-      title: "Order Confirmed",
-      desc: "Order booked & verified via SMS/WhatsApp notification",
-      status: "completed",
-      time: "Day 1, 10:15 AM",
-      location: "Verified Order",
-    },
-    {
-      title: "Packed & Quality Inspected",
-      desc: "Central Warehouse, Gurugram Logistics Hub (Barcodes scanned)",
-      status: "completed",
-      time: "Day 1, 02:40 PM",
-      location: "Gurugram Hub",
-    },
-    {
-      title: "Handed to Courier (BlueDart Express)",
-      desc: "Airway cargo dispatch initiated to destination delivery center",
-      status: "completed",
-      time: "Day 2, 09:30 AM",
-      location: "In Transit",
-    },
-    {
-      title: "Out for Doorstep Delivery",
-      desc: "Courier delivery partner assigned and heading to your address",
-      status: "current",
-      time: "Expected Tomorrow, by 6:00 PM",
-      location: "Local Delivery Van",
-    },
-    {
-      title: "Delivered & Handed Over",
-      desc: "Package handed over upon OTP confirmation / Cash collection",
-      status: "upcoming",
-      time: "Pending Final Delivery",
-      location: "Doorstep",
-    },
-  ];
+  function getDynamicTrackingSteps(order: StoredOrder): TrackingStep[] {
+    const rawDate = order.createdAt || order.date;
+    const createdDate = rawDate ? new Date(rawDate) : new Date();
+    const formattedCreated = !isNaN(createdDate.getTime())
+      ? `${createdDate.toLocaleDateString("en-IN", { month: "short", day: "numeric" })}, ${createdDate.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}`
+      : "Order Booked";
+
+    const courierName = order.courier || "Standard Express Delivery";
+    const awbStr = order.awbNumber ? `(AWB: ${order.awbNumber})` : "";
+    const isCancelled = order.status === "Cancelled";
+    const isDelivered = order.status === "Delivered";
+    const isShipped = order.status === "Shipped";
+    const isProcessing = !isCancelled && !isDelivered && !isShipped;
+
+    if (isCancelled) {
+      return [
+        {
+          title: "Order Placed",
+          desc: "Order initially submitted by customer",
+          status: "completed",
+          time: formattedCreated,
+          location: "Online Store",
+        },
+        {
+          title: "Order Cancelled",
+          desc: "Order was cancelled prior to shipment dispatch. No cargo pickup generated.",
+          status: "current",
+          time: "Cancelled",
+          location: "Central Warehouse",
+        },
+      ];
+    }
+
+    return [
+      {
+        title: "Order Confirmed",
+        desc: "Order verified and queued for warehouse picking",
+        status: "completed",
+        time: formattedCreated,
+        location: "Shopify Central Warehouse",
+      },
+      {
+        title: "Packed & Quality Inspected",
+        desc: isProcessing
+          ? "Inspection & barcode scanning in progress at Central Warehouse"
+          : "3-point quality check completed & protective packaging sealed",
+        status: isProcessing ? "current" : "completed",
+        time: isProcessing ? "In Progress" : "Completed",
+        location: "Central Warehouse",
+      },
+      {
+        title: `Handed to Courier (${courierName})`,
+        desc: isProcessing
+          ? `Courier dispatch scheduled with ${courierName}`
+          : `Shipment handed over to logistics partner ${awbStr}`,
+        status: isProcessing ? "upcoming" : isShipped ? "current" : "completed",
+        time: isShipped ? "In Transit" : isDelivered ? "Dispatched" : "Scheduled",
+        location: isShipped || isDelivered ? "In Transit" : "Logistics Hub",
+      },
+      {
+        title: "Out for Doorstep Delivery",
+        desc: isDelivered
+          ? "Courier delivery partner delivered package to recipient address"
+          : isShipped
+          ? "Shipment reaching destination delivery station"
+          : "Delivery partner will be assigned upon regional hub arrival",
+        status: isDelivered ? "completed" : "upcoming",
+        time: isDelivered ? "Completed" : "Expected in 2–4 Days",
+        location: "Destination Station",
+      },
+      {
+        title: "Delivered & Handed Over",
+        desc: isDelivered
+          ? "Package successfully handed over to customer"
+          : "Pending final delivery & doorstep OTP verification",
+        status: isDelivered ? "completed" : "upcoming",
+        time: isDelivered ? "Delivered" : "Pending Delivery",
+        location: "Doorstep",
+      },
+    ];
+  }
+
+  const trackingSteps = searchedOrder ? getDynamicTrackingSteps(searchedOrder) : [];
 
   return (
     <div className="w-full bg-[#f8f9ff] min-h-screen py-10 sm:py-16">
@@ -313,32 +359,50 @@ function TrackOrderContent() {
                   Order {searchedOrder.orderId}
                 </h2>
                 <div className="flex items-center gap-2 pt-1 text-xs">
-                  <span className="px-2.5 py-0.5 rounded-full font-bold bg-amber-100 text-[#b45309]">
-                    In Transit — Out for Delivery Tomorrow
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full font-bold ${
+                      searchedOrder.status === "Delivered"
+                        ? "bg-emerald-100 text-[#15803d]"
+                        : searchedOrder.status === "Shipped"
+                        ? "bg-blue-100 text-blue-700"
+                        : searchedOrder.status === "Cancelled"
+                        ? "bg-rose-100 text-rose-700"
+                        : "bg-amber-100 text-[#b45309]"
+                    }`}
+                  >
+                    {searchedOrder.status === "Delivered"
+                      ? "Delivered to Doorstep"
+                      : searchedOrder.status === "Shipped"
+                      ? "In Transit — On the way"
+                      : searchedOrder.status === "Cancelled"
+                      ? "Order Cancelled"
+                      : "Processing & Quality Inspection"}
                   </span>
                   <span className="text-[#584237]">•</span>
                   <span className="text-[#15803d] font-semibold flex items-center gap-1">
-                    <CheckCircle size={13} weight="Filled" /> Verified Dispatch
+                    <CheckCircle size={13} weight="Filled" /> Verified Order
                   </span>
                 </div>
               </div>
 
               {/* Courier AWB Pill */}
-              <div className="bg-[#f8fafc] p-4 rounded-2xl border border-[#e2e8f0] space-y-1 text-right sm:text-right w-full sm:w-auto">
+              <div className="bg-[#f8fafc] p-4 rounded-2xl border border-[#e2e8f0] space-y-1 text-left sm:text-right w-full sm:w-auto">
                 <span className="text-[11px] font-bold text-[#584237] block">
-                  Courier Partner: {searchedOrder.courier || "BlueDart Express"}
+                  Courier Partner: {searchedOrder.courier || "Standard Express Delivery"}
                 </span>
                 <div className="flex items-center justify-between sm:justify-end gap-2">
                   <span className="font-space font-bold text-xs sm:text-sm text-[#0b1c30]">
-                    AWB: {searchedOrder.awbNumber || "BD-884920194IN"}
+                    {searchedOrder.awbNumber ? `AWB: ${searchedOrder.awbNumber}` : "AWB: Pending Dispatch"}
                   </span>
-                  <button
-                    onClick={() => handleCopyAWB(searchedOrder.awbNumber || "BD-884920194IN")}
-                    className="p-1 text-[#f97316] hover:bg-orange-50 rounded-lg transition-colors"
-                    title="Copy AWB Number"
-                  >
-                    <Copy size={16} weight="Outline" />
-                  </button>
+                  {searchedOrder.awbNumber && (
+                    <button
+                      onClick={() => handleCopyAWB(searchedOrder.awbNumber!)}
+                      className="p-1 text-[#f97316] hover:bg-orange-50 rounded-lg transition-colors"
+                      title="Copy AWB Number"
+                    >
+                      <Copy size={16} weight="Outline" />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -351,7 +415,7 @@ function TrackOrderContent() {
                     Live Shipment Milestones
                   </h3>
                   <p className="text-xs text-[#584237]/70 mt-0.5">
-                    Real-time telemetry synced with BlueDart Logistics
+                    Real-time telemetry synced with Central Warehouse &amp; Logistics Network
                   </p>
                 </div>
                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200/80 rounded-full text-xs font-semibold self-start sm:self-auto">

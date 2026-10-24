@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { formatProduct } from "../route";
-import { verifyAdminSessionToken } from "@/lib/auth";
+import { formatProduct } from "@/lib/products";
+import { verifyAdminSessionToken } from "@/lib/session";
 
 // GET /api/products/[id]
 export async function GET(

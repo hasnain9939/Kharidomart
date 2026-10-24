@@ -4,18 +4,10 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
-  Activity,
   TruckFast,
   ShoppingBag,
   Box,
-  Users,
-  TicketDiscount,
-  Chart,
-  Setting,
-  Search,
-  Notification,
   Add,
-  ArrowRight,
   ShieldCheck,
   Check,
   CheckCircle,
@@ -23,8 +15,6 @@ import {
   Clock,
   Location,
   Copy,
-  Printer,
-  Sparkles,
   Refresh,
 } from "reicon-react";
 import { useStore } from "@/context/StoreContext";
@@ -55,7 +45,7 @@ interface DbOrder {
 }
 
 export default function AdminDashboardPage() {
-  const { products, isLoadingProducts } = useStore();
+  const { products } = useStore();
   const [orders, setOrders] = useState<DbOrder[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(true);
   const [activeTab, setActiveTab] = useState<"all" | "processing" | "shipped" | "delivered" | "cancelled">("all");
@@ -321,25 +311,25 @@ export default function AdminDashboardPage() {
           </Link>
         </div>
 
-        {/* Metric 5: BlueDart & Fulfillment Ready */}
+        {/* Metric 5: Warehouse & Fulfillment Sync */}
         <div className="p-5 rounded-2xl bg-white border border-[#e2e8f0] shadow-xs flex flex-col justify-between">
           <div className="flex items-start justify-between">
-            <span className="text-xs font-semibold text-[#565e74]">Logistics &amp; AWB</span>
+            <span className="text-xs font-semibold text-[#565e74]">Warehouse Sync</span>
             <span className="px-2 py-0.5 rounded-full bg-[#caecbf]/60 text-[#1d3819] text-[10px] font-bold">
-              Auto-AWB Active
+              Shopify Central
             </span>
           </div>
           <div className="my-3">
-            <div className="text-2xl sm:text-3xl font-black text-[#15803d] tracking-tight font-mono">
-              100%
+            <div className="text-2xl sm:text-3xl font-black text-[#0b1c30] tracking-tight font-mono">
+              {orders.filter((o) => o.status === "Delivered" || o.status === "In Transit" || o.status === "Shipped").length}/{orders.length}
             </div>
             <span className="text-xs text-[#565e74]">
-              AWB generated for all placed orders
+              Orders dispatched or delivered
             </span>
           </div>
           <div className="flex items-center gap-1 text-xs text-[#565e74]">
             <ShieldCheck size={14} weight="Filled" className="text-[#15803d]" />
-            <span>Trackable on /track-order</span>
+            <span>Fulfillment SLA Active</span>
           </div>
         </div>
       </div>
@@ -508,16 +498,20 @@ export default function AdminDashboardPage() {
                       </td>
                       <td className="py-3.5 px-4">
                         <div className="flex flex-col">
-                          <button
-                            onClick={() => handleCopyAwb(order.awbNumber)}
-                            className="font-mono text-[11px] text-[#0b1c30] hover:text-[#ea580c] flex items-center gap-1 text-left"
-                            title="Click to copy AWB"
-                          >
-                            <span>{order.awbNumber}</span>
-                            <Copy size={11} weight="Outline" />
-                          </button>
+                          {order.awbNumber ? (
+                            <button
+                              onClick={() => handleCopyAwb(order.awbNumber)}
+                              className="font-mono text-[11px] text-[#0b1c30] hover:text-[#ea580c] flex items-center gap-1 text-left"
+                              title="Click to copy AWB"
+                            >
+                              <span>{order.awbNumber}</span>
+                              <Copy size={11} weight="Outline" />
+                            </button>
+                          ) : (
+                            <span className="text-[11px] text-[#565e74] italic">Pending Dispatch</span>
+                          )}
                           <span className="text-[#565e74] text-[11px]">
-                            {order.courier || "BlueDart Express"}
+                            {order.courier || "Standard Delivery"}
                           </span>
                         </div>
                       </td>
@@ -696,7 +690,7 @@ export default function AdminDashboardPage() {
             </div>
 
             <p className="text-xs text-[#565e74] leading-relaxed">
-              Cancelling this order now marks it as <strong>Cancelled (Pre-Shipment)</strong> in the database. This halts fulfillment, stops BlueDart pickup, and avoids courier RTO loss.
+              Cancelling this order now marks it as <strong>Cancelled (Pre-Shipment)</strong> in the database. This halts fulfillment, stops courier pickup, and avoids courier RTO loss.
             </p>
 
             <div className="flex items-center gap-2.5 pt-2">

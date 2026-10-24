@@ -125,24 +125,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    let isMounted = true;
-    fetch("/api/products")
-      .then((res) => res.json())
-      .then((data) => {
-        if (isMounted && data.success && Array.isArray(data.products)) {
-          setProducts(data.products);
-        }
-      })
-      .catch((err) => {
-        console.error("Failed to fetch products:", err);
-      })
-      .finally(() => {
-        if (isMounted) setIsLoadingProducts(false);
-      });
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+    void refreshProducts();
+  }, [refreshProducts]);
 
   // Load from localStorage
   useEffect(() => {

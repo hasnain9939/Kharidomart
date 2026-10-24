@@ -2,7 +2,7 @@
 
 import Script from "next/script";
 
-export default function Analytics() {
+export default function GoogleAnalytics() {
   const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "G-KHARIDOMART";
 
   return (

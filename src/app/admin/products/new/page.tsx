@@ -324,7 +324,7 @@ function AddProductForm() {
           .filter(Boolean)
       : [
           "100% Certified Safe & High Quality Materials",
-          "Fast Dispatch via BlueDart Express Air Courier",
+          "Fast Dispatch via Express Courier",
           "Cash on Delivery & 24-Hour Replacement Support",
         ];
 

@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 
@@ -193,7 +192,7 @@ export async function GET(request: Request) {
       </div>
     </div>
 
-    <a href="http://localhost:3000/admin" class="btn">Open Admin Dashboard</a>
+    <a href="/admin" class="btn">Open Admin Dashboard</a>
   </div>
 </body>
 </html>`,

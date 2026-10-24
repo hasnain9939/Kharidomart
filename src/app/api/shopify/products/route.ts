@@ -1,63 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifyAdminSessionToken } from "@/lib/auth";
-
-async function getShopifyProductsFromApi() {
-  const rawDomain = process.env.SHOPIFY_STORE_DOMAIN?.trim();
-  const token = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN?.trim();
-  const version = process.env.SHOPIFY_API_VERSION?.trim() || "2024-01";
-
-  if (!rawDomain || !token) {
-    return {
-      success: false,
-      error: "Shopify domain or access token not configured in .env",
-    };
-  }
-
-  const cleanDomain = rawDomain.replace(/^https?:\/\//i, "").replace(/\/.*$/, "").trim();
-  const domain = cleanDomain.includes(".") ? cleanDomain : `${cleanDomain}.myshopify.com`;
-
-  try {
-    const endpoint = `https://${domain}/admin/api/${version}/products.json?limit=50`;
-    const res = await fetch(endpoint, {
-      headers: {
-        "Content-Type": "application/json",
-        "X-Shopify-Access-Token": token,
-      },
-      cache: "no-store",
-    });
-
-    const data = await res.json();
-    if (!res.ok) {
-      if (res.status === 403) {
-        return {
-          success: false,
-          scopeNeeded: true,
-          error: "Shopify read_products permission required.",
-        };
-      }
-      return {
-        success: false,
-        error: data.errors ? JSON.stringify(data.errors) : "Failed to fetch products from Shopify",
-      };
-    }
-
-    return {
-      success: true,
-      products: data.products || [],
-    };
-  } catch (err: any) {
-    return {
-      success: false,
-      error: err.message || "Failed to reach Shopify API",
-    };
-  }
-}
+import { verifyAdminSessionToken } from "@/lib/session";
+import { fetchShopifyProducts } from "@/lib/shopify";
 
 // GET /api/shopify/products - List products from Shopify and mark which ones are in Kharido Mart
 export async function GET(req: NextRequest) {
   try {
-    const shopifyResult = await getShopifyProductsFromApi();
+    const shopifyResult = await fetchShopifyProducts();
 
     if (!shopifyResult.success) {
       return NextResponse.json(
@@ -140,7 +89,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { productIds, importAll = false } = body;
 
-    const shopifyResult = await getShopifyProductsFromApi();
+    const shopifyResult = await fetchShopifyProducts();
     if (!shopifyResult.success || !shopifyResult.products) {
       return NextResponse.json(
         { success: false, error: shopifyResult.error || "Could not retrieve Shopify catalog" },

@@ -19,11 +19,11 @@ import {
   Refresh,
   Box,
 } from "reicon-react";
-import { ADMIN_TEAM, AdminTeamMember } from "@/data/adminData";
+import { AdminTeamMember } from "@/data/adminData";
 
 export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState<"shopify" | "pixel" | "cod" | "team">("shopify");
-  const [team, setTeam] = useState<AdminTeamMember[]>(ADMIN_TEAM);
+  const [team, setTeam] = useState<AdminTeamMember[]>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isTestingShopify, setIsTestingShopify] = useState(false);

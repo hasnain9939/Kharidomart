@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyAdminSessionToken } from "@/lib/auth";
 import { pushOrderToShopify } from "@/lib/shopify";
+import {
+  generateOrderNumber,
+  sanitizeOrderItems,
+  calculateOrderTotals,
+} from "@/lib/orders";
 
 // GET /api/orders - list orders (Admin gets all with filters, Customers scoped to their phone/email/userId)
 export async function GET(req: NextRequest) {
@@ -110,31 +115,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Sanitize and validate all items
-    let computedSubtotal = 0;
-    const sanitizedItems = items.map((item: any) => {
-      const title = String(item.product?.title || item.title || "Product").trim();
-      const rawPrice = Number(item.product?.price ?? item.price ?? 0);
-      const cleanPrice = isNaN(rawPrice) || rawPrice < 0 ? 0 : rawPrice;
-      const rawQty = Number(item.quantity);
-      const cleanQuantity = isNaN(rawQty) || rawQty < 1 ? 1 : Math.floor(rawQty);
-
-      computedSubtotal += cleanPrice * cleanQuantity;
-
-      return {
-        productId: item.product?.id || item.productId || null,
-        title,
-        price: cleanPrice,
-        quantity: cleanQuantity,
-        image: item.product?.images?.[0] || item.image || null,
-      };
-    });
-
-    const finalSubtotal = computedSubtotal > 0 ? computedSubtotal : Math.max(0, parseFloat(subtotal) || 0);
-    const cleanDiscount = Math.min(finalSubtotal, Math.max(0, parseFloat(discountAmount) || 0));
-    const cleanShipping = Math.max(0, parseFloat(shippingFee) || 0);
-    const upiDiscount = paymentMethod === "upi" ? 50 : 0;
-    const finalGrandTotal = Math.max(0, finalSubtotal - cleanDiscount + cleanShipping - upiDiscount);
+    // Sanitize items and calculate verified totals
+    const { sanitizedItems, computedSubtotal } = sanitizeOrderItems(items);
+    const { finalSubtotal, cleanDiscount, cleanShipping, finalGrandTotal } =
+      calculateOrderTotals({
+        subtotal,
+        computedSubtotal,
+        discountAmount,
+        shippingFee,
+        paymentMethod,
+      });
 
     // Verify valid user reference if provided
     let linkedUserId: string | null = null;
@@ -148,15 +138,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Generate clean real Indian ecommerce order number
-    const orderNumber =
-      "KM-" +
-      new Date().getFullYear() +
-      "-" +
-      Math.floor(10000 + Math.random() * 90000);
-
-    const awbNumber =
-      "KM-BLU-" + Math.floor(10000000 + Math.random() * 90000000) + "-IN";
+    const orderNumber = generateOrderNumber();
 
     const customerFullName = [customer.firstName, customer.lastName]
       .filter(Boolean)
@@ -167,7 +149,7 @@ export async function POST(req: NextRequest) {
       data: {
         userId: linkedUserId,
         orderNumber,
-        customerName: customerFullName || "Valued Customer",
+        customerName: customerFullName || "Customer",
         customerPhone: String(customer.phone).trim(),
         customerEmail: customer.email ? String(customer.email).trim() : "",
         address: String(address.address).trim(),
@@ -181,8 +163,8 @@ export async function POST(req: NextRequest) {
         total: finalGrandTotal,
         paymentMethod: paymentMethod === "upi" ? "UPI" : paymentMethod === "card" ? "Card" : "COD",
         status: paymentMethod === "cod" ? "Processing" : "Pending Payment",
-        courier: "BlueDart Express",
-        awbNumber,
+        courier: "Standard Express Delivery",
+        awbNumber: null,
         items: {
           create: sanitizedItems,
         },

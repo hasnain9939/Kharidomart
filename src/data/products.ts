@@ -30,5 +30,3 @@ export interface Product {
   updatedAt?: string;
 }
 
-// Initial empty catalog for the client to add their own real products via Admin (/admin/products/new)
-export const PRODUCTS: Product[] = [];
