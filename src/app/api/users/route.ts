@@ -53,6 +53,9 @@ export async function GET(req: NextRequest) {
       }),
     });
   } catch (err: any) {
+    if (err?.digest?.startsWith("NEXT_PRERENDER") || err?.digest === "DYNAMIC_SERVER_USAGE") {
+      throw err;
+    }
     console.error("Fetch users error:", err);
     return NextResponse.json(
       { success: false, error: "Failed to fetch users", users: [] },

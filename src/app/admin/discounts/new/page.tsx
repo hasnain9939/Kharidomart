@@ -5,11 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  TicketDiscount,
   CheckCircle,
-  Copy,
-  Clock,
-  ShieldCheck,
   Check,
 } from "reicon-react";
 
@@ -23,7 +19,6 @@ export default function CreateDiscountPage() {
   const [eligibility, setEligibility] = useState("all");
   const [limitTotal, setLimitTotal] = useState(1000);
   const [limitPerCustomer, setLimitPerCustomer] = useState(true);
-  const [hasEndDate, setHasEndDate] = useState(true);
   const [expiryDate, setExpiryDate] = useState("31 Dec 2026");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);

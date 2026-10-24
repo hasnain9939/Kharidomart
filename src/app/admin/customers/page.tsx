@@ -5,15 +5,9 @@ import Link from "next/link";
 import {
   Users,
   Search,
-  Filter,
   Phone,
   Location,
-  CheckCircle,
   CloseCircle,
-  ShieldCheck,
-  TicketDiscount,
-  ShoppingBag,
-  ArrowRight,
 } from "reicon-react";
 import { ADMIN_CUSTOMERS, AdminCustomer } from "@/data/adminData";
 

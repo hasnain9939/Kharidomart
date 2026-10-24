@@ -3,14 +3,12 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Product } from "@/data/products";
 import { useStore } from "@/context/StoreContext";
 import ProductCard from "@/components/ProductCard";
 import {
   Star,
   ShoppingBag,
-  ShoppingCart,
   Heart,
   TruckFast,
   ShieldCheck,
@@ -19,8 +17,6 @@ import {
   Share,
   Location,
   ArrowRight,
-  ArrowLeft,
-  Lock,
   Sparkles,
   TicketDiscount,
   Clock,
@@ -42,7 +38,6 @@ export default function ProductDetailsClient({
   relatedProducts,
   initialReviews = [],
 }: ProductDetailsClientProps) {
-  const router = useRouter();
   const { addToCart, toggleWishlist, isWishlisted, openCart, showToast } = useStore();
 
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
@@ -422,7 +417,7 @@ export default function ProductDetailsClient({
           setPincodeChecked(true);
           showToast(`Express Delivery available to Pincode ${pincode}! 🚀`);
         }
-      } catch (err) {
+      } catch {
         setPincodeChecked(true);
         showToast(`Express Delivery available to Pincode ${pincode}! 🚀`);
       } finally {
@@ -1175,8 +1170,16 @@ export default function ProductDetailsClient({
                 </div>
               )}
 
+              {/* Reviews Loading State */}
+              {isLoadingReviews && userReviews.length === 0 && (
+                <div className="p-8 text-center bg-[#f8fafc] rounded-3xl border border-[#e2e8f0] max-w-lg mx-auto flex flex-col items-center justify-center gap-3">
+                  <div className="w-6 h-6 border-2 border-[#f97316] border-t-transparent rounded-full animate-spin" />
+                  <p className="text-xs text-[#584237]">Loading verified customer reviews...</p>
+                </div>
+              )}
+
               {/* Empty state when no reviews submitted yet */}
-              {userReviews.length === 0 && (
+              {!isLoadingReviews && userReviews.length === 0 && (
                 <div className="p-8 sm:p-12 text-center bg-[#f8fafc] rounded-3xl border border-[#e2e8f0] max-w-lg mx-auto space-y-3">
                   <div className="w-12 h-12 rounded-2xl bg-orange-100 text-[#f97316] flex items-center justify-center mx-auto">
                     <Star size={24} weight="Filled" />

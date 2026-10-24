@@ -1,12 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyAdminSessionToken } from "@/lib/auth";
-import { pushOrderToShopify } from "@/lib/shopify";
-import {
-  generateOrderNumber,
-  sanitizeOrderItems,
-  calculateOrderTotals,
-} from "@/lib/orders";
+import { createDatabaseOrder } from "@/lib/orders";
 
 // GET /api/orders - list orders (Admin gets all with filters, Customers scoped to their phone/email/userId)
 export async function GET(req: NextRequest) {
@@ -115,87 +110,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Sanitize items and calculate verified totals
-    const { sanitizedItems, computedSubtotal } = sanitizeOrderItems(items);
-    const { finalSubtotal, cleanDiscount, cleanShipping, finalGrandTotal } =
-      calculateOrderTotals({
-        subtotal,
-        computedSubtotal,
-        discountAmount,
-        shippingFee,
-        paymentMethod,
-      });
-
-    // Verify valid user reference if provided
-    let linkedUserId: string | null = null;
-    if (userId) {
-      const existingUser = await prisma.user.findUnique({
-        where: { id: String(userId) },
-        select: { id: true },
-      });
-      if (existingUser) {
-        linkedUserId = existingUser.id;
-      }
-    }
-
-    const orderNumber = generateOrderNumber();
-
-    const customerFullName = [customer.firstName, customer.lastName]
-      .filter(Boolean)
-      .join(" ")
-      .trim();
-
-    const newOrder = await prisma.order.create({
-      data: {
-        userId: linkedUserId,
-        orderNumber,
-        customerName: customerFullName || "Customer",
-        customerPhone: String(customer.phone).trim(),
-        customerEmail: customer.email ? String(customer.email).trim() : "",
-        address: String(address.address).trim(),
-        city: String(address.city || "").trim(),
-        state: String(address.state || "").trim(),
-        pincode: String(address.pincode || "").trim(),
-        landmark: address.landmark ? String(address.landmark).trim() : null,
-        subtotal: finalSubtotal,
-        discountAmount: cleanDiscount,
-        shippingFee: cleanShipping,
-        total: finalGrandTotal,
-        paymentMethod: paymentMethod === "upi" ? "UPI" : paymentMethod === "card" ? "Card" : "COD",
-        status: paymentMethod === "cod" ? "Processing" : "Pending Payment",
-        courier: "Standard Express Delivery",
-        awbNumber: null,
-        items: {
-          create: sanitizedItems,
-        },
-      },
-      include: {
-        items: true,
-      },
+    const newOrder = await createDatabaseOrder({
+      userId,
+      customer,
+      address,
+      items,
+      paymentMethod,
+      subtotal,
+      discountAmount,
+      shippingFee,
     });
- 
-    // Synchronize to Shopify warehouse (non-blocking)
-    pushOrderToShopify({
-      orderNumber: newOrder.orderNumber,
-      customerName: newOrder.customerName,
-      customerPhone: newOrder.customerPhone,
-      customerEmail: newOrder.customerEmail,
-      address: newOrder.address,
-      city: newOrder.city,
-      state: newOrder.state,
-      pincode: newOrder.pincode,
-      landmark: newOrder.landmark,
-      paymentMethod: newOrder.paymentMethod,
-      subtotal: newOrder.subtotal,
-      discountAmount: newOrder.discountAmount,
-      shippingFee: newOrder.shippingFee,
-      total: newOrder.total,
-      items: newOrder.items.map((i) => ({
-        title: i.title,
-        price: i.price,
-        quantity: i.quantity,
-      })),
-    }).catch((err) => console.warn("[Shopify Sync Error]:", err));
 
     return NextResponse.json(
       {

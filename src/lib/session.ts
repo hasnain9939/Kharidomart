@@ -1,5 +1,5 @@
 /**
- * Edge-compatible and Node-compatible Admin Session Token Handler
+ * Edge-compatible and Node-compatible Session Token Handler
  * Built with standard Web Crypto API (crypto.subtle) so it runs flawlessly
  * in Next.js Edge Middleware, API Routes, and Browser runtimes.
  */
@@ -10,6 +10,13 @@ const SESSION_SECRET =
 export interface AdminSessionPayload {
   email: string;
   role: "admin";
+  issuedAt: number;
+}
+
+export interface UserSessionPayload {
+  userId: string;
+  email: string;
+  role: "user";
   issuedAt: number;
 }
 
@@ -60,131 +67,108 @@ function base64UrlDecodeJson<T>(b64url: string): T | null {
 }
 
 /**
- * Creates an HMAC-SHA256 signed session token using Web Crypto
+ * Generic HMAC-SHA256 session token generator using Web Crypto
+ */
+export async function signSessionToken<T>(
+  payload: T,
+  secret: string = SESSION_SECRET
+): Promise<string> {
+  const data = base64UrlEncodeJson(payload);
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(data));
+  return `${data}.${bufToBase64Url(sig)}`;
+}
+
+/**
+ * Generic HMAC-SHA256 session token verifier using Web Crypto
+ */
+export async function verifySessionToken<T>(
+  token: string | null | undefined,
+  secret: string = SESSION_SECRET,
+  validator?: (data: any) => T | null
+): Promise<T | null> {
+  if (!token || typeof token !== "string" || !token.includes(".")) {
+    return null;
+  }
+
+  try {
+    const [data, sig] = token.split(".");
+    if (!data || !sig) return null;
+
+    const enc = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      "raw",
+      enc.encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["verify"]
+    );
+
+    const isValid = await crypto.subtle.verify(
+      "HMAC",
+      key,
+      base64UrlToBuf(sig),
+      enc.encode(data)
+    );
+
+    if (!isValid) return null;
+
+    const parsed = base64UrlDecodeJson<T>(data);
+    if (!parsed) return null;
+
+    return validator ? validator(parsed) : parsed;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Creates an HMAC-SHA256 signed session token for administrators
  */
 export async function createAdminSessionToken(
   payload: AdminSessionPayload
 ): Promise<string> {
-  const data = base64UrlEncodeJson(payload);
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    "raw",
-    enc.encode(SESSION_SECRET),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(data));
-  return `${data}.${bufToBase64Url(sig)}`;
+  return signSessionToken(payload);
 }
 
 /**
- * Verifies an HMAC-SHA256 signed session token using Web Crypto
+ * Verifies an HMAC-SHA256 signed session token for administrators
  */
 export async function verifyAdminSessionToken(
   token: string | null | undefined
 ): Promise<AdminSessionPayload | null> {
-  if (!token || typeof token !== "string" || !token.includes(".")) {
-    return null;
-  }
-
-  try {
-    const [data, sig] = token.split(".");
-    if (!data || !sig) return null;
-
-    const enc = new TextEncoder();
-    const key = await crypto.subtle.importKey(
-      "raw",
-      enc.encode(SESSION_SECRET),
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["verify"]
-    );
-
-    const isValid = await crypto.subtle.verify(
-      "HMAC",
-      key,
-      base64UrlToBuf(sig),
-      enc.encode(data)
-    );
-
-    if (!isValid) return null;
-
-    const parsed = base64UrlDecodeJson<AdminSessionPayload>(data);
-    if (parsed && parsed.role === "admin" && parsed.email) {
-      return parsed;
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-export interface UserSessionPayload {
-  userId: string;
-  email: string;
-  role: "user";
-  issuedAt: number;
+  return verifySessionToken<AdminSessionPayload>(
+    token,
+    SESSION_SECRET,
+    (p) => (p && p.role === "admin" && p.email ? p : null)
+  );
 }
 
 /**
- * Creates an HMAC-SHA256 signed customer session token using Web Crypto
+ * Creates an HMAC-SHA256 signed session token for customers
  */
 export async function createUserSessionToken(
   payload: UserSessionPayload
 ): Promise<string> {
-  const data = base64UrlEncodeJson(payload);
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    "raw",
-    enc.encode(SESSION_SECRET),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(data));
-  return `${data}.${bufToBase64Url(sig)}`;
+  return signSessionToken(payload);
 }
 
 /**
- * Verifies an HMAC-SHA256 signed customer session token using Web Crypto
+ * Verifies an HMAC-SHA256 signed session token for customers
  */
 export async function verifyUserSessionToken(
   token: string | null | undefined
 ): Promise<UserSessionPayload | null> {
-  if (!token || typeof token !== "string" || !token.includes(".")) {
-    return null;
-  }
-
-  try {
-    const [data, sig] = token.split(".");
-    if (!data || !sig) return null;
-
-    const enc = new TextEncoder();
-    const key = await crypto.subtle.importKey(
-      "raw",
-      enc.encode(SESSION_SECRET),
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["verify"]
-    );
-
-    const isValid = await crypto.subtle.verify(
-      "HMAC",
-      key,
-      base64UrlToBuf(sig),
-      enc.encode(data)
-    );
-
-    if (!isValid) return null;
-
-    const parsed = base64UrlDecodeJson<UserSessionPayload>(data);
-    if (parsed && parsed.role === "user" && parsed.userId && parsed.email) {
-      return parsed;
-    }
-    return null;
-  } catch {
-    return null;
-  }
+  return verifySessionToken<UserSessionPayload>(
+    token,
+    SESSION_SECRET,
+    (p) => (p && p.role === "user" && p.userId && p.email ? p : null)
+  );
 }
-

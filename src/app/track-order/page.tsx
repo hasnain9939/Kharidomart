@@ -96,7 +96,6 @@ function TrackOrderContent() {
       const data = await res.json();
       if (res.ok && data.success && data.order) {
         const dbOrder = data.order;
-        const nameParts = (dbOrder.customerName || "").split(" ");
         const mappedOrder: StoredOrder = {
           orderId: dbOrder.orderNumber,
           date: dbOrder.createdAt,

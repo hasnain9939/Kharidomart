@@ -107,28 +107,14 @@ export async function POST(req: NextRequest) {
         type: mime,
       });
     } catch (fsErr: any) {
-      console.warn("Local filesystem write failed, using fallback:", fsErr?.message);
-
-      // Serverless fallback: For images or files under 4MB, convert to base64 Data URL
-      if (file.size <= 4.5 * 1024 * 1024) {
-        const base64Data = buffer.toString("base64");
-        const dataUrl = `data:${mime || "image/jpeg"};base64,${base64Data}`;
-        return NextResponse.json({
-          success: true,
-          url: dataUrl,
-          filename,
-          size: file.size,
-          type: mime,
-          isDataUrl: true,
-        });
-      }
-
+      console.error("Local filesystem write failed in /api/upload:", fsErr?.message);
       return NextResponse.json(
         {
           success: false,
-          error: "File is too large for serverless memory storage. Please use a video under 4MB or paste an external link (YouTube / Vimeo / CDN).",
+          error:
+            "Local storage is unavailable on this environment. Please configure cloud storage (S3/R2/Cloudinary) or use external media URLs.",
         },
-        { status: 413 }
+        { status: 503 }
       );
     }
   } catch (error: any) {

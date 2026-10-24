@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Product } from "@/data/products";
 import { useStore } from "@/context/StoreContext";
-import { Star, Heart, ShoppingBag, Eye, Check } from "reicon-react";
+import { Star, Heart, ShoppingBag, Eye } from "reicon-react";
 
 interface ProductCardProps {
   product: Product;

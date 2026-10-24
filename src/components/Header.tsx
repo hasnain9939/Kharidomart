@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import Image from "next/image";
 import KharidoMartLogo from "@/components/KharidoMartLogo";
 import { useStore } from "@/context/StoreContext";
 import {
@@ -12,7 +11,6 @@ import {
   Heart,
   User,
   Flame,
-  ArrowRight,
   Menu,
   CloseCircle,
 } from "reicon-react";

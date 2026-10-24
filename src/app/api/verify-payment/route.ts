@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
-import { prisma } from "@/lib/prisma";
-import { pushOrderToShopify } from "@/lib/shopify";
-import {
-  generateOrderNumber,
-  sanitizeOrderItems,
-  calculateOrderTotals,
-} from "@/lib/orders";
+import { createDatabaseOrder } from "@/lib/orders";
 
 export async function POST(req: NextRequest) {
   try {
@@ -60,101 +54,17 @@ export async function POST(req: NextRequest) {
     // If checkout order payload is included, create the confirmed order in the database
     let createdOrder = null;
     if (body.customer && body.address && Array.isArray(body.items) && body.items.length > 0) {
-      const {
-        userId,
-        customer,
-        address,
-        items,
-        subtotal = 0,
-        discountAmount = 0,
-        shippingFee = 0,
-        grandTotal = 0,
-        paymentMethod = "UPI",
-      } = body;
-
-      const { sanitizedItems, computedSubtotal } = sanitizeOrderItems(items);
-      const { finalSubtotal, cleanDiscount, cleanShipping, finalGrandTotal } =
-        calculateOrderTotals({
-          subtotal,
-          computedSubtotal,
-          discountAmount,
-          shippingFee,
-          paymentMethod,
-        });
-
-      let linkedUserId: string | null = null;
-      if (userId) {
-        const existingUser = await prisma.user.findUnique({
-          where: { id: String(userId) },
-          select: { id: true },
-        });
-        if (existingUser) {
-          linkedUserId = existingUser.id;
-        }
-      }
-
-      const orderNumber = generateOrderNumber();
-
-      const customerFullName = [customer.firstName, customer.lastName]
-        .filter(Boolean)
-        .join(" ")
-        .trim();
-
-      const landmarkWithRef = address.landmark
-        ? `${address.landmark} (Razorpay: ${paymentId})`
-        : `Razorpay Payment ID: ${paymentId}`;
-
-      createdOrder = await prisma.order.create({
-        data: {
-          userId: linkedUserId,
-          orderNumber,
-          customerName: customerFullName || "Customer",
-          customerPhone: String(customer.phone).trim(),
-          customerEmail: customer.email ? String(customer.email).trim() : "",
-          address: String(address.address).trim(),
-          city: String(address.city || "").trim(),
-          state: String(address.state || "").trim(),
-          pincode: String(address.pincode || "").trim(),
-          landmark: landmarkWithRef,
-          subtotal: finalSubtotal,
-          discountAmount: cleanDiscount,
-          shippingFee: cleanShipping,
-          total: finalGrandTotal,
-          paymentMethod: String(paymentMethod).toLowerCase().includes("card") ? "Card (Razorpay)" : "UPI (Razorpay)",
-          status: "Processing",
-          courier: "Standard Express Delivery",
-          awbNumber: null, // Assigned upon courier pickup / dispatch
-          items: {
-            create: sanitizedItems,
-          },
-        },
-        include: {
-          items: true,
-        },
+      createdOrder = await createDatabaseOrder({
+        userId: body.userId,
+        customer: body.customer,
+        address: body.address,
+        items: body.items,
+        paymentMethod: body.paymentMethod || "UPI",
+        paymentId,
+        subtotal: body.subtotal,
+        discountAmount: body.discountAmount,
+        shippingFee: body.shippingFee,
       });
-
-      // Synchronize confirmed prepaid order to Shopify warehouse (non-blocking)
-      pushOrderToShopify({
-        orderNumber: createdOrder.orderNumber,
-        customerName: createdOrder.customerName,
-        customerPhone: createdOrder.customerPhone,
-        customerEmail: createdOrder.customerEmail,
-        address: createdOrder.address,
-        city: createdOrder.city,
-        state: createdOrder.state,
-        pincode: createdOrder.pincode,
-        landmark: createdOrder.landmark,
-        paymentMethod: createdOrder.paymentMethod,
-        subtotal: createdOrder.subtotal,
-        discountAmount: createdOrder.discountAmount,
-        shippingFee: createdOrder.shippingFee,
-        total: createdOrder.total,
-        items: createdOrder.items.map((i: any) => ({
-          title: i.title,
-          price: i.price,
-          quantity: i.quantity,
-        })),
-      }).catch((err) => console.warn("[Shopify Sync Error on Prepaid]:", err));
     }
 
     return NextResponse.json({

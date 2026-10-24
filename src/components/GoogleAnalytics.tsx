@@ -3,7 +3,12 @@
 import Script from "next/script";
 
 export default function GoogleAnalytics() {
-  const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "G-KHARIDOMART";
+  const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+
+  // Do not inject tracking scripts if measurement ID is unconfigured or a dummy placeholder
+  if (!gaId || gaId === "G-KHARIDOMART") {
+    return null;
+  }
 
   return (
     <>

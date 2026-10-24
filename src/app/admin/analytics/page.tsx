@@ -2,23 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import {
-  Chart,
-  TruckFast,
-  ShoppingBag,
-  ArrowRight,
-  Printer,
-  ShieldCheck,
-  CheckCircle,
-  Location,
-  Sparkles,
-  TicketDiscount,
-} from "reicon-react";
 
 export default function AdminAnalyticsPage() {
   const [timeRange, setTimeRange] = useState("mtd");
   const [orders, setOrders] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -30,8 +17,6 @@ export default function AdminAnalyticsPage() {
         }
       } catch {
         // Fallback
-      } finally {
-        setIsLoading(false);
       }
     };
     fetchOrders();

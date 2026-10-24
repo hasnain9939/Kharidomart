@@ -5,8 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   Box,
-  TruckFast,
-  ArrowRight,
   ShieldCheck,
   CheckCircle,
   CloseCircle,
