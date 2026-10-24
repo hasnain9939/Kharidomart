@@ -105,6 +105,9 @@ export async function PUT(
       data: updateData,
     });
 
+    const { clearDataCache } = await import("@/lib/data-cache");
+    clearDataCache();
+
     return NextResponse.json({
       success: true,
       product: formatProduct(updated),
@@ -161,6 +164,9 @@ export async function DELETE(
     await prisma.product.delete({
       where: { id: existing.id },
     });
+
+    const { clearDataCache } = await import("@/lib/data-cache");
+    clearDataCache();
 
     return NextResponse.json({
       success: true,

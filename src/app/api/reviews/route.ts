@@ -63,6 +63,10 @@ export async function GET(req: NextRequest) {
         }),
         createdAt: r.createdAt,
       })),
+    }, {
+      headers: {
+        "Cache-Control": "public, s-maxage=120, stale-while-revalidate=600",
+      },
     });
   } catch (error: any) {
     console.error("GET /api/reviews error:", error);

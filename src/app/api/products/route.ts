@@ -29,16 +29,41 @@ export async function GET(req: NextRequest) {
       ];
     }
 
+    // Fast path: use server-cached products when no filters are applied
+    if (!category && !search && !featured) {
+      const { getCachedAllProducts } = await import("@/lib/data-cache");
+      const products = await getCachedAllProducts();
+      return NextResponse.json(
+        {
+          success: true,
+          count: products.length,
+          products,
+        },
+        {
+          headers: {
+            "Cache-Control": "public, s-maxage=120, stale-while-revalidate=600",
+          },
+        }
+      );
+    }
+
     const products = await prisma.product.findMany({
       where,
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({
-      success: true,
-      count: products.length,
-      products: products.map(formatProduct),
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        count: products.length,
+        products: products.map(formatProduct),
+      },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        },
+      }
+    );
   } catch (error: any) {
     console.error("GET /api/products error:", error);
     return NextResponse.json(
@@ -114,6 +139,9 @@ export async function POST(req: NextRequest) {
         specs: JSON.stringify(Array.isArray(specs) ? specs : []),
       },
     });
+
+    const { clearDataCache } = await import("@/lib/data-cache");
+    clearDataCache();
 
     return NextResponse.json(
       { success: true, product: formatProduct(newProduct) },

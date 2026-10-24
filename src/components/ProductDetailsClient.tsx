@@ -34,11 +34,13 @@ import { trackViewItem, trackAddToCart } from "@/lib/analytics";
 interface ProductDetailsClientProps {
   product: Product;
   relatedProducts: Product[];
+  initialReviews?: any[];
 }
 
 export default function ProductDetailsClient({
   product,
   relatedProducts,
+  initialReviews = [],
 }: ProductDetailsClientProps) {
   const router = useRouter();
   const { addToCart, toggleWishlist, isWishlisted, openCart, showToast } = useStore();
@@ -98,10 +100,14 @@ export default function ProductDetailsClient({
 
   const [activeTab, setActiveTab] = useState<"description" | "specs" | "reviews">("description");
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
-  const [isLoadingReviews, setIsLoadingReviews] = useState(true);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(
+    !initialReviews || initialReviews.length === 0
+  );
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [liveRating, setLiveRating] = useState<number>(product.rating || 5);
-  const [liveReviewsCount, setLiveReviewsCount] = useState<number>(product.reviewsCount || 0);
+  const [liveReviewsCount, setLiveReviewsCount] = useState<number>(
+    product.reviewsCount || (initialReviews ? initialReviews.length : 0)
+  );
 
   const [userReviews, setUserReviews] = useState<
     Array<{
@@ -115,7 +121,19 @@ export default function ProductDetailsClient({
       date: string;
       verified?: boolean;
     }>
-  >([]);
+  >(
+    (initialReviews || []).map((r: any) => ({
+      id: r.id,
+      name: r.customerName || r.name || "Verified Customer",
+      customerName: r.customerName || r.name || "Verified Customer",
+      city: r.city || "India",
+      rating: r.rating || 5,
+      title: r.title || "",
+      comment: r.comment || "",
+      date: r.createdAt ? new Date(r.createdAt).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }) : "Recent purchase",
+      verified: r.verified ?? true,
+    }))
+  );
   const [reviewForm, setReviewForm] = useState({
     name: "",
     city: "",
@@ -278,8 +296,9 @@ export default function ProductDetailsClient({
     };
   };
 
-  // Fetch real reviews from Neon PostgreSQL on mount
+  // Fetch real reviews from Neon PostgreSQL on mount only if not already provided
   React.useEffect(() => {
+    if (initialReviews && initialReviews.length > 0) return;
     let isMounted = true;
     const loadProductReviews = async () => {
       setIsLoadingReviews(true);
@@ -303,7 +322,7 @@ export default function ProductDetailsClient({
     return () => {
       isMounted = false;
     };
-  }, [product.id, product.slug]);
+  }, [product.id, product.slug, initialReviews]);
 
   // Submit verified customer review to PostgreSQL
   const handleSubmitReview = async (e: React.FormEvent) => {
@@ -529,6 +548,7 @@ export default function ProductDetailsClient({
                       alt={product.title}
                       fill
                       priority
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
                       className="object-contain rounded-2xl transition-all duration-300 hover:scale-[1.03]"
                     />
                   </div>
@@ -563,6 +583,7 @@ export default function ProductDetailsClient({
                         src={img}
                         alt={`${product.shortTitle} thumbnail ${idx + 1}`}
                         fill
+                        sizes="96px"
                         className="object-cover rounded-xl"
                       />
                     </button>

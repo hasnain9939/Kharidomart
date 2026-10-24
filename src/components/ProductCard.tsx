@@ -74,6 +74,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               src={product.images[1]}
               alt={`${product.title} - alternate angle`}
               fill
+              loading="lazy"
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
               className="object-cover object-center opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-out absolute inset-0"
             />

@@ -1,35 +1,35 @@
-import React, { cache } from "react";
+import React from "react";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
-import { Product } from "@/data/products";
-import { formatProduct } from "@/lib/products";
+import { getCachedProduct, getCachedAllProducts, getCachedProductReviews } from "@/lib/data-cache";
 import ProductDetailsClient from "@/components/ProductDetailsClient";
 import type { Metadata } from "next";
+
+// Data is cached via unstable_cache in @/lib/data-cache
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
 }
 
-const getProduct = cache(async (slug: string) => {
-  return prisma.product.findFirst({
-    where: {
-      OR: [{ slug }, { id: slug }],
-    },
-  });
-});
+export async function generateStaticParams() {
+  try {
+    const products = await getCachedAllProducts();
+    return products.map((p) => ({ slug: p.slug }));
+  } catch {
+    return [];
+  }
+}
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const dbProduct = await getProduct(slug);
+  const product = await getCachedProduct(slug);
 
-  if (!dbProduct) {
+  if (!product) {
     return {
       title: "Product Not Found | Kharido Mart",
       description: "This item is currently not available at Kharido Mart.",
     };
   }
 
-  const product = formatProduct(dbProduct);
   const primaryImage = product.images[0] || "/assets/stitch/hero_showcase.jpg";
   const title = `${product.title} | Kharido Mart India`;
   const description =
@@ -77,22 +77,21 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 
 export default async function ProductDetailPage({ params }: ProductPageProps) {
   const { slug } = await params;
-  const dbProduct = await getProduct(slug);
 
-  if (!dbProduct) {
+  // Run product query, related products, and reviews in parallel with data caching
+  const [product, allProducts, initialReviews] = await Promise.all([
+    getCachedProduct(slug),
+    getCachedAllProducts(),
+    getCachedProductReviews(slug),
+  ]);
+
+  if (!product) {
     notFound();
   }
 
-  const product = formatProduct(dbProduct);
-
-  const relatedDb = await prisma.product.findMany({
-    where: {
-      id: { not: dbProduct.id },
-    },
-    take: 3,
-  });
-
-  const relatedProducts = relatedDb.map(formatProduct);
+  const relatedProducts = allProducts
+    .filter((p) => p.id !== product.id && p.slug !== product.slug)
+    .slice(0, 4);
 
   const productSchema = {
     "@context": "https://schema.org/",
@@ -190,6 +189,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
       <ProductDetailsClient
         product={product}
         relatedProducts={relatedProducts}
+        initialReviews={initialReviews}
       />
     </>
   );

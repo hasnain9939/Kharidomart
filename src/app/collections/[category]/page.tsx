@@ -2,9 +2,8 @@ import React from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CATEGORIES } from "@/data/categories";
-import { prisma } from "@/lib/prisma";
+import { getCachedAllProducts } from "@/lib/data-cache";
 import { Product } from "@/data/products";
-import { formatProduct } from "@/lib/products";
 import ProductCard from "@/components/ProductCard";
 import { ArrowLeft, Sparkles, ShoppingBag, ArrowRight } from "reicon-react";
 import type { Metadata } from "next";
@@ -72,14 +71,8 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     notFound();
   }
 
-  const dbProducts = await prisma.product.findMany({
-    where: {
-      categorySlug,
-    },
-    orderBy: { createdAt: "desc" },
-  });
-
-  const categoryProducts = dbProducts.map(formatProduct);
+  const allProducts = await getCachedAllProducts();
+  const categoryProducts = allProducts.filter((p) => p.categorySlug === categorySlug);
 
   const breadcrumbSchema = {
     "@context": "https://schema.org",

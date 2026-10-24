@@ -1,10 +1,8 @@
-"use client";
-
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useStore } from "@/context/StoreContext";
-import ProductCard from "@/components/ProductCard";
+import { getCachedAllProducts } from "@/lib/data-cache";
+import HomeProductSection from "@/components/HomeProductSection";
 import {
   ArrowRight,
   ShieldCheck,
@@ -20,22 +18,8 @@ import {
   Headphones,
 } from "reicon-react";
 
-export default function Home() {
-  const { products, isLoadingProducts } = useStore();
-  const [activeCategory, setActiveCategory] = useState("all");
-
-  const categoryFilters = [
-    { label: "All Mom Favorites", key: "all", count: products.length },
-    { label: "Mom & Newborn Care", key: "mom-baby", count: products.filter((p) => p.categorySlug === "mom-baby").length },
-    { label: "Screen-Free Learning", key: "fun-clever-finds", count: products.filter((p) => p.categorySlug === "fun-clever-finds").length },
-    { label: "Nursery & Night Lights", key: "smart-gadgets", count: products.filter((p) => p.categorySlug === "smart-gadgets").length },
-    { label: "Healthy Feeding & Home", key: "home-kitchen", count: products.filter((p) => p.categorySlug === "home-kitchen").length },
-  ];
-
-  const filteredProducts =
-    activeCategory === "all"
-      ? products
-      : products.filter((p) => p.categorySlug === activeCategory);
+export default async function Home() {
+  const products = await getCachedAllProducts();
 
   return (
     <div className="flex flex-col w-full bg-[#fdfbf7] text-[#2b1f1a]">
@@ -154,6 +138,7 @@ export default function Home() {
                   alt="Loving Indian mother caring gently for her baby with Kharido Mart essentials"
                   width={600}
                   height={600}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 480px"
                   className="w-full h-full object-cover rounded-2xl group-hover:scale-105 transition-transform duration-700 ease-out"
                   priority
                 />
@@ -255,6 +240,7 @@ export default function Home() {
                   src="/assets/stitch/bento_mom_baby.jpg"
                   alt="Mom and Baby Essentials"
                   fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 450px"
                   className="object-cover object-left rounded-tl-3xl"
                 />
               </div>
@@ -285,6 +271,7 @@ export default function Home() {
                   src="/assets/stitch/bento_home_kitchen.jpg"
                   alt="Home and Kitchen Organizers"
                   fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 320px"
                   className="object-cover rounded-tl-3xl shadow-md"
                 />
               </div>
@@ -315,6 +302,7 @@ export default function Home() {
                   src="/assets/stitch/bento_fun_clever.jpg"
                   alt="Fun and Clever Educational Toys"
                   fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 320px"
                   className="object-cover rounded-tl-3xl shadow-md"
                 />
               </div>
@@ -345,6 +333,7 @@ export default function Home() {
                   src="/assets/stitch/bento_smart_gadgets.jpg"
                   alt="Smart Gadgets and Desk Lamps"
                   fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 450px"
                   className="object-cover object-left rounded-tl-3xl"
                 />
               </div>
@@ -354,136 +343,7 @@ export default function Home() {
       </section>
 
       {/* 4. FEATURED PRODUCTS & BEST-SELLERS */}
-      <section className="w-full py-14 sm:py-20 bg-[#fdfbf7]" id="featured-products">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
-            <div>
-              <div className="inline-flex items-center gap-1.5 text-[#e06b5b] text-xs uppercase tracking-wider font-bold mb-2">
-                <Sparkles size={14} weight="Filled" />
-                <span>Trending Mom-Approved Essentials</span>
-              </div>
-              <h2 className="text-2xl sm:text-4xl text-[#2b1f1a] font-black tracking-tight">
-                Featured Parenting Bestsellers
-              </h2>
-              <p className="text-sm sm:text-base text-[#6b5850] mt-1">
-                Verified for 100% child-safe materials, durability, and stress-free daily use.
-              </p>
-            </div>
-
-            {/* Filter Tabs */}
-            <div className="flex flex-wrap items-center gap-2">
-              {categoryFilters.map((tab) => {
-                const isActive = activeCategory === tab.key;
-                return (
-                  <button
-                    key={tab.key}
-                    onClick={() => setActiveCategory(tab.key)}
-                    className={`px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all duration-150 active:scale-95 flex items-center gap-1.5 ${
-                      isActive
-                        ? "bg-[#e06b5b] text-white shadow-sm"
-                        : "bg-white text-[#6b5850] hover:text-[#2b1f1a] hover:bg-[#fbf7f0] border border-[#eddcd1]"
-                    }`}
-                  >
-                    <span>{tab.label}</span>
-                    <span
-                      className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono tabular-nums ${
-                        isActive ? "bg-white/20 text-white" : "bg-[#fbf7f0] text-[#6b5850]"
-                      }`}
-                    >
-                      {tab.count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Product Grid */}
-          {isLoadingProducts ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[1, 2, 3, 4].map((n) => (
-                <div key={n} className="bg-white rounded-3xl p-4 border border-[#eddcd1] animate-pulse space-y-4">
-                  <div className="w-full aspect-square bg-[#f5ebe6] rounded-2xl" />
-                  <div className="h-4 bg-[#f5ebe6] rounded w-3/4" />
-                  <div className="h-3 bg-[#f5ebe6] rounded w-1/2" />
-                </div>
-              ))}
-            </div>
-          ) : filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          ) : (
-            <div className="bg-white rounded-3xl p-8 sm:p-12 border border-[#eddcd1] shadow-xs max-w-3xl mx-auto text-center space-y-6">
-              <div className="w-16 h-16 rounded-2xl bg-[#fdedeb] text-[#e06b5b] flex items-center justify-center mx-auto shadow-2xs">
-                <Sparkles size={32} weight="Filled" />
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-xl sm:text-2xl font-black text-[#2b1f1a] tracking-tight">
-                  New Handpicked Arrivals Dropping This Week
-                </h3>
-                <p className="text-sm text-[#6b5850] max-w-lg mx-auto leading-relaxed">
-                  Our quality team is currently inspecting and certifying the next batch of BPA-free, child-safe essentials. Explore our milestone collections below or get in touch for custom requests.
-                </p>
-              </div>
-
-              {/* Quick Collection Jump Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 text-left">
-                <Link
-                  href="/collections/mom-baby"
-                  className="p-3.5 rounded-xl bg-[#fbf7f0] border border-[#eddcd1] hover:border-[#e06b5b] transition-all group"
-                >
-                  <p className="text-[11px] font-bold text-[#e06b5b] uppercase tracking-wider">0–12M</p>
-                  <p className="text-xs font-black text-[#2b1f1a] group-hover:text-[#e06b5b] transition-colors mt-0.5">Mom &amp; Baby</p>
-                </Link>
-                <Link
-                  href="/collections/fun-clever-finds"
-                  className="p-3.5 rounded-xl bg-[#eaf3ed] border border-[#d2e7d7] hover:border-[#4f775d] transition-all group"
-                >
-                  <p className="text-[11px] font-bold text-[#4f775d] uppercase tracking-wider">1–4Y</p>
-                  <p className="text-xs font-black text-[#2b1f1a] group-hover:text-[#4f775d] transition-colors mt-0.5">Montessori Play</p>
-                </Link>
-                <Link
-                  href="/collections/home-kitchen"
-                  className="p-3.5 rounded-xl bg-[#fbf7f0] border border-[#eddcd1] hover:border-[#e06b5b] transition-all group"
-                >
-                  <p className="text-[11px] font-bold text-[#4f775d] uppercase tracking-wider">Feeding</p>
-                  <p className="text-xs font-black text-[#2b1f1a] group-hover:text-[#4f775d] transition-colors mt-0.5">Baby Purees</p>
-                </Link>
-                <Link
-                  href="/collections/smart-gadgets"
-                  className="p-3.5 rounded-xl bg-[#f6f1eb] border border-[#eddcd1] hover:border-[#2b1f1a] transition-all group"
-                >
-                  <p className="text-[11px] font-bold text-[#6b5850] uppercase tracking-wider">Bedtime</p>
-                  <p className="text-xs font-black text-[#2b1f1a] group-hover:text-[#e06b5b] transition-colors mt-0.5">Nursery Lamps</p>
-                </Link>
-              </div>
-
-              <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
-                <Link
-                  href="/shop"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-[#e06b5b] hover:bg-[#c95444] text-white text-xs sm:text-sm font-bold rounded-xl transition-all shadow-sm active:scale-95"
-                >
-                  <ShoppingBag size={16} weight="Filled" />
-                  <span>Browse Full Catalog</span>
-                  <ArrowRight size={15} weight="Outline" />
-                </Link>
-                <a
-                  href="https://wa.me/918540017572?text=Hi%20Kharido%20Mart,%20I'm%20looking%20for%20a%20baby%20product"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-5 py-3 bg-white hover:bg-stone-50 text-[#2b1f1a] text-xs sm:text-sm font-bold rounded-xl border border-[#eddcd1] transition-all shadow-2xs active:scale-95"
-                >
-                  <Headphones size={16} weight="Outline" />
-                  <span>Ask Support on WhatsApp</span>
-                </a>
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
+      <HomeProductSection initialProducts={products} />
 
       {/* 5. UPI / PREPAID INCENTIVE BANNER (WARM ROASTED ESPRESSO & CORAL ACCENTS) */}
       <section className="w-full py-8 bg-[#fdfbf7]">
