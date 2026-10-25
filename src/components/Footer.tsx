@@ -284,7 +284,7 @@ export default function Footer() {
         </div>
 
         {/* 4. Bottom Copyright & Quick Legal Strip */}
-        <div className="pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-stone-400">
+        <div className="pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-stone-400 sm:pr-16 md:pr-20">
           <div className="text-center md:text-left space-y-0.5">
             <p className="font-bold text-stone-200">
               © 2026 Kharido Mart (kharidomart.com). All rights reserved.

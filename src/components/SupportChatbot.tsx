@@ -3,7 +3,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import {
-  ChatRoundDots,
   Send2,
   CloseCircle,
   Sparkles,
@@ -247,35 +246,22 @@ export default function SupportChatbot() {
 
   return (
     <>
-      {/* Floating Chatbot Launcher FAB (Right bottom) */}
+      {/* Floating Chatbot Launcher FAB (Right bottom - compact circular orb) */}
       <div className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-40">
         {!isOpen && (
           <button
             onClick={() => setIsOpen(true)}
-            className="group relative flex items-center gap-2.5 px-4 py-3 bg-[#1a1615] hover:bg-[#25201e] text-white rounded-full shadow-2xl border border-white/[0.12] transition-all duration-300 hover:scale-[1.02] active:scale-[0.96] cursor-pointer"
+            className="group relative flex items-center justify-center w-12 h-12 md:w-14 md:h-14 bg-[#1a1615] hover:bg-[#25201e] text-white rounded-full shadow-2xl border border-white/[0.15] transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer ring-4 ring-black/10"
             aria-label="Open Customer Support Chatbot"
+            title="Chat with AI Concierge"
           >
-            {/* Thinking Orb Avatar */}
-            <div className="w-7 h-7 rounded-full bg-[#e06b5b]/20 flex items-center justify-center p-0.5 border border-[#e06b5b]/40">
-              <ThinkingOrb size={20} state="breathing" theme="dark" />
-            </div>
+            <ThinkingOrb size={20} state="breathing" theme="dark" />
 
-            <div className="flex flex-col text-left">
-              <span className="text-xs font-bold leading-tight flex items-center gap-1.5">
-                <span>AI Help Desk</span>
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-                </span>
-              </span>
-              <span className="text-[10px] text-stone-300 font-medium hidden sm:inline">
-                Instant Order &amp; Product Help
-              </span>
-            </div>
-
-            <div className="ml-1 text-[#e06b5b] group-hover:translate-x-0.5 transition-transform">
-              <ChatRoundDots size={16} weight="Filled" />
-            </div>
+            {/* Subtle live indicator dot */}
+            <span className="absolute top-1 right-1 flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 ring-2 ring-[#1a1615]" />
+            </span>
           </button>
         )}
       </div>
