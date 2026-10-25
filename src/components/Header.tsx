@@ -27,6 +27,21 @@ export default function Header() {
     setMobileMenuOpen(false);
   }, [pathname]);
 
+  // Close mobile menu on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setMobileMenuOpen(false);
+      }
+    };
+    if (mobileMenuOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [mobileMenuOpen]);
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -61,7 +76,7 @@ export default function Header() {
   ];
 
   return (
-    <header className="w-full bg-white/95 backdrop-blur-md border-b border-[#e2e8f0] sticky top-0 z-40 transition-all shadow-xs">
+    <header className="relative w-full bg-white/95 backdrop-blur-md border-b border-[#eddcd1]/80 sticky top-0 z-50 transition-all shadow-xs">
       {/* Main Row: Logo, Search, Action Icons */}
       <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
         <div className="flex items-center justify-between gap-4 lg:gap-8">
@@ -215,69 +230,86 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile Drawer Menu */}
+      {/* Mobile Dropdown Menu Floating On Top (No Layout Shift / Pushing Page Down) */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-[#e2e8f0] bg-white px-4 py-5 shadow-lg space-y-4 animate-in slide-in-from-top-2 duration-200">
-          {/* Main Categories */}
-          <nav className="flex flex-col space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#584237]/60 px-3 pb-1">
-              Shop Categories
-            </span>
-            {navLinks.map((link) => {
-              const isActive = pathname === link.href;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    isActive
-                      ? "bg-orange-50 text-[#f97316] font-bold"
-                      : "text-[#0b1c30] hover:bg-[#f8fafc]"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              );
-            })}
-          </nav>
+        <>
+          {/* Fullscreen Backdrop overlay - clicking anywhere closes the menu */}
+          <div
+            className="fixed inset-0 z-40 bg-[#2b1f1a]/40 backdrop-blur-[2px] animate-in fade-in duration-200 lg:hidden cursor-pointer"
+            onClick={() => setMobileMenuOpen(false)}
+            aria-hidden="true"
+          />
 
-          {/* Quick Help & Tracking */}
-          <div className="pt-2 border-t border-[#e2e8f0]/80">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#584237]/60 px-3 pb-1 block">
-              Customer Services
-            </span>
-            <div className="flex flex-col space-y-0.5 mt-1">
-              {mobileUtilityLinks.map((u) => (
-                <Link
-                  key={u.href}
-                  href={u.href}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-[#584237] hover:text-[#f97316] hover:bg-[#f8fafc] transition-colors"
-                >
-                  {u.label}
-                </Link>
-              ))}
+          {/* Floating Dropdown Panel on top */}
+          <div
+            className="absolute top-full left-0 right-0 z-50 bg-white border-b border-[#eddcd1] shadow-[0_20px_40px_rgba(43,31,26,0.18)] px-4 sm:px-6 py-5 space-y-4 max-h-[calc(100vh-130px)] overflow-y-auto animate-in slide-in-from-top-2 fade-in duration-200 lg:hidden"
+          >
+            {/* Main Categories */}
+            <nav className="flex flex-col space-y-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#6b5850]/70 px-3 pb-1">
+                Shop Collections
+              </span>
+              {navLinks.map((link) => {
+                const isActive = pathname === link.href;
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-between ${
+                      isActive
+                        ? "bg-[#fdedeb] text-[#e06b5b] font-bold"
+                        : "text-[#2b1f1a] hover:bg-[#fbf7f0]"
+                    }`}
+                  >
+                    <span>{link.label}</span>
+                    <span className="text-xs text-[#6b5850]/40">→</span>
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {/* Quick Help & Tracking */}
+            <div className="pt-2 border-t border-[#eddcd1]/80">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#6b5850]/70 px-3 pb-1 block">
+                Customer Services &amp; Help
+              </span>
+              <div className="flex flex-col space-y-1 mt-1">
+                {mobileUtilityLinks.map((u) => (
+                  <Link
+                    key={u.href}
+                    href={u.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="px-3 py-2 rounded-xl text-xs font-semibold text-[#6b5850] hover:text-[#e06b5b] hover:bg-[#fbf7f0] transition-colors"
+                  >
+                    {u.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Bottom Account & Wishlist strip */}
+            <div className="pt-3 border-t border-[#eddcd1] flex items-center justify-between px-2">
+              <Link
+                href="/account"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-xs text-[#2b1f1a] hover:text-[#e06b5b] font-bold flex items-center gap-1.5 py-1"
+              >
+                <User size={16} weight={user ? "Filled" : "Outline"} className={user ? "text-[#e06b5b]" : ""} />
+                <span>{user ? `Hi, ${user.name.split(" ")[0]}` : "Account / Sign In"}</span>
+              </Link>
+
+              <Link
+                href="/shop?filter=wishlist"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-xs text-[#2b1f1a] hover:text-[#e06b5b] font-semibold flex items-center gap-1"
+              >
+                <Heart size={15} weight={wishlist.length > 0 ? "Filled" : "Outline"} className={wishlist.length > 0 ? "text-rose-500" : ""} />
+                <span>Wishlist ({wishlist.length})</span>
+              </Link>
             </div>
           </div>
-
-          {/* Bottom Account & Wishlist strip */}
-          <div className="pt-3 border-t border-[#e2e8f0] flex items-center justify-between">
-            <Link
-              href="/account"
-              className="text-xs text-[#0b1c30] hover:text-[#f97316] font-semibold flex items-center gap-1.5 py-1"
-            >
-              <User size={16} weight={user ? "Filled" : "Outline"} className={user ? "text-[#f97316]" : ""} />
-              <span>{user ? `Hi, ${user.name.split(" ")[0]}` : "Account / Sign In"}</span>
-            </Link>
-
-            <Link
-              href="/shop?filter=wishlist"
-              className="text-xs text-[#0b1c30] hover:text-[#f97316] font-medium flex items-center gap-1"
-            >
-              <Heart size={15} weight="Outline" />
-              <span>Wishlist ({wishlist.length})</span>
-            </Link>
-          </div>
-        </div>
+        </>
       )}
     </header>
   );
