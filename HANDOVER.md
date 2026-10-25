@@ -36,14 +36,10 @@ Open **[http://localhost:3000](http://localhost:3000)** in your browser.
 
 All `/admin` routes (`/admin`, `/admin/products`, `/admin/orders`, `/admin/inventory`, `/admin/customers`, `/admin/settings`, etc.) are secured. Typing `/admin` in the browser automatically redirects unauthenticated users to `/admin/login`.
 
-### Default Administrator Credentials
-- **Email**: `admin@kharidomart.com`
-- **Password**: `admin`
-
-### Alternative Configured Accounts:
-- **Email**: `mdhasnain7321@gmail.com` | **Password**: `admin@hasnain01`
-- **Email**: `shadabjmi0908@gmail.com` | **Password**: `admin@shadab02`
-- *(All credentials can be adjusted in your [`.env`](file:///c:/kharidomart/.env) file).*
+### Administrator Credentials & Production Setup
+- Admin credentials must be configured securely in your `.env` file via `ADMIN_EMAIL` and `ADMIN_PASSWORD`.
+- In production, default fallback passwords are permanently disabled.
+- Refer to [AUDIT_AND_REMEDIATION_STATUS.md](AUDIT_AND_REMEDIATION_STATUS.md) for the complete list of security updates, required statutory details, and setup steps.
 
 ---
 
