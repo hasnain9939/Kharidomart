@@ -3,18 +3,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { getCachedAllProducts } from "@/lib/data-cache";
 import HomeProductSection from "@/components/HomeProductSection";
-import HeroVisualShowcase from "@/components/HeroVisualShowcase";
+import HeroSlideshow from "@/components/HeroSlideshow";
 import {
   ArrowRight,
   ShieldCheck,
   TruckFast,
   Refresh,
   Award,
-  Heart,
   TicketDiscount,
-  ShoppingBag,
   Sparkles,
-  Layers,
   Check,
   Headphones,
 } from "reicon-react";
@@ -56,89 +53,8 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 2. BESPOKE MOM & BABY HERO SECTION */}
-      <section className="relative w-full bg-gradient-to-b from-[#fdfbf7] via-[#fbf7f0] to-[#f7f0e6]/70 overflow-hidden py-10 sm:py-16 lg:py-20">
-        {/* Warm ambient peach & sage glows */}
-        <div className="absolute top-10 left-1/4 w-96 h-96 rounded-full bg-[#fdedeb]/80 blur-3xl pointer-events-none -z-0" />
-        <div className="absolute bottom-10 right-10 w-96 h-96 rounded-full bg-[#eaf3ed]/70 blur-3xl pointer-events-none -z-0" />
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-            {/* Hero Text Column */}
-            <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-              {/* Trust Badge Pill */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#fdedeb] text-[#c95444] rounded-full border border-[#f5c7c1] shadow-2xs">
-                <Heart size={14} weight="Filled" className="text-[#e06b5b]" />
-                <span className="text-[11px] font-bold uppercase tracking-wider">
-                  🍼 Gentle Care for Little Ones • Quality Tested
-                </span>
-              </div>
-
-              {/* Display Header */}
-              <h1 className="text-3xl sm:text-5xl lg:text-[54px] font-black text-[#2b1f1a] tracking-tight leading-[1.08]">
-                Gentle care for{" "}
-                <span className="text-[#e06b5b]">little ones</span>.{" "}
-                Peace of mind for{" "}
-                <span className="text-[#4f775d]">moms</span>.
-              </h1>
-
-              <p className="text-sm sm:text-base lg:text-lg text-[#6b5850] max-w-xl mx-auto lg:mx-0 leading-relaxed font-normal">
-                Tear-free baby grooming, screen-free sensory discovery, and pure homemade nutrition—thoughtfully crafted to take the anxiety out of modern parenting.
-              </p>
-
-              {/* Action Buttons with Emil Kowalski Spring Physics */}
-              <div className="pt-2 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5">
-                <Link
-                  href="/shop"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 bg-[#e06b5b] hover:bg-[#c95444] active:scale-[0.97] text-white text-sm font-bold rounded-xl shadow-[0_4px_16px_rgba(224,107,91,0.35)] hover:shadow-[0_8px_24px_rgba(224,107,91,0.45)] transition-all duration-150"
-                >
-                  <ShoppingBag size={18} weight="Filled" />
-                  <span>Shop Mom Favorites</span>
-                  <ArrowRight size={16} weight="Outline" />
-                </Link>
-
-                <a
-                  href="#collections-bento"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white hover:bg-[#fbf7f0] active:scale-[0.97] text-[#2b1f1a] text-sm font-bold rounded-xl border border-[#eddcd1] shadow-2xs hover:border-[#e06b5b]/50 transition-all duration-150"
-                >
-                  <Layers size={17} weight="Outline" />
-                  <span>Explore Stages &amp; Play</span>
-                </a>
-              </div>
-
-              {/* Real Metric Proof with Tabular Numerals */}
-              <div className="pt-4 grid grid-cols-3 gap-3 max-w-lg mx-auto lg:mx-0">
-                <div className="bg-white/90 p-3.5 rounded-2xl border border-[#eddcd1] shadow-2xs text-center lg:text-left">
-                  <p className="font-mono text-xl sm:text-2xl text-[#e06b5b] font-black tabular-nums">
-                    24 Hrs
-                  </p>
-                  <p className="text-xs text-[#6b5850] font-medium mt-0.5">Replacement Guarantee</p>
-                </div>
-
-                <div className="bg-white/90 p-3.5 rounded-2xl border border-[#eddcd1] shadow-2xs text-center lg:text-left">
-                  <p className="font-mono text-xl sm:text-2xl text-[#2b1f1a] font-black tabular-nums">
-                    24/7
-                  </p>
-                  <p className="text-xs text-[#6b5850] font-medium mt-0.5">WhatsApp Support</p>
-                </div>
-
-                <div className="bg-white/90 p-3.5 rounded-2xl border border-[#eddcd1] shadow-2xs text-center lg:text-left">
-                  <p className="font-mono text-xl sm:text-2xl text-[#4f775d] font-black tabular-nums">
-                    100%
-                  </p>
-                  {/* TODO(owner): Add lab test certificate if claiming 3rd-party certification */}
-                  <p className="text-xs text-[#6b5850] font-medium mt-0.5">Food-Grade &amp; BPA-Free</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Hero Visual Showcase */}
-            <div className="lg:col-span-5 relative">
-              <HeroVisualShowcase />
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* 2. FULL DISPLAY CINEMATIC HERO SLIDESHOW (NO BOXED TEXT) */}
+      <HeroSlideshow />
 
       {/* 3. BENTO GRID CATEGORIES ("STAGE & PLAY COLLECTIONS") */}
       <section className="w-full py-14 sm:py-20 bg-white" id="collections-bento">
