@@ -13,7 +13,6 @@ import {
   Printer,
   ArrowLeft,
   ArrowRight,
-  Phone,
   Check,
   Clock,
 } from "reicon-react";
@@ -58,12 +57,15 @@ interface StoredOrder {
 
 function TrackOrderContent() {
   const searchParams = useSearchParams();
-  const initialQuery = searchParams?.get("orderId") || "";
+  const initialOrderId = searchParams?.get("orderId") || "";
   const { showToast } = useStore();
 
-  const [searchQuery, setSearchQuery] = useState(initialQuery);
+  const [orderIdQuery, setOrderIdQuery] = useState(initialOrderId);
+  const [contactQuery, setContactQuery] = useState("");
   const [searchedOrder, setSearchedOrder] = useState<StoredOrder | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
   const [recentSavedOrder, setRecentSavedOrder] = useState<StoredOrder | null>(null);
 
   // Check for any recently placed order by this browser
@@ -71,7 +73,11 @@ function TrackOrderContent() {
     try {
       const latest = localStorage.getItem("km_latest_order");
       if (latest) {
-        setRecentSavedOrder(JSON.parse(latest));
+        const parsed = JSON.parse(latest);
+        setRecentSavedOrder(parsed);
+        if (parsed.customer?.phone && !contactQuery) {
+          setContactQuery(parsed.customer.phone);
+        }
       }
     } catch {
       // ignore
@@ -80,20 +86,28 @@ function TrackOrderContent() {
 
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    const query = searchQuery.trim();
-    const cleanDigits = query.replace(/\D/g, "");
+    const cleanOrderId = orderIdQuery.trim();
+    const cleanContact = contactQuery.trim();
 
-    if (!query) {
-      showToast("Please enter your Order ID or 10-digit Mobile Number", "warning");
+    if (!cleanOrderId) {
+      showToast("Please enter your Order ID (#KM-2026-XXXXX)", "warning");
+      return;
+    }
+    if (!cleanContact) {
+      showToast("Please enter your matching 10-digit mobile number or email", "warning");
       return;
     }
 
     setHasSearched(true);
+    setSearchError(null);
+    setIsSearching(true);
 
     try {
-      // 1. First search in real Database
-      const res = await fetch(`/api/orders/${encodeURIComponent(query)}`);
+      const res = await fetch(
+        `/api/orders/${encodeURIComponent(cleanOrderId)}?contact=${encodeURIComponent(cleanContact)}`
+      );
       const data = await res.json();
+
       if (res.ok && data.success && data.order) {
         const dbOrder = data.order;
         const mappedOrder: StoredOrder = {
@@ -104,10 +118,10 @@ function TrackOrderContent() {
           status: dbOrder.status,
           courier: dbOrder.courier,
           customer: {
-            fullName: dbOrder.customerName || "Customer",
-            phone: dbOrder.customerPhone || "",
-            email: dbOrder.customerEmail || "",
-            address: `${dbOrder.address}, ${dbOrder.city}, ${dbOrder.state} - ${dbOrder.pincode}`,
+            fullName: "Verified Customer",
+            phone: "",
+            email: "",
+            address: "Verified Delivery Destination",
           },
           items: (dbOrder.items || []).map((it: any) => ({
             product: {
@@ -119,7 +133,7 @@ function TrackOrderContent() {
             },
             quantity: it.quantity,
           })),
-          paymentMethod: dbOrder.paymentMethod,
+          paymentMethod: dbOrder.paymentMethod || "COD",
           subtotal: dbOrder.subtotal,
           discountAmount: dbOrder.discountAmount,
           grandTotal: dbOrder.total,
@@ -127,57 +141,18 @@ function TrackOrderContent() {
 
         setSearchedOrder(mappedOrder);
         showToast("Order tracking details found! 📦");
-        return;
-      }
-    } catch {
-      // database request failed, fall through to localStorage
-    }
-
-    try {
-      const allOrdersStr = localStorage.getItem("km_all_orders");
-      const latestOrderStr = localStorage.getItem("km_latest_order");
-
-      let found: StoredOrder | null = null;
-      const upperQuery = query.toUpperCase();
-
-      // 2. Search in all saved local orders
-      if (allOrdersStr) {
-        const orders: StoredOrder[] = JSON.parse(allOrdersStr);
-        found =
-          orders.find((o) => {
-            const idMatch = o.orderId && o.orderId.toUpperCase() === upperQuery;
-            const phoneMatch = cleanDigits.length >= 10 && o.customer?.phone?.replace(/\D/g, "").includes(cleanDigits);
-            return idMatch || phoneMatch;
-          }) || null;
-      }
-
-      // 3. Search in latest order
-      if (!found && latestOrderStr) {
-        const latest: StoredOrder = JSON.parse(latestOrderStr);
-        const idMatch = latest.orderId && latest.orderId.toUpperCase() === upperQuery;
-        const phoneMatch = cleanDigits.length >= 10 && latest.customer?.phone?.replace(/\D/g, "").includes(cleanDigits);
-        if (idMatch || phoneMatch) {
-          found = latest;
-        }
-      }
-
-      if (found) {
-        setSearchedOrder(found);
-        showToast("Order tracking details found! 📦");
       } else {
         setSearchedOrder(null);
-        showToast("No active order found with this ID/Mobile. Please check details.", "warning");
+        setSearchError(data.error || "No order matching the provided Order Number and Contact was found.");
+        showToast(data.error || "No order found with matching credentials.", "warning");
       }
     } catch {
       setSearchedOrder(null);
+      setSearchError("Unable to retrieve tracking details. Please check your network connection.");
+    } finally {
+      setIsSearching(false);
     }
   };
-
-  useEffect(() => {
-    if (initialQuery) {
-      handleSearch();
-    }
-  }, [initialQuery]);
 
   const handleCopyAWB = (awb: string) => {
     if (typeof window !== "undefined") {
@@ -305,22 +280,45 @@ function TrackOrderContent() {
             Track Your Kharido Mart Order
           </h1>
           <p className="text-xs sm:text-sm text-[#584237] max-w-md mx-auto">
-            Enter your 10-digit Mobile Number or Order ID (#KM-2026-XXXXX) sent to your WhatsApp.
+            To protect your privacy, enter your Order ID (#KM-2026-XXXXX) along with your matching registered mobile number or email.
           </p>
 
-          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2.5 pt-2">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="e.g. KM-2026-84912 or 9820154321"
-              className="flex-1 px-4 py-3 bg-[#f8fafc] rounded-2xl border border-[#e2e8f0] text-xs sm:text-sm font-space font-semibold text-[#0b1c30] focus:outline-none focus:ring-2 focus:ring-[#f97316]"
-            />
+          <form onSubmit={handleSearch} className="flex flex-col gap-3 pt-2 text-left">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-bold text-[#0b1c30] uppercase tracking-wider mb-1">
+                  Order ID <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={orderIdQuery}
+                  onChange={(e) => setOrderIdQuery(e.target.value)}
+                  placeholder="e.g. KM-2026-84912"
+                  className="w-full px-4 py-3 bg-[#f8fafc] rounded-2xl border border-[#e2e8f0] text-xs sm:text-sm font-space font-semibold text-[#0b1c30] focus:outline-none focus:ring-2 focus:ring-[#f97316]"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-[#0b1c30] uppercase tracking-wider mb-1">
+                  Mobile Number or Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={contactQuery}
+                  onChange={(e) => setContactQuery(e.target.value)}
+                  placeholder="10-digit Phone or Email"
+                  className="w-full px-4 py-3 bg-[#f8fafc] rounded-2xl border border-[#e2e8f0] text-xs sm:text-sm font-space font-semibold text-[#0b1c30] focus:outline-none focus:ring-2 focus:ring-[#f97316]"
+                  required
+                />
+              </div>
+            </div>
+
             <button
               type="submit"
-              className="px-6 py-3 bg-[#f97316] hover:bg-[#ea580c] text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-xs transition-all flex items-center justify-center gap-1.5 shrink-0"
+              disabled={isSearching}
+              className="w-full py-3.5 bg-[#f97316] hover:bg-[#ea580c] disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer mt-1"
             >
-              <span>Track Order</span>
+              <span>{isSearching ? "Verifying Credentials..." : "Secure Track Order"}</span>
               <ArrowRight size={14} weight="Outline" />
             </button>
           </form>
@@ -332,14 +330,15 @@ function TrackOrderContent() {
               <button
                 type="button"
                 onClick={() => {
-                  setSearchQuery(recentSavedOrder.orderId);
-                  setSearchedOrder(recentSavedOrder);
-                  setHasSearched(true);
+                  setOrderIdQuery(recentSavedOrder.orderId);
+                  if (recentSavedOrder.customer?.phone) {
+                    setContactQuery(recentSavedOrder.customer.phone);
+                  }
                 }}
                 className="font-space font-bold text-[#ea580c] hover:underline inline-flex items-center gap-1 bg-orange-50 px-2 py-0.5 rounded-lg border border-orange-200/80 cursor-pointer"
               >
                 <span>📦 {recentSavedOrder.orderId}</span>
-                <span className="text-[10px] text-slate-500 font-sans font-normal">(Click to track)</span>
+                <span className="text-[10px] text-slate-500 font-sans font-normal">(Click to fill)</span>
               </button>
             </div>
           )}
@@ -558,21 +557,25 @@ function TrackOrderContent() {
               <div className="lg:col-span-5 bg-white rounded-3xl p-6 sm:p-8 border border-[#e2e8f0] shadow-xs space-y-4">
                 <div className="flex items-center gap-2 text-[#0b1c30] font-bold text-base">
                   <Location size={18} weight="Filled" className="text-[#ea580c]" />
-                  <span>Delivery Address</span>
+                  <span>Delivery Destination</span>
                 </div>
 
-                <div className="text-xs text-[#584237] space-y-1.5 leading-relaxed bg-[#f8fafc] p-4 rounded-2xl border border-[#e2e8f0]">
-                  <p className="font-bold text-sm text-[#0b1c30]">
-                    {searchedOrder.customer.fullName || `${searchedOrder.customer.firstName || ""} ${searchedOrder.customer.lastName || ""}`.trim() || "Customer"}
+                <div className="text-xs text-[#584237] space-y-2 leading-relaxed bg-[#f8fafc] p-4 rounded-2xl border border-[#e2e8f0]">
+                  <div className="flex items-center gap-2 text-emerald-700 font-bold text-xs">
+                    <ShieldCheck size={16} weight="Filled" />
+                    <span>Customer Privacy Protected</span>
+                  </div>
+                  <p className="text-slate-600">
+                    Shipment dispatched for registered customer via verified express logistics. Exact delivery address and contact details are redacted for security.
                   </p>
-                  <p>{searchedOrder.customer.address || "Doorstep Delivery Address"}</p>
-                  <p>
-                    {searchedOrder.customer.city || ""}{searchedOrder.customer.city && searchedOrder.customer.state ? ", " : ""}{searchedOrder.customer.state || ""}{searchedOrder.customer.pincode ? ` - ` : ""}
-                    {searchedOrder.customer.pincode && <strong>{searchedOrder.customer.pincode}</strong>}
-                  </p>
-                  {searchedOrder.customer.phone && (
+                  {searchedOrder.courier && (
                     <p className="pt-1 text-[#0b1c30] font-semibold">
-                      📞 {searchedOrder.customer.phone}
+                      🚚 Logistics Partner: <strong>{searchedOrder.courier}</strong>
+                    </p>
+                  )}
+                  {searchedOrder.awbNumber && (
+                    <p className="text-[#0b1c30] font-mono text-xs">
+                      AWB Code: <strong>{searchedOrder.awbNumber}</strong>
                     </p>
                   )}
                 </div>
@@ -588,7 +591,7 @@ function TrackOrderContent() {
 
                   <button
                     onClick={() => window.print()}
-                    className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-[#0b1c30] font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-colors"
+                    className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-[#0b1c30] font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer"
                   >
                     <Printer size={16} weight="Outline" />
                     <span>Print Order Invoice</span>
@@ -609,7 +612,7 @@ function TrackOrderContent() {
               No Matching Order Found
             </h3>
             <p className="text-xs text-[#584237] leading-relaxed">
-              We couldn&apos;t find an active order matching &ldquo;{searchQuery}&rdquo;. Please verify your 10-digit mobile number or Order ID.
+              {searchError || "We could not find an active order matching the provided Order Number and Mobile/Email credentials. Please verify your details."}
             </p>
             <div className="pt-2">
               <Link

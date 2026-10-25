@@ -2,36 +2,66 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyAdminSessionToken, verifyUserSessionToken } from "@/lib/session";
 
-// GET /api/orders/[id] - by orderNumber or cuid
+// In-memory rate limiting
+// Per IP: max 15 requests per 10 minutes
+const trackIpRateLimits = new Map<string, { count: number; expiresAt: number }>();
+// Per order ID: max 6 requests per 10 minutes
+const trackOrderRateLimits = new Map<string, { count: number; expiresAt: number }>();
+
+async function enforceConstantTime(startTime: number, targetMs = 300) {
+  const elapsed = Date.now() - startTime;
+  if (elapsed < targetMs) {
+    await new Promise((resolve) => setTimeout(resolve, targetMs - elapsed));
+  }
+}
+
+// GET /api/orders/[id] - Secure track order
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const startTime = Date.now();
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+  const now = Date.now();
+
   try {
     const { id } = await params;
+    const cleanId = (id || "").trim();
 
-    const order = await prisma.order.findFirst({
-      where: {
-        OR: [
-          { id },
-          { orderNumber: id },
-          { awbNumber: id },
-        ],
-      },
-      include: {
-        items: true,
-      },
-      orderBy: { createdAt: "desc" },
-    });
-
-    if (!order) {
-      return NextResponse.json(
-        { success: false, error: "Order not found" },
-        { status: 404 }
-      );
+    // 1. IP Rate Limiting Check
+    const ipRecord = trackIpRateLimits.get(ip);
+    if (ipRecord && ipRecord.expiresAt > now) {
+      if (ipRecord.count >= 15) {
+        await enforceConstantTime(startTime, 300);
+        return NextResponse.json(
+          { success: false, error: "Too many tracking attempts. Please wait 10 minutes before trying again." },
+          { status: 429 }
+        );
+      }
+      ipRecord.count += 1;
+    } else {
+      trackIpRateLimits.set(ip, { count: 1, expiresAt: now + 10 * 60 * 1000 });
     }
 
-    // Authorization & PII Redaction
+    // 2. Order Number Rate Limiting Check
+    const orderRecord = trackOrderRateLimits.get(cleanId);
+    if (orderRecord && orderRecord.expiresAt > now) {
+      if (orderRecord.count >= 6) {
+        await enforceConstantTime(startTime, 300);
+        return NextResponse.json(
+          { success: false, error: "Too many requests for this order number. Please wait a few minutes." },
+          { status: 429 }
+        );
+      }
+      orderRecord.count += 1;
+    } else {
+      trackOrderRateLimits.set(cleanId, { count: 1, expiresAt: now + 10 * 60 * 1000 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const contactParam = (searchParams.get("contact") || searchParams.get("phone") || searchParams.get("email") || "").trim().toLowerCase();
+
+    // 3. Check for Admin or User Session
     const adminSessionCookie = req.cookies.get("km_admin_session")?.value;
     const userSessionCookie = req.cookies.get("km_user_session")?.value;
 
@@ -40,40 +70,108 @@ export async function GET(
       verifyUserSessionToken(userSessionCookie),
     ]);
 
-    const isAuthorized =
-      Boolean(admin) ||
-      (userSession &&
-        ((order.userId && userSession.userId === order.userId) ||
-          (order.customerEmail && userSession.email.toLowerCase() === order.customerEmail.toLowerCase())));
+    const order = await prisma.order.findFirst({
+      where: {
+        OR: [
+          { id: cleanId },
+          { orderNumber: cleanId },
+        ],
+      },
+      include: {
+        items: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
 
-    if (!isAuthorized) {
-      // Mask PII for public guest tracking to protect customer privacy
-      const maskedPhone = order.customerPhone
-        ? order.customerPhone.replace(/(\d{2})\d{4,6}(\d{2})/, "$1******$2")
-        : "";
-      const maskedEmail = order.customerEmail
-        ? order.customerEmail.replace(/(.{2})(.*)(@.*)/, "$1***$3")
-        : "";
+    const genericNotFound = {
+      success: false,
+      error: "No order matching the provided Order Number and Phone/Email was found. Please verify your details.",
+    };
 
-      return NextResponse.json({
-        success: true,
-        order: {
-          ...order,
-          customerPhone: maskedPhone,
-          customerEmail: maskedEmail,
-          address: "*** Redacted for Privacy ***",
-        },
-      });
+    // If order is not found, delay and return generic error
+    if (!order) {
+      await enforceConstantTime(startTime, 300);
+      return NextResponse.json(genericNotFound, { status: 404 });
     }
 
+    // Admin has full authorized access
+    if (admin) {
+      await enforceConstantTime(startTime, 300);
+      return NextResponse.json({ success: true, order });
+    }
+
+    // Authenticated user owns the order
+    const isOwner =
+      userSession &&
+      ((order.userId && userSession.userId === order.userId) ||
+        (order.customerEmail && userSession.email.toLowerCase() === order.customerEmail.toLowerCase()));
+
+    if (isOwner) {
+      await enforceConstantTime(startTime, 300);
+      return NextResponse.json({ success: true, order });
+    }
+
+    // Guest / Public Tracking: Requires Order Number AND matching Phone or Email
+    if (!contactParam) {
+      await enforceConstantTime(startTime, 300);
+      return NextResponse.json(
+        {
+          success: false,
+          error: "To protect customer privacy, both Order Number and matching Phone Number/Email are required to track an order.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const cleanInputDigits = contactParam.replace(/\D/g, "");
+    const cleanOrderDigits = (order.customerPhone || "").replace(/\D/g, "");
+    const isPhoneMatch =
+      cleanInputDigits.length >= 10 &&
+      cleanOrderDigits.length >= 10 &&
+      cleanOrderDigits.endsWith(cleanInputDigits.slice(-10));
+
+    const isEmailMatch =
+      order.customerEmail &&
+      contactParam.includes("@") &&
+      order.customerEmail.toLowerCase() === contactParam;
+
+    if (!isPhoneMatch && !isEmailMatch) {
+      // Intentionally return the EXACT same error message and status code to prevent order enumeration
+      await enforceConstantTime(startTime, 300);
+      return NextResponse.json(genericNotFound, { status: 404 });
+    }
+
+    // Valid credential match: Return MINIMAL fields only (Zero PII: no customer name, address, full phone, email)
+    await enforceConstantTime(startTime, 300);
     return NextResponse.json({
       success: true,
-      order,
+      order: {
+        orderNumber: order.orderNumber,
+        status: order.status,
+        createdAt: order.createdAt,
+        courier: order.courier,
+        awbNumber: order.awbNumber,
+        trackingUrl: order.awbNumber
+          ? `https://shiprocket.co/tracking/${encodeURIComponent(order.awbNumber)}`
+          : null,
+        items: order.items.map((it) => ({
+          id: it.id,
+          title: it.title,
+          quantity: it.quantity,
+          price: it.price,
+          image: it.image,
+        })),
+        total: order.total,
+        subtotal: order.subtotal,
+        discountAmount: order.discountAmount,
+        paymentMethod: order.paymentMethod,
+      },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("GET /api/orders/[id] error:", error);
+    await enforceConstantTime(startTime, 300);
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to fetch order" },
+      { success: false, error: "Unable to retrieve order details. Please try again later." },
       { status: 500 }
     );
   }
