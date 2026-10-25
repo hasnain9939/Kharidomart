@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { getCachedAllProducts } from "@/lib/data-cache";
 import HomeProductSection from "@/components/HomeProductSection";
+import HeroVisualShowcase from "@/components/HeroVisualShowcase";
 import {
   ArrowRight,
   ShieldCheck,
@@ -133,58 +134,7 @@ export default async function Home() {
 
             {/* Hero Visual Showcase */}
             <div className="lg:col-span-5 relative">
-              <div className="relative w-full aspect-square max-w-[480px] mx-auto rounded-3xl bg-white p-3 shadow-xl border border-[#eddcd1] overflow-hidden group">
-                <Image
-                  src="/assets/stitch/story_mother_child.jpg"
-                  alt="Loving Indian mother caring gently for her baby with Kharido Mart essentials"
-                  width={600}
-                  height={600}
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 480px"
-                  className="w-full h-full object-cover rounded-2xl group-hover:scale-105 transition-transform duration-700 ease-out"
-                  priority
-                />
-
-                {/* Genuine Lab Safety & Non-Toxic Assurance Badge */}
-                <div className="absolute top-6 left-6 right-6 bg-white/95 backdrop-blur-md p-3.5 rounded-2xl shadow-lg border border-[#eddcd1] flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-8 h-8 rounded-full bg-[#eaf3ed] text-[#4f775d] flex items-center justify-center shrink-0">
-                      <ShieldCheck size={18} weight="Filled" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold text-[#2b1f1a] truncate">
-                        100% Food-Grade &amp; Non-Toxic
-                      </p>
-                      <p className="text-[11px] text-[#6b5850] truncate">
-                        BPA-Free Materials • Rounded Safety Edges
-                      </p>
-                    </div>
-                  </div>
-                  <span className="shrink-0 px-2.5 py-1 bg-[#eaf3ed] text-[#4f775d] text-[10px] font-bold uppercase rounded-full">
-                    Curated Quality
-                  </span>
-                </div>
-
-                {/* Bottom Parent Approved Badge */}
-                <div className="absolute bottom-6 left-6 right-6 bg-white/95 backdrop-blur-md p-3.5 rounded-2xl shadow-lg border border-[#eddcd1] flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#fdedeb] flex items-center justify-center text-[#e06b5b] shrink-0">
-                      <Award size={22} weight="Filled" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-black text-[#2b1f1a] leading-tight">
-                        Tear-Free Guarantee
-                      </p>
-                      <p className="text-xs text-[#6b5850]">
-                        Safe for sensitive skin &amp; tiny fingers
-                      </p>
-                    </div>
-                  </div>
-                  {/* TODO(owner): Add clinical report if claiming pediatric testing */}
-                  <span className="px-2.5 py-1 bg-[#eaf3ed] text-[#4f775d] text-[10px] font-black uppercase tracking-wider rounded-full">
-                    GENTLE ON SENSITIVE NAILS
-                  </span>
-                </div>
-              </div>
+              <HeroVisualShowcase />
             </div>
           </div>
         </div>
