@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import KharidoMartLogo from "@/components/KharidoMartLogo";
@@ -13,6 +14,7 @@ import {
   Flame,
   Menu,
   CloseCircle,
+  ArrowRight,
 } from "reicon-react";
 
 export default function Header() {
@@ -21,6 +23,29 @@ export default function Header() {
   const { cartCount, wishlist, openCart, user, products } = useStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [mounted, setMounted] = useState(false);
+  const [headerBottom, setHeaderBottom] = useState(112);
+  const headerRef = useRef<HTMLElement | null>(null);
+
+  // Dynamically calculate the bottom edge of the sticky header
+  const updateHeaderBottom = useCallback(() => {
+    if (headerRef.current) {
+      const rect = headerRef.current.getBoundingClientRect();
+      setHeaderBottom(Math.round(rect.bottom));
+    }
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
+    updateHeaderBottom();
+  }, [updateHeaderBottom]);
+
+  const toggleMobileMenu = () => {
+    if (!mobileMenuOpen) {
+      updateHeaderBottom();
+    }
+    setMobileMenuOpen((prev) => !prev);
+  };
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -41,6 +66,24 @@ export default function Header() {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [mobileMenuOpen]);
+
+  // Keep dropdown top position aligned and prevent background scroll while open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      updateHeaderBottom();
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+
+      window.addEventListener("resize", updateHeaderBottom);
+      window.addEventListener("scroll", updateHeaderBottom);
+
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        window.removeEventListener("resize", updateHeaderBottom);
+        window.removeEventListener("scroll", updateHeaderBottom);
+      };
+    }
+  }, [mobileMenuOpen, updateHeaderBottom]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,15 +119,18 @@ export default function Header() {
   ];
 
   return (
-    <header className="relative w-full bg-white/95 backdrop-blur-md border-b border-[#eddcd1]/80 sticky top-0 z-50 transition-all shadow-xs">
+    <header
+      ref={headerRef}
+      className="relative w-full bg-white/95 backdrop-blur-md border-b border-[#eddcd1]/80 sticky top-0 z-[70] transition-all shadow-xs"
+    >
       {/* Main Row: Logo, Search, Action Icons */}
       <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
         <div className="flex items-center justify-between gap-4 lg:gap-8">
           {/* Mobile Menu Button & Brand Logo */}
           <div className="flex items-center gap-3 shrink-0">
             <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-xl text-[#0b1c30] hover:bg-[#f8fafc] transition-colors lg:hidden"
+              onClick={toggleMobileMenu}
+              className="p-2 rounded-xl text-[#0b1c30] hover:bg-[#f8fafc] transition-colors lg:hidden cursor-pointer"
               aria-label="Toggle Navigation Menu"
             >
               {mobileMenuOpen ? (
@@ -230,86 +276,106 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile Dropdown Menu Floating On Top (No Layout Shift / Pushing Page Down) */}
-      {mobileMenuOpen && (
-        <>
-          {/* Fullscreen Backdrop overlay - clicking anywhere closes the menu */}
+      {/* Mobile Dropdown Menu rendered via Portal (bypasses header backdrop-filter, zero layout shift) */}
+      {mounted && mobileMenuOpen && createPortal(
+        <div className="lg:hidden">
+          {/* Fullscreen Backdrop: attached directly to <body>, covers 100% of viewport - clicking anywhere outside closes the menu */}
           <div
-            className="fixed inset-0 z-40 bg-[#2b1f1a]/40 backdrop-blur-[2px] animate-in fade-in duration-200 lg:hidden cursor-pointer"
+            className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-xs transition-opacity duration-200 animate-in fade-in cursor-pointer"
             onClick={() => setMobileMenuOpen(false)}
+            onTouchEnd={(e) => {
+              if (e.target === e.currentTarget) {
+                setMobileMenuOpen(false);
+              }
+            }}
             aria-hidden="true"
           />
 
-          {/* Floating Dropdown Panel on top */}
+          {/* Floating Dropdown Panel on top of page */}
           <div
-            className="absolute top-full left-0 right-0 z-50 bg-white border-b border-[#eddcd1] shadow-[0_20px_40px_rgba(43,31,26,0.18)] px-4 sm:px-6 py-5 space-y-4 max-h-[calc(100vh-130px)] overflow-y-auto animate-in slide-in-from-top-2 fade-in duration-200 lg:hidden"
+            style={{ top: `${headerBottom}px` }}
+            onClick={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+            className="fixed left-0 right-0 z-[65] bg-white border-b border-[#eddcd1] shadow-[0_24px_48px_rgba(43,31,26,0.28)] rounded-b-3xl overflow-hidden max-h-[calc(100dvh-130px)] flex flex-col animate-in slide-in-from-top-2 fade-in duration-200"
           >
-            {/* Main Categories */}
-            <nav className="flex flex-col space-y-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#6b5850]/70 px-3 pb-1">
-                Shop Collections
-              </span>
-              {navLinks.map((link) => {
-                const isActive = pathname === link.href;
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-between ${
-                      isActive
-                        ? "bg-[#fdedeb] text-[#e06b5b] font-bold"
-                        : "text-[#2b1f1a] hover:bg-[#fbf7f0]"
-                    }`}
-                  >
-                    <span>{link.label}</span>
-                    <span className="text-xs text-[#6b5850]/40">→</span>
-                  </Link>
-                );
-              })}
-            </nav>
+            <div className="overflow-y-auto px-4 py-3.5 space-y-3">
+              {/* Shop Collections */}
+              <nav className="flex flex-col space-y-0.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#6b5850]/70 px-3 pb-0.5">
+                  Shop Collections
+                </span>
+                {navLinks.map((link) => {
+                  const isActive = pathname === link.href;
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`px-3.5 py-2 rounded-xl text-[13px] font-semibold transition-colors flex items-center justify-between cursor-pointer ${
+                        isActive
+                          ? "bg-[#fdedeb] text-[#e06b5b] font-bold shadow-2xs"
+                          : "text-[#2b1f1a] hover:bg-[#fbf7f0] hover:text-[#e06b5b]"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-[#e06b5b]" : "bg-[#eddcd1]"}`} />
+                        <span>{link.label}</span>
+                      </div>
+                      <ArrowRight size={13} weight="Outline" className={isActive ? "text-[#e06b5b]" : "text-[#6b5850]/40"} />
+                    </Link>
+                  );
+                })}
+              </nav>
 
-            {/* Quick Help & Tracking */}
-            <div className="pt-2 border-t border-[#eddcd1]/80">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#6b5850]/70 px-3 pb-1 block">
-                Customer Services &amp; Help
-              </span>
-              <div className="flex flex-col space-y-1 mt-1">
-                {mobileUtilityLinks.map((u) => (
-                  <Link
-                    key={u.href}
-                    href={u.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="px-3 py-2 rounded-xl text-xs font-semibold text-[#6b5850] hover:text-[#e06b5b] hover:bg-[#fbf7f0] transition-colors"
-                  >
-                    {u.label}
-                  </Link>
-                ))}
+              {/* Customer Services & Help */}
+              <div className="pt-2 border-t border-[#eddcd1]/80">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#6b5850]/70 px-3 pb-0.5 block">
+                  Customer Services &amp; Help
+                </span>
+                <div className="flex flex-col space-y-0.5 mt-0.5">
+                  {mobileUtilityLinks.map((u) => (
+                    <Link
+                      key={u.href}
+                      href={u.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-[#6b5850] hover:text-[#e06b5b] hover:bg-[#fbf7f0] transition-colors flex items-center justify-between cursor-pointer"
+                    >
+                      <span>{u.label}</span>
+                      <ArrowRight size={12} weight="Outline" className="text-[#6b5850]/40" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              {/* Bottom Account & Wishlist strip */}
+              <div className="pt-2.5 border-t border-[#eddcd1] grid grid-cols-2 gap-2">
+                <Link
+                  href="/account"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="py-2 px-3 rounded-xl bg-[#fbf7f0] hover:bg-[#fdedeb] text-[#2b1f1a] hover:text-[#e06b5b] border border-[#eddcd1] text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                >
+                  <User size={15} weight={user ? "Filled" : "Outline"} className={user ? "text-[#e06b5b]" : ""} />
+                  <span className="truncate">{user ? `Hi, ${user.name.split(" ")[0]}` : "Account / Sign In"}</span>
+                </Link>
+
+                <Link
+                  href="/shop?filter=wishlist"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="py-2 px-3 rounded-xl bg-[#fbf7f0] hover:bg-[#fdedeb] text-[#2b1f1a] hover:text-rose-500 border border-[#eddcd1] text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                >
+                  <Heart size={15} weight={wishlist.length > 0 ? "Filled" : "Outline"} className={wishlist.length > 0 ? "text-rose-500" : ""} />
+                  <span>Wishlist ({wishlist.length})</span>
+                </Link>
+              </div>
+
+              {/* Bottom Pull Handle Indicator */}
+              <div className="pt-0.5 pb-0 flex justify-center">
+                <span className="w-10 h-1 rounded-full bg-[#eddcd1]" />
               </div>
             </div>
-
-            {/* Bottom Account & Wishlist strip */}
-            <div className="pt-3 border-t border-[#eddcd1] flex items-center justify-between px-2">
-              <Link
-                href="/account"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-xs text-[#2b1f1a] hover:text-[#e06b5b] font-bold flex items-center gap-1.5 py-1"
-              >
-                <User size={16} weight={user ? "Filled" : "Outline"} className={user ? "text-[#e06b5b]" : ""} />
-                <span>{user ? `Hi, ${user.name.split(" ")[0]}` : "Account / Sign In"}</span>
-              </Link>
-
-              <Link
-                href="/shop?filter=wishlist"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-xs text-[#2b1f1a] hover:text-[#e06b5b] font-semibold flex items-center gap-1"
-              >
-                <Heart size={15} weight={wishlist.length > 0 ? "Filled" : "Outline"} className={wishlist.length > 0 ? "text-rose-500" : ""} />
-                <span>Wishlist ({wishlist.length})</span>
-              </Link>
-            </div>
           </div>
-        </>
+        </div>,
+        document.body
       )}
     </header>
   );
