@@ -10,7 +10,7 @@ import QuickViewModal from "@/components/QuickViewModal";
 import Toast from "@/components/Toast";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
-import WhatsAppMomWidget from "@/components/WhatsAppMomWidget";
+import SupportChatbot from "@/components/SupportChatbot";
 import ExitIntentModal from "@/components/ExitIntentModal";
 
 function StorefrontLayoutInner({
@@ -43,7 +43,7 @@ function StorefrontLayoutInner({
       <CartDrawer />
       <QuickViewModal />
       <ExitIntentModal />
-      <WhatsAppMomWidget />
+      <SupportChatbot />
       <Toast />
 
       {/* Compliance & Analytics */}
