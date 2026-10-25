@@ -9,7 +9,6 @@ import {
   Box,
   Add,
   ShieldCheck,
-  Check,
   CheckCircle,
   CloseCircle,
   Clock,

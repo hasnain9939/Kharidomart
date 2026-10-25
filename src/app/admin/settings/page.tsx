@@ -3,19 +3,12 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
-  Setting,
   Users,
   ShieldCheck,
-  TruckFast,
   CheckCircle,
-  CloseCircle,
   Copy,
   Add,
-  ArrowRight,
-  Phone,
   Sparkles,
-  TicketDiscount,
-  Lock,
   Refresh,
   Box,
 } from "reicon-react";

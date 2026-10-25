@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { ArrowLeft, ShoppingBag, Search, Sparkles, Heart } from "reicon-react";
+import { ArrowLeft, ShoppingBag, Sparkles, Heart } from "reicon-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

@@ -7,13 +7,9 @@ import {
   Add,
   CheckCircle,
   Copy,
-  Clock,
   Phone,
-  ShieldCheck,
   ShoppingBag,
-  ArrowRight,
   Edit,
-  Trash,
 } from "reicon-react";
 import { AdminDiscount } from "@/data/adminData";
 

@@ -5,14 +5,6 @@ import { verifyAdminSessionToken } from "@/lib/session";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB maximum limit
 const ALLOWED_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif", ".mp4", ".webm"]);
-const ALLOWED_MIME_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-  "video/mp4",
-  "video/webm",
-]);
 
 export async function POST(req: NextRequest) {
   try {

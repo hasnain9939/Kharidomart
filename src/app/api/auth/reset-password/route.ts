@@ -9,7 +9,7 @@ const resetAttempts = new Map<string, { count: number; expiresAt: number }>();
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { email, newPassword, currentPassword, phone } = body;
+    const { email, newPassword, currentPassword } = body;
 
     if (!email || typeof email !== "string" || !email.includes("@")) {
       return NextResponse.json(

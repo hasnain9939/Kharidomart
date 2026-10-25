@@ -22,6 +22,13 @@ function StorefrontLayoutInner({
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith("/admin");
 
+  // Prevent browser from restoring scroll position down to the footer during page reload/refresh
+  React.useEffect(() => {
+    if (typeof window !== "undefined" && "scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+  }, []);
+
   if (isAdmin) {
     return (
       <>
@@ -30,13 +37,6 @@ function StorefrontLayoutInner({
       </>
     );
   }
-
-  // Prevent browser from restoring scroll position down to the footer during page reload/refresh
-  React.useEffect(() => {
-    if (typeof window !== "undefined" && "scrollRestoration" in window.history) {
-      window.history.scrollRestoration = "manual";
-    }
-  }, []);
 
   return (
     <>

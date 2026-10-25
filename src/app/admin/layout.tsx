@@ -19,7 +19,6 @@ import {
   Menu,
   CloseCircle,
   ShieldCheck,
-  User,
   Logout,
 } from "reicon-react";
 

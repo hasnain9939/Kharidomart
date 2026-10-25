@@ -5,14 +5,11 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   Box,
-  ShieldCheck,
   CheckCircle,
-  CloseCircle,
   Add,
   Search,
   Sparkles,
   Refresh,
-  Lock,
 } from "reicon-react";
 
 export default function AdminShopifyWarehousePage() {

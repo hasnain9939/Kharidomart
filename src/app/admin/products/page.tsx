@@ -4,21 +4,15 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  ShoppingBag,
   Search,
-  Filter,
   Add,
-  ArrowRight,
   ShieldCheck,
   CheckCircle,
   CloseCircle,
   Box,
-  TicketDiscount,
   Eye,
   Edit,
   Trash,
-  Sparkles,
-  Copy,
   Refresh,
 } from "reicon-react";
 import { Product } from "@/data/products";

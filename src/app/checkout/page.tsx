@@ -9,10 +9,8 @@ import {
   Lock,
   ShieldCheck,
   ArrowLeft,
-  Phone,
   Check,
   CheckCircle,
-  TruckFast,
   Location,
   User,
 } from "reicon-react";

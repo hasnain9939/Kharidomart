@@ -23,6 +23,7 @@ import {
   VideoPlay,
 } from "reicon-react";
 import { getVideoEmbed } from "@/lib/media";
+import { getDeliveryEstimate } from "@/lib/pincode";
 import { trackViewItem, trackAddToCart } from "@/lib/analytics";
 
 // Real customer reviews are stored per-product and submitted by verified purchasers
@@ -279,49 +280,6 @@ export default function ProductDetailsClient({
     } finally {
       setIsPincodeLoading(false);
     }
-  };
-
-  // Helper for delivery dates estimation
-  const getDeliveryEstimate = (pin: string) => {
-    const firstDigit = pin[0];
-    let daysMin = 2;
-    let daysMax = 3;
-    let region = "Metro Hub";
-
-    if (["1", "2"].includes(firstDigit)) {
-      region = "Delhi NCR & Northern Region";
-      daysMin = 2;
-      daysMax = 3;
-    } else if (["4"].includes(firstDigit)) {
-      region = "Mumbai, Pune & Western Region";
-      daysMin = 2;
-      daysMax = 3;
-    } else if (["5", "6"].includes(firstDigit)) {
-      region = "Bengaluru, Hyderabad & South Region";
-      daysMin = 3;
-      daysMax = 4;
-    } else if (["7", "8"].includes(firstDigit)) {
-      region = "Kolkata, Bihar & Eastern Region";
-      daysMin = 3;
-      daysMax = 5;
-    } else {
-      region = "Central & Western India";
-      daysMin = 3;
-      daysMax = 4;
-    }
-
-    const today = new Date();
-    const minDate = new Date(today);
-    minDate.setDate(today.getDate() + daysMin);
-    const maxDate = new Date(today);
-    maxDate.setDate(today.getDate() + daysMax);
-
-    const options: Intl.DateTimeFormatOptions = { weekday: "short", month: "short", day: "numeric" };
-    return {
-      region,
-      startDate: minDate.toLocaleDateString("en-IN", options),
-      endDate: maxDate.toLocaleDateString("en-IN", options),
-    };
   };
 
   // Fetch real reviews from Neon PostgreSQL on mount only if not already provided

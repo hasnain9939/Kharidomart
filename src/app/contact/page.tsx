@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useStore } from "@/context/StoreContext";
-import { ShieldCheck, TruckFast } from "reicon-react";
+import { ShieldCheck } from "reicon-react";
 
 export default function ContactPage() {
   const { showToast } = useStore();

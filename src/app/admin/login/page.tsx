@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ShieldCheck,
   User,
@@ -14,6 +15,7 @@ import {
 } from "reicon-react";
 
 export default function AdminLoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -60,7 +62,8 @@ export default function AdminLoginPage() {
 
       setAuthSuccess(true);
       setTimeout(() => {
-        window.location.href = "/admin";
+        router.push("/admin");
+        router.refresh();
       }, 250);
     } catch {
       setAuthError("Network error while connecting to authentication service. Please try again.");

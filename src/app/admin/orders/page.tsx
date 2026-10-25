@@ -6,7 +6,6 @@ import Link from "next/link";
 import {
   TruckFast,
   Search,
-  Filter,
   CheckCircle,
   CloseCircle,
   Clock,
@@ -15,7 +14,6 @@ import {
   Location,
   Phone,
   ShieldCheck,
-  User,
   ArrowRight,
   Add,
   Box,

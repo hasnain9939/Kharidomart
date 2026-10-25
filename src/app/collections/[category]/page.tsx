@@ -3,9 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CATEGORIES } from "@/data/categories";
 import { getCachedAllProducts } from "@/lib/data-cache";
-import { Product } from "@/data/products";
 import ProductCard from "@/components/ProductCard";
-import { ArrowLeft, Sparkles, ShoppingBag, ArrowRight } from "reicon-react";
+import { Sparkles, ShoppingBag, ArrowRight } from "reicon-react";
 import type { Metadata } from "next";
 
 export function generateStaticParams() {

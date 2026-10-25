@@ -5,11 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  Users,
-  ShieldCheck,
   CheckCircle,
   Check,
-  Box,
 } from "reicon-react";
 
 export default function InviteTeamMemberPage() {

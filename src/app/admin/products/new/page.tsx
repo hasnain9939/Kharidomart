@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
@@ -10,12 +9,9 @@ import {
   Check,
   CheckCircle,
   Copy,
-  Box,
   TruckFast,
-  ShieldCheck,
   CloseCircle,
   Trash,
-  Image as ImageIcon,
   VideoPlay,
   Upload,
   Clock,

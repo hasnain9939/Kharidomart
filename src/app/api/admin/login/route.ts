@@ -142,7 +142,7 @@ export async function POST(req: NextRequest) {
     });
 
     return res;
-  } catch (err: unknown) {
+  } catch {
     return NextResponse.json(
       { success: false, error: "Authentication failed. Please try again later." },
       { status: 500 }
