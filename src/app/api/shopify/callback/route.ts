@@ -1,10 +1,33 @@
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
-  const shop = searchParams.get("shop") || "cgxx12-ek.myshopify.com";
+  const shop = searchParams.get("shop") || process.env.SHOPIFY_STORE_DOMAIN || "";
+  const hmac = searchParams.get("hmac");
+
+  // Validate shop domain format strictly
+  const shopRegex = /^[a-zA-Z0-9][a-zA-Z0-9\-]*\.myshopify\.com$/;
+  if (!shop || !shopRegex.test(shop)) {
+    return new Response(
+      `<html><body style="font-family:system-ui,sans-serif;padding:40px;text-align:center;">
+        <h2 style="color:#ef4444;">Invalid Shop Domain</h2>
+        <p>The shop domain provided is invalid.</p>
+      </body></html>`,
+      { headers: { "Content-Type": "text/html" }, status: 400 }
+    );
+  }
 
   if (!code) {
     return new Response(
@@ -29,6 +52,34 @@ export async function GET(request: Request) {
     );
   }
 
+  // Verify HMAC signature from Shopify if present
+  if (hmac) {
+    const params: string[] = [];
+    searchParams.forEach((val, key) => {
+      if (key !== "hmac" && key !== "signature") {
+        params.push(`${key}=${val}`);
+      }
+    });
+    params.sort();
+    const message = params.join("&");
+    const generatedHmac = crypto
+      .createHmac("sha256", clientSecret)
+      .update(message)
+      .digest("hex");
+
+    const hmacBuf = Buffer.from(hmac, "utf-8");
+    const genBuf = Buffer.from(generatedHmac, "utf-8");
+    if (hmacBuf.length !== genBuf.length || !crypto.timingSafeEqual(hmacBuf, genBuf)) {
+      return new Response(
+        `<html><body style="font-family:system-ui,sans-serif;padding:40px;text-align:center;">
+          <h2 style="color:#ef4444;">Invalid HMAC Signature</h2>
+          <p>Could not verify the authenticity of the Shopify request.</p>
+        </body></html>`,
+        { headers: { "Content-Type": "text/html" }, status: 401 }
+      );
+    }
+  }
+
   try {
     const tokenUrl = `https://${shop}/admin/oauth/access_token`;
     const tokenRes = await fetch(tokenUrl, {
@@ -43,49 +94,50 @@ export async function GET(request: Request) {
       }),
     });
 
-    const tokenData = await tokenRes.json();
+    const tokenData = await tokenRes.json().catch(() => ({}));
 
     if (!tokenRes.ok || !tokenData.access_token) {
-      console.error("[Shopify OAuth] Failed to exchange token:", tokenData);
+      console.error("[Shopify OAuth] Failed to exchange token");
       return new Response(
         `<html><body style="font-family:system-ui,sans-serif;padding:40px;text-align:center;">
           <h2 style="color:#ef4444;">Shopify Authorization Failed</h2>
-          <p>${tokenData.error_description || tokenData.error || "Failed to exchange authorization token"}</p>
+          <p>Failed to exchange authorization token. Please check your credentials.</p>
         </body></html>`,
         { headers: { "Content-Type": "text/html" }, status: 400 }
       );
     }
 
     const accessToken = tokenData.access_token;
-    console.log(`[Shopify OAuth] Received token for ${shop}: ${accessToken.substring(0, 10)}...`);
+    console.log(`[Shopify OAuth] Successfully exchanged token for store: ${shop}`);
 
-    // Automatically update .env file
-    const envPath = path.join(process.cwd(), ".env");
-    if (fs.existsSync(envPath)) {
-      let envContent = fs.readFileSync(envPath, "utf-8");
+    // In local development, attempt updating .env if writable
+    try {
+      const envPath = path.join(process.cwd(), ".env");
+      if (fs.existsSync(envPath)) {
+        let envContent = fs.readFileSync(envPath, "utf-8");
 
-      // Replace or append SHOPIFY_STORE_DOMAIN
-      if (envContent.includes("SHOPIFY_STORE_DOMAIN=")) {
-        envContent = envContent.replace(
-          /SHOPIFY_STORE_DOMAIN=.*/g,
-          `SHOPIFY_STORE_DOMAIN="${shop}"`
-        );
-      } else {
-        envContent += `\nSHOPIFY_STORE_DOMAIN="${shop}"`;
+        if (envContent.includes("SHOPIFY_STORE_DOMAIN=")) {
+          envContent = envContent.replace(
+            /SHOPIFY_STORE_DOMAIN=.*/g,
+            `SHOPIFY_STORE_DOMAIN="${shop}"`
+          );
+        } else {
+          envContent += `\nSHOPIFY_STORE_DOMAIN="${shop}"`;
+        }
+
+        if (envContent.includes("SHOPIFY_ADMIN_ACCESS_TOKEN=")) {
+          envContent = envContent.replace(
+            /SHOPIFY_ADMIN_ACCESS_TOKEN=.*/g,
+            `SHOPIFY_ADMIN_ACCESS_TOKEN="${accessToken}"`
+          );
+        } else {
+          envContent += `\nSHOPIFY_ADMIN_ACCESS_TOKEN="${accessToken}"`;
+        }
+
+        fs.writeFileSync(envPath, envContent, "utf-8");
       }
-
-      // Replace or append SHOPIFY_ADMIN_ACCESS_TOKEN
-      if (envContent.includes("SHOPIFY_ADMIN_ACCESS_TOKEN=")) {
-        envContent = envContent.replace(
-          /SHOPIFY_ADMIN_ACCESS_TOKEN=.*/g,
-          `SHOPIFY_ADMIN_ACCESS_TOKEN="${accessToken}"`
-        );
-      } else {
-        envContent += `\nSHOPIFY_ADMIN_ACCESS_TOKEN="${accessToken}"`;
-      }
-
-      fs.writeFileSync(envPath, envContent, "utf-8");
-      console.log("[Shopify OAuth] Successfully saved credentials into .env");
+    } catch {
+      // In serverless / read-only production environments, file write is ignored
     }
 
     // Return friendly HTML success screen
@@ -180,7 +232,7 @@ export async function GET(request: Request) {
     <div class="info-box">
       <div class="info-row">
         <span style="color:#64748b;">Connected Store:</span>
-        <strong style="color:#0f172a;">${shop}</strong>
+        <strong style="color:#0f172a;">${escapeHtml(shop)}</strong>
       </div>
       <div class="info-row">
         <span style="color:#64748b;">API Status:</span>

@@ -342,7 +342,7 @@ export default function AdminSettingsPage() {
               </div>
               <div>
                 <span className="text-[11px] text-[#565e74] block">Admin API Token:</span>
-                <span className="font-mono font-bold text-[#15803d]">shpat_••••••••8d0f (Active)</span>
+                <span className="font-mono font-bold text-[#15803d]">shpat_•••••••••••• (Configured)</span>
               </div>
               <div>
                 <span className="text-[11px] text-[#565e74] block">API Version:</span>

@@ -4,8 +4,18 @@
  * in Next.js Edge Middleware, API Routes, and Browser runtimes.
  */
 
-const SESSION_SECRET =
-  process.env.ADMIN_SESSION_SECRET || "kharidomart-secure-admin-secret-key-2026";
+function getSessionSecret(): string {
+  const secret = process.env.ADMIN_SESSION_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      console.error(
+        "[CRITICAL SECURITY ALERT] ADMIN_SESSION_SECRET environment variable is missing in production! Please configure a cryptographically random secret."
+      );
+    }
+    return "km-dev-fallback-session-secret-change-in-production-min32bytes";
+  }
+  return secret;
+}
 
 export interface AdminSessionPayload {
   email: string;
@@ -19,6 +29,9 @@ export interface UserSessionPayload {
   role: "user";
   issuedAt: number;
 }
+
+const ADMIN_SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const USER_SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 function bufToBase64Url(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
@@ -71,13 +84,14 @@ function base64UrlDecodeJson<T>(b64url: string): T | null {
  */
 export async function signSessionToken<T>(
   payload: T,
-  secret: string = SESSION_SECRET
+  secret?: string
 ): Promise<string> {
+  const activeSecret = secret || getSessionSecret();
   const data = base64UrlEncodeJson(payload);
   const enc = new TextEncoder();
   const key = await crypto.subtle.importKey(
     "raw",
-    enc.encode(secret),
+    enc.encode(activeSecret),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"]
@@ -91,7 +105,7 @@ export async function signSessionToken<T>(
  */
 export async function verifySessionToken<T>(
   token: string | null | undefined,
-  secret: string = SESSION_SECRET,
+  secret?: string,
   validator?: (data: any) => T | null
 ): Promise<T | null> {
   if (!token || typeof token !== "string" || !token.includes(".")) {
@@ -102,10 +116,11 @@ export async function verifySessionToken<T>(
     const [data, sig] = token.split(".");
     if (!data || !sig) return null;
 
+    const activeSecret = secret || getSessionSecret();
     const enc = new TextEncoder();
     const key = await crypto.subtle.importKey(
       "raw",
-      enc.encode(secret),
+      enc.encode(activeSecret),
       { name: "HMAC", hash: "SHA-256" },
       false,
       ["verify"]
@@ -139,15 +154,21 @@ export async function createAdminSessionToken(
 }
 
 /**
- * Verifies an HMAC-SHA256 signed session token for administrators
+ * Verifies an HMAC-SHA256 signed session token for administrators with expiration check
  */
 export async function verifyAdminSessionToken(
   token: string | null | undefined
 ): Promise<AdminSessionPayload | null> {
   return verifySessionToken<AdminSessionPayload>(
     token,
-    SESSION_SECRET,
-    (p) => (p && p.role === "admin" && p.email ? p : null)
+    undefined,
+    (p) => {
+      if (!p || p.role !== "admin" || !p.email) return null;
+      if (typeof p.issuedAt !== "number" || Date.now() - p.issuedAt > ADMIN_SESSION_MAX_AGE_MS) {
+        return null;
+      }
+      return p;
+    }
   );
 }
 
@@ -161,14 +182,20 @@ export async function createUserSessionToken(
 }
 
 /**
- * Verifies an HMAC-SHA256 signed session token for customers
+ * Verifies an HMAC-SHA256 signed session token for customers with expiration check
  */
 export async function verifyUserSessionToken(
   token: string | null | undefined
 ): Promise<UserSessionPayload | null> {
   return verifySessionToken<UserSessionPayload>(
     token,
-    SESSION_SECRET,
-    (p) => (p && p.role === "user" && p.userId && p.email ? p : null)
+    undefined,
+    (p) => {
+      if (!p || p.role !== "user" || !p.userId || !p.email) return null;
+      if (typeof p.issuedAt !== "number" || Date.now() - p.issuedAt > USER_SESSION_MAX_AGE_MS) {
+        return null;
+      }
+      return p;
+    }
   );
 }

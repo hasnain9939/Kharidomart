@@ -322,7 +322,7 @@ export default function AdminShopifyWarehousePage() {
                 Permanent Token
               </h3>
               <p className="text-xs text-[#565e74] font-mono">
-                shpat_••••••••8d0f
+                shpat_••••••••••••
               </p>
             </div>
           </div>
