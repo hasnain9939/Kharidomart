@@ -6,8 +6,8 @@ import { ArrowRight, Heart, Globe, Sparkles } from "reicon-react";
 import { useStore } from "@/context/StoreContext";
 
 const ANNOUNCEMENTS = [
-  { text: "🍼 Gentle Baby Care & Montessori Play", subtext: "Quality-tested, gentle, and 100% BPA-free essentials", link: "/shop" },
-  { text: "🌿 100% Baby-Safe & BPA-Free Materials", subtext: "Smooth child-safe edges & non-toxic finishes", link: "/shop" },
+  { text: "🍼 Gentle Baby Care & Montessori Play", subtext: "Quality-tested, gentle, and BPA-free essentials", link: "/shop" },
+  { text: "🌿 Gentle & BPA-Free Materials", subtext: "Smooth child-safe edges & non-toxic finishes", link: "/shop" },
   { text: "⚡ Extra ₹50 Instant Discount on UPI Payments", subtext: "Zero COD fees + priority dispatch to your doorstep", link: "/shop" },
   { text: "🛡️ Cash on Delivery (COD) Pan-India", subtext: "24-hr replacement guarantee (unboxing video req.)", link: "/policies/refund-policy" },
 ];

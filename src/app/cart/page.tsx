@@ -112,8 +112,9 @@ export default function CartPage() {
         <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm text-[#584237]">
           <div className="flex items-center gap-2">
             <ShieldCheck size={18} weight="Filled" className="text-[#15803d]" />
+            {/* TODO(owner): Add certification docs if claiming doctor approval */}
             <span className="font-semibold text-[#0b1c30]">
-              Doctor & Pediatrician Approved Nursery Grade Safe
+              Nursery-Grade Safe &amp; Gentle Materials
             </span>
           </div>
           <div className="flex items-center gap-6">

@@ -8,14 +8,14 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "All Milestone Collections | Kharido Mart India",
   description:
-    "Explore all curated collections of pediatrician-approved baby grooming essentials, screen-free Montessori toys, nursery night lights, and mom care products.",
+    "Explore all curated collections of baby grooming essentials, screen-free Montessori toys, nursery night lights, and mom care products.",
   alternates: {
     canonical: "https://kharidomart.com/collections",
   },
   openGraph: {
     title: "All Milestone Collections | Kharido Mart India",
     description:
-      "Explore all curated collections of pediatrician-approved baby grooming essentials, screen-free Montessori toys, and nursery night lights.",
+      "Explore all curated collections of quality-vetted baby grooming essentials, screen-free Montessori toys, and nursery night lights.",
     url: "https://kharidomart.com/collections",
     images: [{ url: "/assets/stitch/hero_showcase.jpg", width: 1200, height: 630, alt: "Kharido Mart Collections" }],
   },

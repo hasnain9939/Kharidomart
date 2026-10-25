@@ -155,7 +155,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               <span>Baby-Safe • Fast COD</span>
             </div>
             <span className="text-[#6b5850] text-[10px] font-mono tabular-nums">
-              {product.reviewsCount > 0 ? `${product.reviewsCount}+ happy moms` : "Verified Quality"}
+              {product.reviewsCount > 0 ? `${product.reviewsCount} customer reviews` : "Quality Curated"}
             </span>
           </div>
 

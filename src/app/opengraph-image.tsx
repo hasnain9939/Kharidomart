@@ -156,7 +156,8 @@ export default async function Image() {
               fontWeight: 700,
             }}
           >
-            PEDIATRICIAN TESTED • 100% BABY-SAFE
+            {/* TODO(owner): Add clinical test reports before reinstating medical claim */}
+            PARENT-CURATED • GENTLE CARE
           </div>
 
           <h1

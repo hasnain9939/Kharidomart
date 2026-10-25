@@ -42,7 +42,7 @@ export default async function Home() {
             <div className="flex items-center justify-center gap-2 py-1">
               <ShieldCheck size={17} weight="Filled" className="text-[#4f775d] shrink-0" />
               <span className="font-semibold text-[#2b1f1a]">
-                100% Baby-Safe &amp; BPA-Free
+                Food-Grade &amp; BPA-Free Materials
               </span>
             </div>
             <div className="flex items-center justify-center gap-2 py-1">
@@ -125,7 +125,8 @@ export default async function Home() {
                   <p className="font-mono text-xl sm:text-2xl text-[#4f775d] font-black tabular-nums">
                     100%
                   </p>
-                  <p className="text-xs text-[#6b5850] font-medium mt-0.5">BPA-Free Certified</p>
+                  {/* TODO(owner): Add lab test certificate if claiming 3rd-party certification */}
+                  <p className="text-xs text-[#6b5850] font-medium mt-0.5">Food-Grade &amp; BPA-Free</p>
                 </div>
               </div>
             </div>
@@ -154,12 +155,12 @@ export default async function Home() {
                         100% Food-Grade &amp; Non-Toxic
                       </p>
                       <p className="text-[11px] text-[#6b5850] truncate">
-                        BPA-Free Certified • Rounded Safety Edges
+                        BPA-Free Materials • Rounded Safety Edges
                       </p>
                     </div>
                   </div>
                   <span className="shrink-0 px-2.5 py-1 bg-[#eaf3ed] text-[#4f775d] text-[10px] font-bold uppercase rounded-full">
-                    Certified Safe
+                    Curated Quality
                   </span>
                 </div>
 
@@ -178,8 +179,9 @@ export default async function Home() {
                       </p>
                     </div>
                   </div>
+                  {/* TODO(owner): Add clinical report if claiming pediatric testing */}
                   <span className="px-2.5 py-1 bg-[#eaf3ed] text-[#4f775d] text-[10px] font-black uppercase tracking-wider rounded-full">
-                    PEDIATRIC TESTED
+                    GENTLE ON SENSITIVE NAILS
                   </span>
                 </div>
               </div>
@@ -387,9 +389,9 @@ export default async function Home() {
                 <div className="w-12 h-12 rounded-xl bg-[#fdedeb] text-[#e06b5b] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
                   <ShieldCheck size={24} weight="Filled" />
                 </div>
-                <h3 className="text-base font-black text-[#2b1f1a] mb-1.5">100% Baby-Safe &amp; BPA-Free</h3>
+                <h3 className="text-base font-black text-[#2b1f1a] mb-1.5">BPA-Free &amp; Child-Friendly Materials</h3>
                 <p className="text-xs text-[#6b5850] leading-relaxed">
-                  Food-grade silicone, smooth rounded edges, and non-toxic materials rigorously tested for sensitive little hands.
+                  Food-grade silicone, smooth rounded edges, and non-toxic materials curated for sensitive little hands.
                 </p>
               </div>
             </div>
@@ -411,7 +413,8 @@ export default async function Home() {
                 <div className="w-12 h-12 rounded-xl bg-[#fbf7f0] text-[#c95444] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
                   <Award size={24} weight="Filled" />
                 </div>
-                <h3 className="text-base font-black text-[#2b1f1a] mb-1.5">Pediatrician Tested</h3>
+                {/* TODO(owner): Add pediatrician testing documentation if reinstating claim */}
+                <h3 className="text-base font-black text-[#2b1f1a] mb-1.5">Parent Tested &amp; Curated</h3>
                 <p className="text-xs text-[#6b5850] leading-relaxed">
                   Every product is curated specifically for safe, ergonomic handling to eliminate stress and crying for both baby and parent.
                 </p>
@@ -443,7 +446,7 @@ export default async function Home() {
             <span className="text-white/40">•</span>
             <span className="text-[#a3e0b5]">Extra ₹50 Instant Discount on UPI Payments</span>
             <span className="text-white/40">•</span>
-            <span className="text-white">100% Baby-Safe &amp; Non-Toxic</span>
+            <span className="text-white">Gentle &amp; Non-Toxic Materials</span>
             <span className="text-white/40">•</span>
           </div>
           <div className="flex items-center gap-8 shrink-0" aria-hidden="true">
@@ -453,7 +456,7 @@ export default async function Home() {
             <span className="text-white/40">•</span>
             <span className="text-[#a3e0b5]">Extra ₹50 Instant Discount on UPI Payments</span>
             <span className="text-white/40">•</span>
-            <span className="text-white">100% Baby-Safe &amp; Non-Toxic</span>
+            <span className="text-white">Gentle &amp; Non-Toxic Materials</span>
             <span className="text-white/40">•</span>
           </div>
         </div>

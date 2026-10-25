@@ -377,7 +377,7 @@ export default function CartDrawer() {
               <div className="text-center pt-0.5">
                 <p className="text-[10px] text-[#6b5850] flex items-center justify-center gap-1">
                   <ShieldCheck size={13} weight="Filled" className="text-[#4f775d]" />
-                  <span>Free doorstep exchange • 100% Baby-Safe Guarantee</span>
+                  <span>Free doorstep exchange • Curated Quality Assurance</span>
                 </p>
               </div>
             </div>

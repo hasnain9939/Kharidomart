@@ -323,7 +323,7 @@ function AddProductForm() {
           .map((s) => s.replace(/^[-•*]\s*/, "").trim())
           .filter(Boolean)
       : [
-          "100% Certified Safe & High Quality Materials",
+          "Curated Quality & Non-Toxic Materials",
           "Fast Dispatch via Express Courier",
           "Cash on Delivery & 24-Hour Replacement Support",
         ];

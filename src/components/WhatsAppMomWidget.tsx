@@ -10,7 +10,7 @@ export default function WhatsAppMomWidget() {
   const quickFaqs = [
     {
       q: "Is this 100% safe for newborns & infants?",
-      a: "Yes! Every single toy, groomer, and nursery item at Kharido Mart is BPA-free, made with food-grade silicone or non-toxic materials, and certified baby-safe.",
+      a: "Yes! Every toy, groomer, and nursery item at Kharido Mart is BPA-free, made with food-grade silicone or non-toxic materials, and carefully vetted for baby safety.",
     },
     {
       q: "How does Cash on Delivery (COD) work?",

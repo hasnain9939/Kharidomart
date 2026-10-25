@@ -142,13 +142,17 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
         },
       },
     },
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": product.rating || 4.9,
-      "reviewCount": product.reviewsCount || 128,
-      "bestRating": 5,
-      "worstRating": 1,
-    },
+    ...(product.reviewsCount > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: product.rating || 5.0,
+            reviewCount: product.reviewsCount,
+            bestRating: 5,
+            worstRating: 1,
+          },
+        }
+      : {}),
   };
 
   const breadcrumbSchema = {

@@ -107,7 +107,7 @@ export default function HomeProductSection({
                 New Handpicked Arrivals Dropping This Week
               </h3>
               <p className="text-sm text-[#6b5850] max-w-lg mx-auto leading-relaxed">
-                Our quality team is currently inspecting and certifying the next batch of BPA-free, child-safe essentials. Explore our milestone collections below or get in touch for custom requests.
+                Our quality team is currently inspecting and prepping the next batch of BPA-free, child-safe essentials. Explore our milestone collections below or get in touch for custom requests.
               </p>
             </div>
 

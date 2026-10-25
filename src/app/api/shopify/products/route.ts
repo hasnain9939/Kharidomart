@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
         vendor: sp.vendor || "Shopify Warehouse",
         productType: sp.product_type || "Mom & Baby",
         price,
-        originalPrice: comparePrice > price ? comparePrice : Math.round(price * 1.4),
+        originalPrice: comparePrice > price ? comparePrice : price,
         stock: stock > 0 ? stock : 25,
         sku: firstVariant.sku || `SHP-${sp.id}`,
         imageUrl: images[0] || "/assets/images/img_1_box-full-of-childrens-toys.jpg",
@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
       const firstVariant = sp.variants?.[0] || {};
       const price = parseFloat(firstVariant.price || "499");
       const comparePrice = parseFloat(firstVariant.compare_at_price || "0");
-      const originalPrice = comparePrice > price ? comparePrice : Math.round(price * 1.4);
+      const originalPrice = comparePrice > price ? comparePrice : price;
 
       const totalStock = sp.variants?.reduce(
         (sum: number, v: any) => sum + (typeof v.inventory_quantity === "number" ? v.inventory_quantity : 0),
