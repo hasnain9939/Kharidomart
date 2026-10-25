@@ -128,38 +128,39 @@ export default function Footer() {
             </h4>
             <ul className="space-y-2.5 text-xs sm:text-sm text-stone-300">
               <li>
-                <Link href="/collections/mom-baby" className="hover:text-white transition-colors flex items-center justify-between group">
+                <Link href="/collections/mom-baby" className="hover:text-white transition-colors inline-flex items-center gap-1.5 group">
                   <span>Mom &amp; Baby (0–12M)</span>
-                  <span className="text-stone-500 group-hover:text-stone-300 text-xs">→</span>
+                  <span className="text-stone-500 group-hover:text-stone-300 group-hover:translate-x-0.5 transition-all text-xs">→</span>
                 </Link>
               </li>
               <li>
-                <Link href="/collections/fun-clever-finds" className="hover:text-white transition-colors flex items-center justify-between group">
+                <Link href="/collections/fun-clever-finds" className="hover:text-white transition-colors inline-flex items-center gap-1.5 group">
                   <span>Montessori (1–4Y)</span>
-                  <span className="text-stone-500 group-hover:text-stone-300 text-xs">→</span>
+                  <span className="text-stone-500 group-hover:text-stone-300 group-hover:translate-x-0.5 transition-all text-xs">→</span>
                 </Link>
               </li>
               <li>
-                <Link href="/collections/smart-gadgets" className="hover:text-white transition-colors flex items-center justify-between group">
+                <Link href="/collections/smart-gadgets" className="hover:text-white transition-colors inline-flex items-center gap-1.5 group">
                   <span>Nursery Lamps</span>
-                  <span className="text-stone-500 group-hover:text-stone-300 text-xs">→</span>
+                  <span className="text-stone-500 group-hover:text-stone-300 group-hover:translate-x-0.5 transition-all text-xs">→</span>
                 </Link>
               </li>
               <li>
-                <Link href="/collections/home-kitchen" className="hover:text-white transition-colors flex items-center justify-between group">
+                <Link href="/collections/home-kitchen" className="hover:text-white transition-colors inline-flex items-center gap-1.5 group">
                   <span>Feeding Sets</span>
-                  <span className="text-stone-500 group-hover:text-stone-300 text-xs">→</span>
+                  <span className="text-stone-500 group-hover:text-stone-300 group-hover:translate-x-0.5 transition-all text-xs">→</span>
                 </Link>
               </li>
               <li>
-                <Link href="/shop?filter=deals" className="hover:text-white font-semibold text-[#f5a195] transition-colors flex items-center justify-between group">
+                <Link href="/shop?filter=deals" className="hover:text-white font-semibold text-[#f5a195] transition-colors inline-flex items-center gap-1.5 group">
                   <span>Mom Deals 🔥</span>
-                  <span className="text-[#f5a195] text-xs">HOT</span>
+                  <span className="px-1.5 py-0.2 rounded bg-[#e06b5b]/20 text-[#f5a195] text-[10px] font-bold">HOT</span>
                 </Link>
               </li>
               <li className="pt-1">
-                <Link href="/shop" className="hover:text-white text-stone-400 hover:underline transition-colors text-xs inline-block">
-                  All Products →
+                <Link href="/shop" className="hover:text-white text-stone-400 hover:underline transition-colors text-xs inline-flex items-center gap-1 group">
+                  <span>All Products</span>
+                  <span className="group-hover:translate-x-0.5 transition-transform">→</span>
                 </Link>
               </li>
             </ul>

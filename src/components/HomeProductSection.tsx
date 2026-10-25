@@ -45,9 +45,9 @@ export default function HomeProductSection({
       : initialProducts.filter((p) => p.categorySlug === activeCategory);
 
   return (
-    <section className="w-full py-14 sm:py-20 bg-[#fdfbf7]" id="featured-products">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
+    <section className="w-full py-12 sm:py-20 bg-[#fdfbf7]" id="featured-products">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 sm:mb-10 gap-4">
           <div>
             <div className="inline-flex items-center gap-1.5 text-[#e06b5b] text-xs uppercase tracking-wider font-bold mb-2">
               <Sparkles size={14} weight="Filled" />
@@ -92,9 +92,9 @@ export default function HomeProductSection({
           </div>
         </div>
 
-        {/* Instant SSR-Rendered Product Grid */}
+        {/* Instant SSR-Rendered Product Grid - 2 columns on mobile, 4 on desktop */}
         {filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
             {filteredProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
