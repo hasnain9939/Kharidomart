@@ -90,3 +90,17 @@ body {
 .btn-glow:hover {
   box-shadow: 0 6px 20px 0 rgba(249, 115, 22, 0.45);
 }
+
+/* Hero slideshow hairline progress */
+@keyframes heroProgress {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+.animate-hero-progress {
+  animation: heroProgress 5s linear forwards;
+}

@@ -141,6 +141,19 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           },
         },
       },
+      "hasMerchantReturnPolicy": {
+        "@type": "MerchantReturnPolicy",
+        "applicableCountry": "IN",
+        "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+        "merchantReturnDays": 1,
+        "returnMethod": "https://schema.org/ReturnByMail",
+        "returnFees": "https://schema.org/FreeReturn",
+        "returnShippingFeesAmount": {
+          "@type": "MonetaryAmount",
+          "value": 0,
+          "currency": "INR",
+        },
+      },
     },
     ...(product.reviewsCount > 0
       ? {

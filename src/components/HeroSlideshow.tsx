@@ -154,9 +154,31 @@ export default function HeroSlideshow() {
 
   const totalSlides = HERO_SLIDES.length;
 
+  const touchStartX = useRef<number | null>(null);
+
   const nextSlide = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % totalSlides);
   }, [totalSlides]);
+
+  const prevSlide = useCallback(() => {
+    setCurrentIndex((prev) => (prev === 0 ? totalSlides - 1 : prev - 1));
+  }, [totalSlides]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    // 50px threshold for swipe
+    if (diff > 50) {
+      nextSlide();
+    } else if (diff < -50) {
+      prevSlide();
+    }
+    touchStartX.current = null;
+  };
 
   // Autoplay slideshow with smooth 5s transition, pauses on hover or touch
   useEffect(() => {
@@ -167,7 +189,7 @@ export default function HeroSlideshow() {
 
     timerRef.current = setInterval(() => {
       nextSlide();
-    }, 3000);
+    }, 5000);
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -181,6 +203,8 @@ export default function HeroSlideshow() {
       className="relative w-full overflow-hidden bg-[#14100e]"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       aria-label="Kharido Mart Featured Milestones Slideshow"
     >
       {/* Expansive Full Display Image Carousel Background */}
@@ -289,6 +313,13 @@ export default function HeroSlideshow() {
         </div>
 
 
+        {/* Ultra-Minimal Hairline Slide Progress Indicator (100% Unboxed, 2px quiet bar) */}
+        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-white/15 z-20 overflow-hidden pointer-events-none">
+          <div
+            key={currentIndex}
+            className="h-full bg-[#e06b5b] animate-hero-progress"
+          />
+        </div>
       </div>
     </section>
   );

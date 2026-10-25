@@ -19,8 +19,61 @@ import {
 export default async function Home() {
   const products = await getCachedAllProducts();
 
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: "Does Kharido Mart offer Cash on Delivery (COD) across India?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Yes, Kharido Mart offers Cash on Delivery (COD) across 28,000+ pin codes in India with no extra hidden handling fees. You can pay securely upon delivery.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Are Kharido Mart baby products BPA-free and child-safe?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Every product in our baby feeding, sensory play, and grooming collections is crafted with 100% food-grade silicone and certified BPA-free, lead-free, non-toxic materials for your little one's safety.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "What is Kharido Mart's 24-Hour Doorstep Replacement Guarantee?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "If any item arrives damaged, defective, or missing parts, share an unboxing video with our WhatsApp care team within 24 hours of delivery. We promptly dispatch a free replacement with zero hassle.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "How fast does Kharido Mart dispatch orders?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "All orders placed before 3:00 PM IST on business days are dispatched from our warehouse on the same day. Express delivery takes 2 to 3 days for metro cities (Delhi, Mumbai, Bengaluru, Kolkata) and 3 to 5 days across India.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Is there any instant discount on prepaid UPI payments?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Yes! All prepaid UPI orders receive an instant ₹50 discount automatically applied at checkout, along with priority packing and dispatch.",
+        },
+      },
+    ],
+  };
+
   return (
     <div className="flex flex-col w-full bg-[#fdfbf7] text-[#2b1f1a]">
+      {/* GOOGLE RICH SNIPPETS FAQ SCHEMA */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+
       {/* 1. TOP VALUE HIGHLIGHTS & TRUST STRIP (WARM BUTTERCREAM & EUCALYPTUS SAGE) */}
       <section className="w-full bg-[#fbf7f0] border-b border-[#eddcd1]/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5">

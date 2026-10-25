@@ -92,6 +92,7 @@ export default function ProductDetailsClient({
   const [pincodeChecked, setPincodeChecked] = useState(false);
   const [pincodeLocation, setPincodeLocation] = useState<{ district: string; state: string } | null>(null);
   const [isPincodeLoading, setIsPincodeLoading] = useState(false);
+  const [showStickyBar, setShowStickyBar] = useState(false);
 
   const [activeTab, setActiveTab] = useState<"description" | "specs" | "reviews">("description");
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
@@ -247,6 +248,38 @@ export default function ProductDetailsClient({
       isMounted = false;
     };
   }, []);
+
+  // Show mobile sticky Add to Bag bar after scrolling past the hero fold
+  React.useEffect(() => {
+    const handleScroll = () => {
+      setShowStickyBar(window.scrollY > 380);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Quick metro pincode checker
+  const handleQuickPincode = async (code: string) => {
+    setPincode(code);
+    setIsPincodeLoading(true);
+    try {
+      const res = await fetch(`/api/pincode/${code}`);
+      const data = await res.json();
+      if (data.success && data.city && data.state) {
+        setPincodeLocation({ district: data.city, state: data.state });
+        setPincodeChecked(true);
+        try {
+          localStorage.setItem("km_user_pincode", code);
+        } catch {}
+      } else {
+        setPincodeChecked(true);
+      }
+    } catch {
+      setPincodeChecked(true);
+    } finally {
+      setIsPincodeLoading(false);
+    }
+  };
 
   // Helper for delivery dates estimation
   const getDeliveryEstimate = (pin: string) => {
@@ -960,6 +993,28 @@ export default function ProductDetailsClient({
                   </button>
                 </div>
 
+                {/* Instant Metro Quick Chips when pincode is not yet checked */}
+                {!pincodeChecked && (
+                  <div className="flex items-center gap-1.5 flex-wrap text-[11px] text-[#6b5850]">
+                    <span className="font-semibold text-[#2b1f1a]">Quick check:</span>
+                    {[
+                      { city: "Delhi", pin: "110001" },
+                      { city: "Mumbai", pin: "400001" },
+                      { city: "Bengaluru", pin: "560001" },
+                      { city: "Kolkata", pin: "700001" },
+                    ].map((m) => (
+                      <button
+                        key={m.pin}
+                        type="button"
+                        onClick={() => handleQuickPincode(m.pin)}
+                        className="px-2 py-0.5 rounded-lg bg-[#fbf7f0] hover:bg-[#fdedeb] text-[#2b1f1a] hover:text-[#e06b5b] border border-[#eddcd1] font-medium transition-colors cursor-pointer"
+                      >
+                        {m.city} ({m.pin})
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 {pincodeChecked && pincode.length === 6 && (
                   <div className="bg-[#fdfbf7] p-3 rounded-2xl border border-[#eddcd1] space-y-2 text-xs animate-in fade-in duration-200">
                     <div className="flex items-start gap-2.5">
@@ -983,14 +1038,21 @@ export default function ProductDetailsClient({
                         </p>
                       </div>
                     </div>
+
+                    {/* Dispatch Urgency Alert */}
+                    <div className="flex items-center gap-1.5 text-[11px] text-[#4f775d] font-bold bg-[#eaf3ed] p-2 rounded-xl">
+                      <Sparkles size={14} weight="Filled" className="shrink-0 text-[#4f775d]" />
+                      <span>Order in next {dispatchCountdown.hours}h {dispatchCountdown.minutes}m for priority same-day warehouse handoff!</span>
+                    </div>
+
                     <div className="pt-2 border-t border-[#eddcd1]/70 flex flex-wrap gap-2 text-[11px]">
-                      <span className="bg-[#eaf3ed] text-[#2c4a35] font-semibold px-2 py-0.5 rounded-md">
+                      <span className="bg-white text-[#2c4a35] border border-[#eddcd1] font-semibold px-2 py-0.5 rounded-md">
                         ✓ Cash on Delivery (COD) Available
                       </span>
-                      <span className="bg-[#eaf3ed] text-[#2c4a35] font-semibold px-2 py-0.5 rounded-md">
-                        ✓ Free Delivery on ₹499+
+                      <span className="bg-white text-[#2c4a35] border border-[#eddcd1] font-semibold px-2 py-0.5 rounded-md">
+                        ✓ Free Express Delivery
                       </span>
-                      <span className="bg-[#eaf3ed] text-[#2c4a35] font-semibold px-2 py-0.5 rounded-md">
+                      <span className="bg-white text-[#2c4a35] border border-[#eddcd1] font-semibold px-2 py-0.5 rounded-md">
                         ✓ 24-Hr Doorstep Replacement
                       </span>
                     </div>
@@ -1366,28 +1428,36 @@ export default function ProductDetailsClient({
         </section>
       )}
 
-      {/* Sticky Mobile Add to Cart & Buy Bar for Dropshipping conversions */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#ebdcd3] px-3 py-2.5 sm:px-4 sm:py-3 shadow-[0_-8px_24px_rgba(43,31,26,0.08)] flex items-center justify-between gap-2.5 animate-in slide-in-from-bottom-2">
+      {/* Sticky Mobile Add to Bag Bottom Bar with Scroll Awareness & iOS Safe Area */}
+      <div
+        className={`md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#ebdcd3] px-3.5 py-2.5 shadow-[0_-8px_24px_rgba(43,31,26,0.12)] flex items-center justify-between gap-3 transition-transform duration-300 pb-[max(0.65rem,env(safe-area-inset-bottom))] ${
+          showStickyBar ? "translate-y-0 opacity-100" : "translate-y-full opacity-0 pointer-events-none"
+        }`}
+      >
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-[#fbe8e4]/50 border border-[#ebdcd3] shrink-0">
             <Image
               src={product.images[0]}
               alt={product.shortTitle || product.title}
               fill
+              sizes="40px"
               className="object-cover"
             />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-bold text-[#2b1f1a] truncate">{product.shortTitle || product.title}</p>
-            <div className="flex items-center gap-1.5">
-              <span className="font-space font-extrabold text-sm text-[#2b1f1a]">
+            <p className="text-xs font-bold text-[#2b1f1a] truncate leading-tight">
+              {product.shortTitle || product.title}
+            </p>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="font-space font-extrabold text-sm text-[#e06b5b]">
                 ₹{currentTotalPrice.toLocaleString("en-IN")}
               </span>
-              {quantity > 1 ? (
-                <span className="text-[10px] text-[#4f775d] font-bold">({quantity} Units)</span>
-              ) : (
-                <span className="text-[10px] text-[#4f775d] font-bold">Free COD</span>
-              )}
+              <span className="text-[10px] text-[#6b5850]/70 line-through">
+                ₹{(product.originalPrice * quantity).toLocaleString("en-IN")}
+              </span>
+              <span className="text-[9px] font-bold text-[#4f775d] bg-[#eaf3ed] px-1 rounded">
+                Free COD
+              </span>
             </div>
           </div>
         </div>
@@ -1395,7 +1465,7 @@ export default function ProductDetailsClient({
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={handleAddToCart}
-            className="h-10 px-5 bg-[#e06b5b] hover:bg-[#c25445] text-white font-bold text-xs rounded-xl flex items-center gap-2 shadow-md shadow-[#e06b5b]/25 active:scale-[0.98] transition-all cursor-pointer"
+            className="h-10 px-5 bg-[#e06b5b] hover:bg-[#c25445] active:scale-[0.97] text-white font-bold text-xs sm:text-sm rounded-xl flex items-center gap-2 shadow-md shadow-[#e06b5b]/25 transition-all cursor-pointer"
           >
             <ShoppingBag size={15} weight="Filled" />
             <span>Add to Bag</span>
