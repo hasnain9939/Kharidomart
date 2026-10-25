@@ -196,6 +196,14 @@ export default function CheckoutPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             amount: grandTotal,
+            items: cart.map((i) => ({
+              productId: i.product?.id || (i as any).productId,
+              price: i.product?.price || (i as any).price,
+              quantity: i.quantity,
+              title: i.product?.title || (i as any).title,
+            })),
+            discountCode: discountCode || undefined,
+            paymentMethod,
             receipt: `km_${Date.now()}`,
             notes: {
               customerEmail: email,
@@ -243,6 +251,7 @@ export default function CheckoutPage() {
                   customer: { firstName, lastName, email, phone, whatsappOptIn },
                   address: { address, city, state, pincode, landmark, addressType },
                   items: cart,
+                  discountCode: discountCode || undefined,
                   subtotal,
                   discountAmount,
                   shippingFee,
@@ -355,6 +364,7 @@ export default function CheckoutPage() {
           },
           items: cart,
           paymentMethod,
+          discountCode: discountCode || undefined,
           subtotal,
           discountAmount,
           shippingFee,

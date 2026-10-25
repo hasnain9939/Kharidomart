@@ -9,15 +9,34 @@ import { TruckFast, ShieldCheck, ArrowRight, Heart } from "reicon-react";
 export default function Footer() {
   const { showToast } = useStore();
   const [email, setEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !email.includes("@")) {
       showToast("Please enter a valid email address.", "warning");
       return;
     }
-    showToast("🎉 Welcome! Check your inbox for your 10% parenting welcome coupon.");
-    setEmail("");
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        showToast(data.error || "Subscription failed. Please try again.", "warning");
+        return;
+      }
+      showToast(data.message || `🎉 Welcome! Use coupon code ${data.code} for 10% off.`);
+      setEmail("");
+    } catch {
+      showToast("Unable to subscribe right now. Please try again later.", "warning");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -27,10 +46,11 @@ export default function Footer() {
         <div className="max-w-[1360px] mx-auto flex flex-col lg:flex-row items-center justify-between gap-6 text-center lg:text-left">
           <div className="space-y-1.5 max-w-xl">
             <span className="text-xs font-bold uppercase tracking-wider text-[#e06b5b]">
-              Kharido Mart Mom Community
+              Kharido Mart Parent Community
             </span>
             <h3 className="text-xl sm:text-2xl font-extrabold text-[#2b1f1a] tracking-tight">
-              Join 25,000+ Indian Mothers Getting Weekly Parenting Tips &amp; VIP Flash Deals
+              {/* TODO(owner): Replace with audited subscriber count once verified */}
+              Join Our Community of Caring Parents Getting Weekly Parenting Tips &amp; VIP Flash Deals
             </h3>
             <p className="text-xs sm:text-sm text-[#6b5850]">
               Gentle bedtime routines, screen-free activity ideas, and exclusive secret discounts on baby-safe essentials.
@@ -44,13 +64,15 @@ export default function Footer() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email address..."
               required
-              className="flex-1 bg-white text-[#2b1f1a] placeholder:text-[#6b5850]/60 text-xs sm:text-sm px-4 py-3 rounded-xl border border-[#eddcd1] focus:outline-none focus:border-[#e06b5b] transition-colors shadow-2xs"
+              disabled={isSubmitting}
+              className="flex-1 bg-white text-[#2b1f1a] placeholder:text-[#6b5850]/60 text-xs sm:text-sm px-4 py-3 rounded-xl border border-[#eddcd1] focus:outline-none focus:border-[#e06b5b] transition-colors shadow-2xs disabled:opacity-60"
             />
             <button
               type="submit"
-              className="bg-[#e06b5b] hover:bg-[#c95444] active:scale-95 text-white font-bold px-6 py-3 rounded-xl transition-all text-xs uppercase tracking-wider shrink-0 shadow-xs"
+              disabled={isSubmitting}
+              className="bg-[#e06b5b] hover:bg-[#c95444] active:scale-95 disabled:opacity-60 text-white font-bold px-6 py-3 rounded-xl transition-all text-xs uppercase tracking-wider shrink-0 shadow-xs"
             >
-              Get 10% Off
+              {isSubmitting ? "Subscribing..." : "Get 10% Off"}
             </button>
           </form>
         </div>

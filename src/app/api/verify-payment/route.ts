@@ -63,6 +63,7 @@ export async function POST(req: NextRequest) {
         items: body.items,
         paymentMethod: body.paymentMethod || "UPI",
         paymentId,
+        discountCode: body.discountCode,
         subtotal: body.subtotal,
         discountAmount: body.discountAmount,
         shippingFee: body.shippingFee,

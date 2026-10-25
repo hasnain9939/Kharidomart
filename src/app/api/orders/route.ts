@@ -79,9 +79,27 @@ export async function GET(req: NextRequest) {
   }
 }
 
+// Rate limit order creation: max 20 orders per hour per IP
+const orderRateLimit = new Map<string, { count: number; resetAt: number }>();
+
 // POST /api/orders - create a real order on checkout
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+    const now = Date.now();
+    const rateRecord = orderRateLimit.get(ip);
+    if (rateRecord && rateRecord.resetAt > now) {
+      if (rateRecord.count >= 20) {
+        return NextResponse.json(
+          { success: false, error: "Too many order requests. Please wait a moment." },
+          { status: 429 }
+        );
+      }
+      rateRecord.count += 1;
+    } else {
+      orderRateLimit.set(ip, { count: 1, resetAt: now + 3600000 });
+    }
+
     const body = await req.json();
 
     const {
@@ -90,10 +108,10 @@ export async function POST(req: NextRequest) {
       address,
       items,
       paymentMethod = "COD",
+      discountCode,
       subtotal = 0,
       discountAmount = 0,
       shippingFee = 0,
-      grandTotal = 0,
     } = body;
 
     if (!customer?.phone || String(customer.phone).replace(/\D/g, "").length < 10) {
@@ -116,6 +134,7 @@ export async function POST(req: NextRequest) {
       address,
       items,
       paymentMethod,
+      discountCode,
       subtotal,
       discountAmount,
       shippingFee,

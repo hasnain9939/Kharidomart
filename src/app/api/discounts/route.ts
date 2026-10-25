@@ -45,6 +45,9 @@ const DEFAULT_SEED_DISCOUNTS = [
   },
 ];
 
+// In-memory rate limiter for public coupon verification: max 20 lookups per 15 minutes per IP
+const couponCheckRateLimit = new Map<string, { count: number; resetAt: number }>();
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -52,6 +55,21 @@ export async function GET(req: NextRequest) {
 
     // Specific coupon lookup for checkout validation
     if (codeQuery) {
+      const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+      const now = Date.now();
+      const record = couponCheckRateLimit.get(ip);
+      if (record && record.resetAt > now) {
+        if (record.count >= 20) {
+          return NextResponse.json(
+            { success: false, error: "Too many coupon attempts. Please try again later." },
+            { status: 429 }
+          );
+        }
+        record.count += 1;
+      } else {
+        couponCheckRateLimit.set(ip, { count: 1, resetAt: now + 900000 });
+      }
+
       const discount = await prisma.discount.findUnique({
         where: { code: codeQuery },
       });
@@ -82,7 +100,16 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // List all discounts for admin marketing overview
+    // Listing all discounts is strictly restricted to authenticated administrators
+    const sessionCookie = req.cookies.get("km_admin_session")?.value;
+    const isAdmin = Boolean(await verifyAdminSessionToken(sessionCookie));
+    if (!isAdmin) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized: Administrator access required to list all discounts" },
+        { status: 401 }
+      );
+    }
+
     let discounts = await prisma.discount.findMany({
       orderBy: { createdAt: "desc" },
     });

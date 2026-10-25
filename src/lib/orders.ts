@@ -19,7 +19,10 @@ export function generateOrderNumber(): string {
 
 
 
-export function sanitizeOrderItems(rawItems: any[]): {
+export function sanitizeOrderItems(
+  rawItems: any[],
+  priceMap?: Map<string, number>
+): {
   sanitizedItems: SanitizedOrderItem[];
   computedSubtotal: number;
 } {
@@ -27,15 +30,24 @@ export function sanitizeOrderItems(rawItems: any[]): {
 
   const sanitizedItems: SanitizedOrderItem[] = (rawItems || []).map((item: any) => {
     const title = String(item.product?.title || item.title || "Product").trim();
-    const rawPrice = Number(item.product?.price ?? item.price ?? 0);
-    const cleanPrice = isNaN(rawPrice) || rawPrice < 0 ? 0 : rawPrice;
+    const pId = item.product?.id || item.productId || item.id || null;
+    
+    // If the product exists in our database, enforce the database price
+    let cleanPrice: number;
+    if (pId && priceMap && priceMap.has(pId)) {
+      cleanPrice = priceMap.get(pId)!;
+    } else {
+      const rawPrice = Number(item.product?.price ?? item.price ?? 0);
+      cleanPrice = isNaN(rawPrice) || rawPrice < 0 ? 0 : rawPrice;
+    }
+
     const rawQty = Number(item.quantity);
     const cleanQuantity = isNaN(rawQty) || rawQty < 1 ? 1 : Math.floor(rawQty);
 
     computedSubtotal += cleanPrice * cleanQuantity;
 
     return {
-      productId: item.product?.id || item.productId || null,
+      productId: pId,
       title,
       price: cleanPrice,
       quantity: cleanQuantity,
@@ -70,8 +82,9 @@ export function calculateOrderTotals({
   const parsedShipping = typeof shippingFee === "string" ? parseFloat(shippingFee) || 0 : shippingFee;
   const cleanShipping = Math.max(0, parsedShipping);
 
+  // ₹50 UPI discount is validated for subtotal >= ₹299
   const isUpi = String(paymentMethod).toLowerCase().includes("upi");
-  const upiDiscount = isUpi ? 50 : 0;
+  const upiDiscount = isUpi && finalSubtotal >= 299 ? 50 : 0;
 
   const finalGrandTotal = Math.max(
     0,
@@ -107,6 +120,7 @@ export interface CreateDatabaseOrderParams {
   paymentMethod?: string;
   status?: string;
   paymentId?: string;
+  discountCode?: string;
   subtotal?: number | string;
   discountAmount?: number | string;
   shippingFee?: number | string;
@@ -128,17 +142,74 @@ export async function createDatabaseOrder(params: CreateDatabaseOrderParams) {
     paymentMethod = "COD",
     status,
     paymentId,
+    discountCode,
     subtotal = 0,
-    discountAmount = 0,
     shippingFee = 0,
   } = params;
 
-  const { sanitizedItems, computedSubtotal } = sanitizeOrderItems(items);
-  const { finalSubtotal, cleanDiscount, cleanShipping, finalGrandTotal } =
+  // 1. Fetch real prices from database to prevent client price tampering
+  const productIds = (items || [])
+    .map((item: any) => item.product?.id || item.productId || item.id)
+    .filter(Boolean);
+
+  const priceMap = new Map<string, number>();
+  if (productIds.length > 0) {
+    try {
+      const dbProducts = await prisma.product.findMany({
+        where: { id: { in: productIds } },
+        select: { id: true, price: true },
+      });
+      for (const p of dbProducts) {
+        priceMap.set(p.id, p.price);
+      }
+    } catch (e: any) {
+      console.warn("Could not query DB products for price verification:", e?.message);
+    }
+  }
+
+  const { sanitizedItems, computedSubtotal } = sanitizeOrderItems(items, priceMap);
+
+  // 2. Server-side discount coupon validation
+  let validatedDiscount = 0;
+  if (discountCode && typeof discountCode === "string") {
+    const cleanCode = discountCode.trim().toUpperCase();
+    try {
+      const dbDiscount = await prisma.discount.findUnique({
+        where: { code: cleanCode },
+      });
+      if (
+        dbDiscount &&
+        dbDiscount.active &&
+        (!dbDiscount.expiresAt || new Date(dbDiscount.expiresAt) >= new Date())
+      ) {
+        if (computedSubtotal >= dbDiscount.minOrder) {
+          validatedDiscount =
+            dbDiscount.type === "fixed"
+              ? dbDiscount.value
+              : (computedSubtotal * dbDiscount.value) / 100;
+          validatedDiscount = Math.min(computedSubtotal, Math.max(0, validatedDiscount));
+
+          // Increment coupon usage
+          await prisma.discount.update({
+            where: { id: dbDiscount.id },
+            data: { usageCount: { increment: 1 } },
+          }).catch(() => {});
+        }
+      }
+    } catch (dErr: any) {
+      console.warn("Discount validation warning:", dErr?.message);
+    }
+  } else if (params.discountAmount) {
+    // If discount code was not provided directly, verify bounds on discountAmount
+    const rawDisc = typeof params.discountAmount === "string" ? parseFloat(params.discountAmount) : params.discountAmount;
+    validatedDiscount = Math.min(computedSubtotal, Math.max(0, rawDisc || 0));
+  }
+
+  const { finalSubtotal, cleanDiscount, cleanShipping, upiDiscount, finalGrandTotal } =
     calculateOrderTotals({
       subtotal,
       computedSubtotal,
-      discountAmount,
+      discountAmount: validatedDiscount,
       shippingFee,
       paymentMethod,
     });
@@ -200,7 +271,7 @@ export async function createDatabaseOrder(params: CreateDatabaseOrderParams) {
       pincode: String(address.pincode || "").trim(),
       landmark: landmarkWithRef,
       subtotal: finalSubtotal,
-      discountAmount: cleanDiscount,
+      discountAmount: cleanDiscount + upiDiscount,
       shippingFee: cleanShipping,
       total: finalGrandTotal,
       paymentMethod: formattedPaymentMethod,

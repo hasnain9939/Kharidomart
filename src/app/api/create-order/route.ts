@@ -1,8 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRazorpayClient } from "@/lib/razorpay";
 
+const orderCreationRateLimit = new Map<string, { count: number; resetAt: number }>();
+
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+    const now = Date.now();
+    const rateRecord = orderCreationRateLimit.get(ip);
+    if (rateRecord && rateRecord.resetAt > now) {
+      if (rateRecord.count >= 30) {
+        return NextResponse.json(
+          { success: false, error: "Too many order requests. Please wait a moment." },
+          { status: 429 }
+        );
+      }
+      rateRecord.count += 1;
+    } else {
+      orderCreationRateLimit.set(ip, { count: 1, resetAt: now + 3600000 });
+    }
+
     const keyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
@@ -25,13 +42,55 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { amount, currency = "INR", receipt, notes } = body;
+    const { amount, currency = "INR", receipt, notes, items, discountCode, paymentMethod } = body;
 
-    // Determine amount in paise (minimum 100 paise = 1 INR)
-    // If client passes amount in rupees (e.g. 499), convert to paise (49900).
-    // If client explicitly passes amount in paise (already >= 100 and has isPaise flag, or amount > 1000000), handle properly.
     let amountInPaise: number;
-    if (body.isPaise) {
+
+    // Server-Side Verification: If items are passed, recalculate totals from Prisma database
+    if (Array.isArray(items) && items.length > 0) {
+      const { prisma } = await import("@/lib/prisma");
+      const pIds = items.map((i: any) => i.productId || i.id).filter(Boolean);
+      const dbProducts = await prisma.product.findMany({
+        where: { id: { in: pIds } },
+        select: { id: true, price: true },
+      });
+      const priceMap = new Map(dbProducts.map((p) => [p.id, p.price]));
+
+      let computedSubtotal = 0;
+      for (const item of items) {
+        const qty = Math.max(1, Math.floor(Number(item.quantity) || 1));
+        const pId = item.productId || item.id;
+        // Database price strictly takes precedence over client-supplied price
+        const itemPrice = priceMap.has(pId) ? priceMap.get(pId)! : Math.max(0, Number(item.price) || 0);
+        computedSubtotal += itemPrice * qty;
+      }
+
+      let discountAmount = 0;
+      if (discountCode && typeof discountCode === "string") {
+        const cleanCode = discountCode.trim().toUpperCase();
+        const dbDiscount = await prisma.discount.findUnique({ where: { code: cleanCode } });
+        if (
+          dbDiscount &&
+          dbDiscount.active &&
+          (!dbDiscount.expiresAt || new Date(dbDiscount.expiresAt) >= new Date())
+        ) {
+          if (computedSubtotal >= dbDiscount.minOrder) {
+            discountAmount =
+              dbDiscount.type === "fixed"
+                ? dbDiscount.value
+                : (computedSubtotal * dbDiscount.value) / 100;
+            discountAmount = Math.min(computedSubtotal, Math.max(0, discountAmount));
+          }
+        }
+      }
+
+      const shippingFee = computedSubtotal >= 499 ? 0 : 79;
+      const isUpi = String(paymentMethod || notes?.paymentType || "").toLowerCase().includes("upi");
+      const upiDiscount = isUpi && computedSubtotal >= 299 ? 50 : 0;
+
+      const serverGrandTotal = Math.max(1, computedSubtotal - discountAmount + shippingFee - upiDiscount);
+      amountInPaise = Math.round(serverGrandTotal * 100);
+    } else if (body.isPaise) {
       amountInPaise = Math.round(Number(amount));
     } else {
       // Standard Kharido Mart checkout passes Rupees: convert to paise
