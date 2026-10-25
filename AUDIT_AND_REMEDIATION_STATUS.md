@@ -88,6 +88,7 @@ Below is the complete breakdown of **What is Done** (implemented & verified) and
   - Filtered navigation dropdowns in `src/components/Header.tsx`.
   - Filtered collections grid in `src/app/collections/page.tsx`.
 - [x] **SEO Consistency:** Removed spammy meta keywords tags; verified that canonical URLs, `sitemap.xml`, and `robots.txt` all agree on `https://kharidomart.com`.
+- [x] **Dark Footer Visual Redesign:** Redesigned `src/components/Footer.tsx` with a rich dark espresso/obsidian theme (`#140e0b` and `#1f1612`) with hairline borders (`border-white/[0.08]`), inverted high-contrast brand logo (`inverted` prop in `src/components/KharidoMartLogo.tsx`), dark newsletter input surface, and luminous typography to create an unmistakable visual separation from the light ivory page above it.
 
 ### 8. Logging & Monitoring
 - [x] **Server-Side Structured Logger (`src/lib/logger.ts`):** Implemented a centralized logger that automatically redacts Shopify tokens, Razorpay keys, passwords, phone numbers, and email addresses. Includes an integration hook for Sentry APM.

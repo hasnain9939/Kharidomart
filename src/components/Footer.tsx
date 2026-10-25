@@ -40,19 +40,19 @@ export default function Footer() {
   };
 
   return (
-    <footer className="w-full bg-white border-t border-[#eddcd1]">
+    <footer className="w-full bg-[#140e0b] border-t border-white/[0.08] text-stone-300">
       {/* 1. Newsletter & Value Hook Section */}
-      <div className="bg-[#fbf7f0] border-b border-[#eddcd1] py-10 px-4 sm:px-6 lg:px-8">
+      <div className="bg-[#1f1612] border-b border-white/[0.08] py-10 px-4 sm:px-6 lg:px-8">
         <div className="max-w-[1360px] mx-auto flex flex-col lg:flex-row items-center justify-between gap-6 text-center lg:text-left">
           <div className="space-y-1.5 max-w-xl">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#e06b5b]">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#f5a195]">
               Kharido Mart Parent Community
             </span>
-            <h3 className="text-xl sm:text-2xl font-extrabold text-[#2b1f1a] tracking-tight">
+            <h3 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
               {/* TODO(owner): Replace with audited subscriber count once verified */}
               Join Our Community of Caring Parents Getting Weekly Parenting Tips &amp; VIP Flash Deals
             </h3>
-            <p className="text-xs sm:text-sm text-[#6b5850]">
+            <p className="text-xs sm:text-sm text-stone-300/90">
               Gentle bedtime routines, screen-free activity ideas, and exclusive secret discounts on baby-safe essentials.
             </p>
           </div>
@@ -65,12 +65,12 @@ export default function Footer() {
               placeholder="Enter your email address..."
               required
               disabled={isSubmitting}
-              className="flex-1 bg-white text-[#2b1f1a] placeholder:text-[#6b5850]/60 text-xs sm:text-sm px-4 py-3 rounded-xl border border-[#eddcd1] focus:outline-none focus:border-[#e06b5b] transition-colors shadow-2xs disabled:opacity-60"
+              className="flex-1 bg-white/[0.07] text-white placeholder:text-stone-400 text-xs sm:text-sm px-4 py-3 rounded-xl border border-white/[0.12] focus:outline-none focus:border-[#e06b5b] focus:bg-white/[0.1] transition-all shadow-inner disabled:opacity-60"
             />
             <button
               type="submit"
               disabled={isSubmitting}
-              className="bg-[#e06b5b] hover:bg-[#c95444] active:scale-95 disabled:opacity-60 text-white font-bold px-6 py-3 rounded-xl transition-all text-xs uppercase tracking-wider shrink-0 shadow-xs"
+              className="bg-[#e06b5b] hover:bg-[#c95444] active:scale-[0.98] disabled:opacity-60 text-white font-bold px-6 py-3 rounded-xl transition-all text-xs uppercase tracking-wider shrink-0 shadow-md"
             >
               {isSubmitting ? "Subscribing..." : "Get 10% Off"}
             </button>
@@ -80,37 +80,37 @@ export default function Footer() {
 
       {/* 2. Main Footer Directory */}
       <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-[#eddcd1]">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-white/[0.08]">
           {/* Brand Bio */}
           <div className="lg:col-span-2 space-y-4">
             <Link href="/" className="inline-block py-1" aria-label="KharidoMart Home">
-              <KharidoMartLogo className="h-8 sm:h-9 w-auto hover:opacity-90 transition-opacity" />
+              <KharidoMartLogo inverted className="h-8 sm:h-9 w-auto hover:opacity-90 transition-opacity" />
             </Link>
 
-            <p className="text-xs sm:text-sm font-semibold text-[#e06b5b] flex items-center gap-1.5">
+            <p className="text-xs sm:text-sm font-semibold text-[#f5a195] flex items-center gap-1.5">
               <Heart size={15} weight="Filled" className="text-[#e06b5b]" />
               <span>Gentle Care for Little Ones. Peace of Mind for Moms.</span>
             </p>
 
-            <p className="text-xs sm:text-sm text-[#6b5850] leading-relaxed max-w-sm">
+            <p className="text-xs sm:text-sm text-stone-300/80 leading-relaxed max-w-sm">
               Carefully vetted baby-safe grooming, screen-free Montessori discovery tools, and nourishing mealtime essentials designed to make daily parenting calm and joyful.
             </p>
 
-            <div className="pt-2 text-xs text-[#6b5850] space-y-2">
-              <p className="text-xs text-[#6b5850] leading-relaxed">
+            <div className="pt-2 text-xs text-stone-300/80 space-y-2">
+              <p className="text-xs text-stone-400 leading-relaxed">
                 Need help with your baby care essentials or order?
               </p>
               <div className="flex flex-wrap items-center gap-3 pt-1">
                 <Link
                   href="/contact"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#fbf7f0] text-[#2b1f1a] hover:bg-[#f5ece0] text-xs font-bold rounded-lg border border-[#eddcd1] transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.06] text-stone-200 hover:bg-white/[0.12] hover:text-white text-xs font-semibold rounded-lg border border-white/[0.1] transition-all active:scale-[0.98]"
                 >
                   <span>Customer Support</span>
                   <ArrowRight size={13} weight="Outline" />
                 </Link>
                 <Link
                   href="/track-order"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#fdedeb] text-[#c95444] hover:bg-[#fbdcd7] text-xs font-bold rounded-lg border border-[#f5c7c1] transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#e06b5b]/15 text-[#fca59b] hover:bg-[#e06b5b]/25 hover:text-white text-xs font-semibold rounded-lg border border-[#e06b5b]/30 transition-all active:scale-[0.98]"
                 >
                   <span>Track Your Order</span>
                   <ArrowRight size={13} weight="Outline" />
@@ -121,32 +121,32 @@ export default function Footer() {
 
           {/* Explore Collections */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-[#2b1f1a]">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-white">
               Shop by Milestone
             </h4>
-            <ul className="space-y-2.5 text-xs sm:text-sm text-[#6b5850]">
+            <ul className="space-y-2.5 text-xs sm:text-sm text-stone-300">
               <li>
-                <Link href="/collections/mom-baby" className="hover:text-[#e06b5b] transition-colors">
+                <Link href="/collections/mom-baby" className="hover:text-white transition-colors">
                   Mom &amp; Newborn Care (0–12M)
                 </Link>
               </li>
               <li>
-                <Link href="/collections/fun-clever-finds" className="hover:text-[#e06b5b] transition-colors">
+                <Link href="/collections/fun-clever-finds" className="hover:text-white transition-colors">
                   Screen-Free Montessori (1–4Y)
                 </Link>
               </li>
               <li>
-                <Link href="/collections/smart-gadgets" className="hover:text-[#e06b5b] transition-colors">
+                <Link href="/collections/smart-gadgets" className="hover:text-white transition-colors">
                   Nursery &amp; Bedside Lamps
                 </Link>
               </li>
               <li>
-                <Link href="/collections/home-kitchen" className="hover:text-[#e06b5b] transition-colors">
+                <Link href="/collections/home-kitchen" className="hover:text-white transition-colors">
                   Healthy Baby Purees &amp; Feeding
                 </Link>
               </li>
               <li>
-                <Link href="/shop?filter=deals" className="hover:text-[#e06b5b] font-semibold text-[#e06b5b] transition-colors">
+                <Link href="/shop?filter=deals" className="hover:text-white font-semibold text-[#f5a195] transition-colors">
                   Mom Favorites 🔥
                 </Link>
               </li>
@@ -155,12 +155,12 @@ export default function Footer() {
 
           {/* Customer Support */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-[#2b1f1a]">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-white">
               Customer Support
             </h4>
-            <ul className="space-y-2.5 text-xs sm:text-sm text-[#6b5850]">
+            <ul className="space-y-2.5 text-xs sm:text-sm text-stone-300">
               <li>
-                <Link href="/track-order" className="hover:text-[#e06b5b] font-bold text-[#e06b5b] transition-colors">
+                <Link href="/track-order" className="hover:text-white font-bold text-[#f5a195] transition-colors">
                   📦 Track Your Order
                 </Link>
               </li>
@@ -169,7 +169,7 @@ export default function Footer() {
                   href="https://wa.me/918540017572?text=Hi%20Kharido%20Mart%20Support"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-[#25D366] transition-colors inline-flex items-center gap-1"
+                  className="hover:text-[#25D366] text-stone-300 transition-colors inline-flex items-center gap-1"
                 >
                   <span>💬 WhatsApp: +91 85400 17572</span>
                 </a>
@@ -177,18 +177,18 @@ export default function Footer() {
               <li>
                 <a
                   href="mailto:kharidomartsupport@gmail.com"
-                  className="hover:text-[#e06b5b] transition-colors inline-flex items-center gap-1 truncate max-w-full"
+                  className="hover:text-[#f5a195] text-stone-300 transition-colors inline-flex items-center gap-1 truncate max-w-full"
                 >
                   <span>✉️ kharidomartsupport@gmail.com</span>
                 </a>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-[#e06b5b] transition-colors">
+                <Link href="/contact" className="hover:text-white transition-colors">
                   Help Center &amp; Contact Us
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="hover:text-[#e06b5b] transition-colors">
+                <Link href="/about" className="hover:text-white transition-colors">
                   About Our Mission
                 </Link>
               </li>
@@ -197,32 +197,32 @@ export default function Footer() {
 
           {/* Our Policies & Legals */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-[#2b1f1a]">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-white">
               Policies &amp; Trust
             </h4>
-            <ul className="space-y-2.5 text-xs sm:text-sm text-[#6b5850]">
+            <ul className="space-y-2.5 text-xs sm:text-sm text-stone-300">
               <li>
-                <Link href="/policies/refund-policy" className="hover:text-[#e06b5b] transition-colors">
+                <Link href="/policies/refund-policy" className="hover:text-white transition-colors">
                   24-Hour Replacement Policy
                 </Link>
               </li>
               <li>
-                <Link href="/policies/shipping-policy" className="hover:text-[#e06b5b] transition-colors">
+                <Link href="/policies/shipping-policy" className="hover:text-white transition-colors">
                   Shipping &amp; COD Guidelines
                 </Link>
               </li>
               <li>
-                <Link href="/policies/privacy-policy" className="hover:text-[#e06b5b] transition-colors">
+                <Link href="/policies/privacy-policy" className="hover:text-white transition-colors">
                   Privacy Policy (DPDPA 2023)
                 </Link>
               </li>
               <li>
-                <Link href="/policies/terms-of-service" className="hover:text-[#e06b5b] transition-colors">
+                <Link href="/policies/terms-of-service" className="hover:text-white transition-colors">
                   Terms of Service
                 </Link>
               </li>
               <li>
-                <Link href="/policies/legal-notice" className="hover:text-[#e06b5b] font-semibold transition-colors">
+                <Link href="/policies/legal-notice" className="hover:text-white font-semibold transition-colors">
                   Statutory Legal Disclosures
                 </Link>
               </li>
@@ -230,25 +230,24 @@ export default function Footer() {
           </div>
         </div>
 
-
         {/* Bottom Strip */}
-        <div className="pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#6b5850]">
+        <div className="pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-stone-400">
           <div className="flex items-center gap-6 font-medium">
-            <div className="flex items-center gap-1.5 text-[#4f775d]">
+            <div className="flex items-center gap-1.5 text-emerald-400">
               <ShieldCheck size={16} weight="Filled" />
               <span>BPA-Free Materials &amp; Child-Safe Design</span>
             </div>
-            <div className="flex items-center gap-1.5 text-[#e06b5b]">
+            <div className="flex items-center gap-1.5 text-[#f5a195]">
               <TruckFast size={16} weight="Filled" />
               <span>BlueDart &amp; Delhivery Fast Dispatch</span>
             </div>
           </div>
 
           <div className="text-center md:text-right text-[11px] space-y-0.5">
-            <p className="font-bold text-[#2b1f1a]">
+            <p className="font-bold text-stone-200">
               © 2026 Kharido Mart. All rights reserved.
             </p>
-            <p className="text-[#6b5850]/80">
+            <p className="text-stone-400/80">
               India&apos;s trusted destination for gentle baby care, screen-free learning, and peaceful parenting.
             </p>
           </div>
