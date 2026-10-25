@@ -18,7 +18,7 @@ import {
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { cartCount, wishlist, openCart, user } = useStore();
+  const { cartCount, wishlist, openCart, user, products } = useStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -36,15 +36,23 @@ export default function Header() {
     }
   };
 
-  // Curated category and shopping navigation links tailored for moms & kids
-  const navLinks = [
-    { label: "Home", href: "/" },
-    { label: "Mom & Baby Care", href: "/collections/mom-baby" },
-    { label: "Screen-Free Learning", href: "/collections/fun-clever-finds" },
-    { label: "Nursery & Night Lamps", href: "/collections/smart-gadgets" },
-    { label: "Healthy Feeding & Home", href: "/collections/home-kitchen" },
-    { label: "Shop All", href: "/shop" },
+  // Curated category and shopping navigation links tailored for moms & kids (hides empty collections)
+  const categorySlugsWithProducts = new Set(products.map((p) => p.categorySlug));
+
+  const allCategoryNavLinks = [
+    { label: "Home", href: "/", showAlways: true },
+    { label: "Mom & Baby Care", href: "/collections/mom-baby", slug: "mom-baby" },
+    { label: "Screen-Free Learning", href: "/collections/fun-clever-finds", slug: "fun-clever-finds" },
+    { label: "Nursery & Night Lamps", href: "/collections/smart-gadgets", slug: "smart-gadgets" },
+    { label: "Healthy Feeding & Home", href: "/collections/home-kitchen", slug: "home-kitchen" },
+    { label: "Shop All", href: "/shop", showAlways: true },
   ];
+
+  const navLinks = allCategoryNavLinks.filter((link) => {
+    if (link.showAlways) return true;
+    if (products.length === 0) return true;
+    return link.slug ? categorySlugsWithProducts.has(link.slug) : true;
+  });
 
   const mobileUtilityLinks = [
     { label: "Track Your Order", href: "/track-order" },

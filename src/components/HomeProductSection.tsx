@@ -61,9 +61,11 @@ export default function HomeProductSection({
             </p>
           </div>
 
-          {/* Filter Tabs */}
+          {/* Filter Tabs - Hide collections with 0 products */}
           <div className="flex flex-wrap items-center gap-2">
-            {categoryFilters.map((tab) => {
+            {categoryFilters
+              .filter((tab) => tab.key === "all" || tab.count > 0)
+              .map((tab) => {
               const isActive = activeCategory === tab.key;
               return (
                 <button

@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { CATEGORIES } from "@/data/categories";
+import { getCachedAllProducts } from "@/lib/data-cache";
 import { Sparkles, ArrowRight } from "reicon-react";
 import type { Metadata } from "next";
 
@@ -21,7 +22,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function CollectionsPage() {
+export default async function CollectionsPage() {
+  const products = await getCachedAllProducts();
+  const visibleCategories = CATEGORIES.filter((cat) =>
+    products.length === 0 || products.some((p) => p.categorySlug === cat.slug)
+  );
+
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -70,9 +76,9 @@ export default function CollectionsPage() {
         </p>
       </div>
 
-      {/* Collections Grid */}
+      {/* Collections Grid - Only show collections with products */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-        {CATEGORIES.map((cat) => (
+        {visibleCategories.map((cat) => (
           <Link
             key={cat.slug}
             href={`/collections/${cat.slug}`}
