@@ -230,43 +230,6 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Statutory E-Commerce Compliance Block (Consumer Protection E-Commerce Rules, 2020) */}
-        <div className="mt-8 pt-6 border-t border-[#eddcd1] text-[11px] text-[#6b5850] bg-[#fbf7f0]/60 p-4 rounded-xl space-y-2">
-          <p className="font-bold text-[#2b1f1a] uppercase tracking-wider text-[10px]">
-            Statutory E-Commerce Compliance &amp; Consumer Grievance
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <div>
-              <span className="font-semibold text-[#2b1f1a]">Seller / Legal Entity:</span>
-              <p className="text-[#6b5850]">
-                {/* TODO(owner): Update legal business name in .env or settings */}
-                {process.env.NEXT_PUBLIC_SELLER_LEGAL_NAME || "Kharido Mart Retail (OPC) Private Limited"}
-              </p>
-            </div>
-            <div>
-              <span className="font-semibold text-[#2b1f1a]">GSTIN:</span>
-              <p className="font-mono text-[#6b5850]">
-                {/* TODO(owner): Provide registered GSTIN */}
-                {process.env.NEXT_PUBLIC_SELLER_GSTIN || "07AAAAA0000A1Z5 (Pending Verification)"}
-              </p>
-            </div>
-            <div>
-              <span className="font-semibold text-[#2b1f1a]">Registered Address:</span>
-              <p className="text-[#6b5850]">
-                {/* TODO(owner): Update registered business address */}
-                {process.env.NEXT_PUBLIC_SELLER_ADDRESS || "New Delhi, Delhi - 110001, India"}
-              </p>
-            </div>
-            <div>
-              <span className="font-semibold text-[#2b1f1a]">Grievance Officer:</span>
-              <p className="text-[#6b5850]">
-                {/* TODO(owner): Update grievance officer name and direct contact */}
-                {process.env.NEXT_PUBLIC_GRIEVANCE_OFFICER_NAME || "Nodal Grievance Officer"}<br />
-                Email: {process.env.NEXT_PUBLIC_GRIEVANCE_OFFICER_EMAIL || "kharidomartsupport@gmail.com"}
-              </p>
-            </div>
-          </div>
-        </div>
 
         {/* Bottom Strip */}
         <div className="pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#6b5850]">

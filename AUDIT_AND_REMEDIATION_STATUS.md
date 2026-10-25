@@ -79,7 +79,7 @@ Below is the complete breakdown of **What is Done** (implemented & verified) and
   - `"2+ happy moms"` → `"Quality Curated"`.
 - [x] **Real Compare-At MRP Pricing:** Fixed `src/app/api/shopify/products/route.ts` to only use real Shopify `compare_at_price` values instead of artificial `1.4x` price markups.
 - [x] **Product JSON-LD Schema:** Removed fabricated fallback review count (`reviewCount: 128`). Real reviews are now queried from the database; schema only outputs `aggregateRating` when genuine reviews exist.
-- [x] **Statutory Indian E-Commerce Disclosures:** Added statutory compliance block to `src/components/Footer.tsx` dynamically displaying Seller Legal Name, GSTIN, Physical Registered Address, and Grievance Officer details sourced from `.env` placeholders.
+- [x] **No Fabricated Legal/GST Claims:** Removed placeholder GSTIN and legal entity blocks from the footer per owner confirmation that GST registration is not yet created. The site displays zero fabricated tax/legal credentials.
 
 ### 7. UX, SEO & Performance Optimizations
 - [x] **Eliminated Blocking Loading Splash:** Replaced the heavy 70vh skeleton splash screen in `src/app/loading.tsx` with a non-intrusive progress bar. The server now streams genuine HTML directly on initial page load, improving LCP from ~3.5s to ~0.8s.
@@ -98,16 +98,10 @@ Below is the complete breakdown of **What is Done** (implemented & verified) and
 
 The following items cannot be completed autonomously via code changes because they depend on business legal details, external vendor dashboard configurations, or third-party agreements:
 
-### 1. Fill Statutory Business Details in `.env` (Mandatory by Indian Law)
-Under the **Consumer Protection (E-Commerce) Rules, 2020**, an e-commerce entity operating in India must prominently display its legal details. Fill these in your production environment variables:
-```bash
-NEXT_PUBLIC_SELLER_LEGAL_NAME="Your Registered Company / Entity Name"
-NEXT_PUBLIC_SELLER_GSTIN="29ABCDE1234F1Z5"
-NEXT_PUBLIC_SELLER_ADDRESS="Plot No., Street, Landmark, City, State - PIN"
-NEXT_PUBLIC_GRIEVANCE_OFFICER_NAME="Full Name of Appointed Officer"
-NEXT_PUBLIC_GRIEVANCE_OFFICER_EMAIL="grievance@kharidomart.com"
-NEXT_PUBLIC_GRIEVANCE_OFFICER_PHONE="+91-XXXXXXXXXX"
-```
+### 1. Register for GSTIN & Add Business Details (When Business Scale Requires)
+As confirmed by the store owner, no GST number has been created yet. All temporary/placeholder GST references and legal entity claims have been completely removed from the storefront. When GST registration is completed in the future:
+1. Register on the official GST portal (`gst.gov.in`).
+2. Add your official legal business name, GSTIN, and registered address to production environment variables or storefront footer.
 
 ### 2. Supply Authentic Lab / Clinical Certificates (If Reinstating Claims)
 If you wish to display any of the following claims on the storefront or marketing creatives, obtain and archive the required physical certifications:
