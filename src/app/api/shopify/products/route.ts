@@ -6,6 +6,14 @@ import { fetchShopifyProducts } from "@/lib/shopify";
 // GET /api/shopify/products - List products from Shopify and mark which ones are in Kharido Mart
 export async function GET(req: NextRequest) {
   try {
+    const sessionCookie = req.cookies.get("km_admin_session")?.value;
+    if (!(await verifyAdminSessionToken(sessionCookie))) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized: Admin session required" },
+        { status: 401 }
+      );
+    }
+
     const shopifyResult = await fetchShopifyProducts();
 
     if (!shopifyResult.success) {

@@ -78,11 +78,50 @@ export async function GET(req: NextRequest) {
   }
 }
 
+import { z } from "zod";
+
+// Rate limiting: max 3 review submissions per IP per hour
+const reviewIpRateLimit = new Map<string, { count: number; expiresAt: number }>();
+
+const ReviewSubmissionSchema = z.object({
+  productId: z.string().optional(),
+  slug: z.string().optional(),
+  customerName: z.string().optional(),
+  name: z.string().optional(),
+  rating: z.coerce.number().min(1).max(5).default(5),
+  comment: z.string().min(5, "Review must be at least 5 characters long").max(1000),
+  title: z.string().max(100).optional(),
+  city: z.string().max(50).optional(),
+});
+
 // POST /api/reviews - submit a new customer review
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { productId, slug, customerName, name, rating, comment, title, city } = body;
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+    const now = Date.now();
+    const rateRecord = reviewIpRateLimit.get(ip);
+    if (rateRecord && rateRecord.expiresAt > now) {
+      if (rateRecord.count >= 3) {
+        return NextResponse.json(
+          { success: false, error: "Too many review submissions. Please wait an hour before submitting another." },
+          { status: 429 }
+        );
+      }
+      rateRecord.count += 1;
+    } else {
+      reviewIpRateLimit.set(ip, { count: 1, expiresAt: now + 60 * 60 * 1000 });
+    }
+
+    const rawJson = await req.json().catch(() => ({}));
+    const parseResult = ReviewSubmissionSchema.safeParse(rawJson);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { success: false, error: parseResult.error.issues[0]?.message || "Invalid review data" },
+        { status: 400 }
+      );
+    }
+
+    const { productId, slug, customerName, name, rating, comment, title, city } = parseResult.data;
 
     const authorName = (customerName || name || "").trim();
     if (!authorName) {
@@ -93,13 +132,7 @@ export async function POST(req: NextRequest) {
     }
 
     const cleanRating = Math.min(5, Math.max(1, Math.round(Number(rating) || 5)));
-    const cleanComment = (comment || "").trim();
-    if (!cleanComment || cleanComment.length < 5) {
-      return NextResponse.json(
-        { success: false, error: "Review must be at least 5 characters long" },
-        { status: 400 }
-      );
-    }
+    const cleanComment = comment.trim();
 
     // Combine optional headline/title with comment
     const finalComment = title && title.trim()
@@ -129,15 +162,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. Create the new verified review in PostgreSQL
+    // Unauthenticated public review submissions are set to verified: false
     const newReview = await prisma.review.create({
       data: {
         productId: product.id,
         customerName: authorName,
         rating: cleanRating,
         comment: finalComment,
-        city: city ? String(city).trim() : "India",
-        verified: true,
+        city: city ? city.trim() : "India",
+        verified: false,
       },
     });
 
@@ -164,7 +197,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Review submitted and verified successfully! 🎉",
+      message: "Thank you! Your review has been submitted for verification.",
       review: {
         id: newReview.id,
         name: newReview.customerName,
@@ -182,10 +215,10 @@ export async function POST(req: NextRequest) {
         reviewsCount: totalCount,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("POST /api/reviews error:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to submit review" },
+      { success: false, error: "Failed to submit review. Please try again later." },
       { status: 500 }
     );
   }

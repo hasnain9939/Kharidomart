@@ -63,23 +63,21 @@ export async function POST(req: NextRequest) {
     let isVerified = false;
 
     if (isSessionOwner) {
-      isVerified = true;
+      if (user.passwordHash) {
+        isVerified = !!currentPassword && typeof currentPassword === "string" && verifyPassword(currentPassword, user.passwordHash);
+      } else {
+        // Authenticated OAuth user setting their first password
+        isVerified = true;
+      }
     } else if (user.passwordHash && currentPassword && typeof currentPassword === "string") {
       isVerified = verifyPassword(currentPassword, user.passwordHash);
-    } else if (user.phone && phone && typeof phone === "string") {
-      const cleanInputPhone = phone.replace(/\D/g, "");
-      const cleanUserPhone = user.phone.replace(/\D/g, "");
-      isVerified = cleanInputPhone.length >= 10 && cleanUserPhone.endsWith(cleanInputPhone.slice(-10));
-    } else if (!user.passwordHash) {
-      // OAuth-only user setting their first password
-      isVerified = true;
     }
 
     if (!isVerified) {
       return NextResponse.json(
         {
           success: false,
-          error: "Identity verification failed. Please enter your registered mobile number or current password to verify ownership before resetting.",
+          error: "Identity verification failed. Please provide your current password to authorize this password change.",
         },
         { status: 401 }
       );

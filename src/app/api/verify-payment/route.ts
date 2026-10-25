@@ -36,12 +36,14 @@ export async function POST(req: NextRequest) {
       .update(`${orderId}|${paymentId}`)
       .digest("hex");
 
-    // Signature mismatch: return 400, do NOT mark as paid
-    if (expectedSignature !== signature) {
-      console.error("Razorpay signature mismatch:", {
-        expected: expectedSignature,
-        received: signature,
-      });
+    const expectedBuf = Buffer.from(expectedSignature, "utf-8");
+    const receivedBuf = Buffer.from(String(signature), "utf-8");
+    const isSignatureValid =
+      expectedBuf.length === receivedBuf.length &&
+      crypto.timingSafeEqual(expectedBuf, receivedBuf);
+
+    if (!isSignatureValid) {
+      console.error("Razorpay signature verification failed");
       return NextResponse.json(
         {
           success: false,

@@ -1,7 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { testShopifyConnection, isShopifyConfigured } from "@/lib/shopify";
+import { verifyAdminSessionToken } from "@/lib/session";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const sessionCookie = req.cookies.get("km_admin_session")?.value;
+  if (!(await verifyAdminSessionToken(sessionCookie))) {
+    return NextResponse.json(
+      { error: "Unauthorized: Admin session required" },
+      { status: 401 }
+    );
+  }
+
   const configured = isShopifyConfigured();
   if (!configured) {
     return NextResponse.json({

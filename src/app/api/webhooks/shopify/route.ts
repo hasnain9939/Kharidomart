@@ -14,15 +14,23 @@ export async function POST(req: NextRequest) {
     const topic = req.headers.get("x-shopify-topic") || "fulfillments/create";
     const hmacHeader = req.headers.get("x-shopify-hmac-sha256");
 
-    // Optional HMAC verification if SHOPIFY_WEBHOOK_SECRET is set
+    // Enforce HMAC verification if SHOPIFY_WEBHOOK_SECRET is set
     const webhookSecret = process.env.SHOPIFY_WEBHOOK_SECRET;
-    if (webhookSecret && hmacHeader) {
+    if (webhookSecret) {
+      if (!hmacHeader) {
+        console.warn("[Shopify Webhook] Missing x-shopify-hmac-sha256 header.");
+        return NextResponse.json({ error: "Missing webhook signature" }, { status: 401 });
+      }
+
       const generatedHash = crypto
         .createHmac("sha256", webhookSecret)
         .update(rawBody, "utf8")
         .digest("base64");
 
-      if (generatedHash !== hmacHeader) {
+      const genBuf = Buffer.from(generatedHash, "utf-8");
+      const hmacBuf = Buffer.from(hmacHeader, "utf-8");
+
+      if (genBuf.length !== hmacBuf.length || !crypto.timingSafeEqual(genBuf, hmacBuf)) {
         console.warn("[Shopify Webhook] Invalid HMAC signature detected.");
         return NextResponse.json({ error: "Unauthorized webhook request" }, { status: 401 });
       }

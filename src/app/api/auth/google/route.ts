@@ -4,44 +4,51 @@ import { createUserSessionToken } from "@/lib/session";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { email, name, accessToken } = body;
+    const body = await req.json().catch(() => ({}));
+    const { accessToken } = body;
 
-    let verifiedEmail = (email && typeof email === "string") ? email.trim().toLowerCase() : "";
-    let verifiedName = (name && typeof name === "string") ? name.trim() : "";
-
-    // 1. Token Verification: When accessToken is provided, verify against Google's API
-    if (accessToken && typeof accessToken === "string") {
-      try {
-        const googleRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-
-        if (googleRes.ok) {
-          const googleData = await googleRes.json();
-          if (googleData.email) {
-            verifiedEmail = googleData.email.trim().toLowerCase();
-            verifiedName = googleData.name || verifiedEmail.split("@")[0];
-          }
-        } else {
-          return NextResponse.json(
-            { success: false, error: "Invalid or expired Google authentication token." },
-            { status: 401 }
-          );
-        }
-      } catch (err) {
-        console.error("Google token verification network error:", err);
-      }
-    }
-
-    if (!verifiedEmail || !verifiedEmail.includes("@")) {
+    // 1. Mandatory Token Verification: accessToken is strictly required
+    if (!accessToken || typeof accessToken !== "string") {
       return NextResponse.json(
-        { success: false, error: "Valid Google email address is required" },
-        { status: 400 }
+        { success: false, error: "Google authentication token is required." },
+        { status: 401 }
       );
     }
 
-    // 2. Prevent Account Takeover: If user has a password and no verified Google token was presented, block
+    let verifiedEmail = "";
+    let verifiedName = "";
+
+    try {
+      const googleRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (!googleRes.ok) {
+        return NextResponse.json(
+          { success: false, error: "Invalid or expired Google authentication token." },
+          { status: 401 }
+        );
+      }
+
+      const googleData = await googleRes.json();
+      if (!googleData.email || typeof googleData.email !== "string" || !googleData.email.includes("@")) {
+        return NextResponse.json(
+          { success: false, error: "Unable to verify email address from Google." },
+          { status: 400 }
+        );
+      }
+
+      verifiedEmail = googleData.email.trim().toLowerCase();
+      verifiedName = (googleData.name || verifiedEmail.split("@")[0]).trim();
+    } catch (err: unknown) {
+      console.error("Google token verification network error:", err);
+      return NextResponse.json(
+        { success: false, error: "Google authentication service unavailable. Please try again." },
+        { status: 502 }
+      );
+    }
+
+    // 2. Query user record in database
     const existingUser = await prisma.user.findUnique({
       where: { email: verifiedEmail },
       select: {
@@ -57,16 +64,6 @@ export async function POST(req: Request) {
         createdAt: true,
       },
     });
-
-    if (existingUser?.passwordHash && !accessToken) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "This account has a password configured. Please sign in with your email and password, or authenticate through the Google Sign-In prompt.",
-        },
-        { status: 401 }
-      );
-    }
 
     let user = existingUser;
 

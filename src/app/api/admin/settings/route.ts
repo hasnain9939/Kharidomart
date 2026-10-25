@@ -4,6 +4,14 @@ import { verifyAdminSessionToken } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   try {
+    const sessionCookie = req.cookies.get("km_admin_session")?.value;
+    if (!(await verifyAdminSessionToken(sessionCookie))) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized: Administrator access required" },
+        { status: 401 }
+      );
+    }
+
     const settings = await prisma.storeSetting.findMany();
     const dictionary: Record<string, string> = {};
     for (const item of settings) {
@@ -14,7 +22,7 @@ export async function GET(req: NextRequest) {
       success: true,
       settings: dictionary,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Failed to fetch store settings:", err);
     return NextResponse.json(
       { success: false, error: "Failed to fetch settings" },
