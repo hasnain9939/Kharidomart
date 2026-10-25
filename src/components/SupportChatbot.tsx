@@ -269,7 +269,7 @@ export default function SupportChatbot() {
       {/* Chatbot Window */}
       {isOpen && (
         <div
-          className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-50 w-[calc(100vw-32px)] sm:w-[410px] h-[580px] max-h-[82vh] flex flex-col bg-[#fdfbf7] rounded-3xl shadow-2xl border border-stone-300/80 overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-300"
+          className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-[85] w-[calc(100vw-32px)] sm:w-[410px] h-[580px] max-h-[82vh] flex flex-col bg-[#fdfbf7] rounded-3xl shadow-2xl border border-stone-300/80 overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-300"
           role="dialog"
           aria-label="Customer Care AI Chatbot"
         >

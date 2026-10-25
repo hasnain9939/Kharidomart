@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useStore } from "@/context/StoreContext";
@@ -39,6 +39,26 @@ export default function CartDrawer() {
 
   const [couponInput, setCouponInput] = useState("");
 
+  // Lock body scroll and listen for Escape key when Cart is open
+  useEffect(() => {
+    if (isCartOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+          closeCart();
+        }
+      };
+
+      window.addEventListener("keydown", handleKeyDown);
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        window.removeEventListener("keydown", handleKeyDown);
+      };
+    }
+  }, [isCartOpen, closeCart]);
+
   if (!isCartOpen) return null;
 
   const giftThreshold = 999;
@@ -69,17 +89,18 @@ export default function CartDrawer() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
+    <div className="fixed inset-0 z-[100] overflow-hidden">
       {/* Backdrop */}
       <div
         onClick={closeCart}
-        className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300 animate-in fade-in"
+        className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300 animate-in fade-in cursor-pointer"
+        aria-hidden="true"
       />
 
       {/* Drawer Panel */}
       <div className="absolute inset-y-0 right-0 max-w-md w-full bg-white shadow-2xl flex flex-col z-10 animate-in slide-in-from-right duration-300">
         {/* Header */}
-        <div className="px-5 py-4 border-b border-[#eddcd1] flex items-center justify-between bg-[#fbf7f0]">
+        <div className="px-5 py-4 border-b border-[#eddcd1] flex items-center justify-between bg-[#fbf7f0] shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-[#fdedeb] text-[#e06b5b] flex items-center justify-center">
               <ShoppingBag size={18} weight="Filled" />
@@ -90,10 +111,10 @@ export default function CartDrawer() {
           </div>
           <button
             onClick={closeCart}
-            className="p-1.5 rounded-full text-[#6b5850]/70 hover:text-[#2b1f1a] hover:bg-[#eddcd1]/50 transition-colors cursor-pointer"
+            className="p-2 rounded-xl text-[#2b1f1a] hover:bg-[#fdedeb] hover:text-[#e06b5b] transition-all cursor-pointer active:scale-95 flex items-center justify-center"
             aria-label="Close cart drawer"
           >
-            <CloseCircle size={22} weight="Outline" />
+            <CloseCircle size={24} weight="Outline" />
           </button>
         </div>
 
