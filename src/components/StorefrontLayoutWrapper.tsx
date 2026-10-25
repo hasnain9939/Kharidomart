@@ -30,13 +30,20 @@ function StorefrontLayoutInner({
     );
   }
 
+  // Prevent browser from restoring scroll position down to the footer during page reload/refresh
+  React.useEffect(() => {
+    if (typeof window !== "undefined" && "scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+  }, []);
+
   return (
     <>
       <AnnouncementBar />
       <Suspense fallback={<div className="h-16 sm:h-20 bg-white border-b border-slate-100" />}>
         <Header />
       </Suspense>
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 min-h-[calc(100vh-140px)]">{children}</main>
       <Footer />
 
       {/* Interactive Modals & Drawers */}

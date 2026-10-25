@@ -32,8 +32,10 @@
   --foreground: #2b1f1a;
 }
 
-html {
-  scroll-behavior: smooth;
+@media (prefers-reduced-motion: no-preference) {
+  :root:has(:target) {
+    scroll-behavior: smooth;
+  }
 }
 
 body {
