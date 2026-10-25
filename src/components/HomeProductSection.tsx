@@ -61,8 +61,8 @@ export default function HomeProductSection({
             </p>
           </div>
 
-          {/* Filter Tabs - Hide collections with 0 products */}
-          <div className="flex flex-wrap items-center gap-2">
+          {/* Filter Tabs - Horizontal touch-scrollable rail on mobile, wrapping on desktop */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth touch-pan-x sm:flex-wrap -mx-3 px-3 sm:mx-0 sm:px-0 pb-1.5 sm:pb-0 w-full md:w-auto">
             {categoryFilters
               .filter((tab) => tab.key === "all" || tab.count > 0)
               .map((tab) => {
@@ -72,7 +72,7 @@ export default function HomeProductSection({
                   key={tab.key}
                   type="button"
                   onClick={() => setActiveCategory(tab.key)}
-                  className={`px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all duration-150 active:scale-95 flex items-center gap-1.5 cursor-pointer ${
+                  className={`shrink-0 px-3.5 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all duration-150 active:scale-95 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
                     isActive
                       ? "bg-[#e06b5b] text-white shadow-sm"
                       : "bg-white text-[#6b5850] hover:text-[#2b1f1a] hover:bg-[#fbf7f0] border border-[#eddcd1]"

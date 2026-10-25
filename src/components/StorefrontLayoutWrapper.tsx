@@ -12,6 +12,7 @@ import CookieConsentBanner from "@/components/CookieConsentBanner";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import SupportChatbot from "@/components/SupportChatbot";
 import ExitIntentModal from "@/components/ExitIntentModal";
+import MobileBottomNav from "@/components/MobileBottomNav";
 
 function StorefrontLayoutInner({
   children,
@@ -43,10 +44,11 @@ function StorefrontLayoutInner({
       <Suspense fallback={<div className="h-16 sm:h-20 bg-white border-b border-slate-100" />}>
         <Header />
       </Suspense>
-      <main className="flex-1 min-h-[calc(100vh-140px)]">{children}</main>
+      <main className="flex-1 min-h-[calc(100vh-140px)] pb-16 md:pb-0">{children}</main>
       <Footer />
 
-      {/* Interactive Modals & Drawers */}
+      {/* Interactive Modals, Drawers & Mobile Dock */}
+      <MobileBottomNav />
       <CartDrawer />
       <QuickViewModal />
       <ExitIntentModal />

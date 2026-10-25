@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Sparkles,
   Gift,
+  Refresh,
 } from "reicon-react";
 
 export default function CartDrawer() {
@@ -163,21 +164,80 @@ export default function CartDrawer() {
 
         {/* Cart Items Area */}
         {cart.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4 bg-[#fdfbf7]">
-            <div className="w-16 h-16 rounded-2xl bg-[#fdedeb] text-[#e06b5b] flex items-center justify-center">
-              <ShoppingCart size={32} weight="Outline" />
+          <div className="flex-1 overflow-y-auto p-4 sm:p-5 text-center flex flex-col items-center justify-between bg-[#fdfbf7]">
+            <div className="w-full flex flex-col items-center py-3 space-y-2.5">
+              <div className="w-14 h-14 rounded-2xl bg-[#fdedeb] text-[#e06b5b] flex items-center justify-center shadow-2xs">
+                <ShoppingCart size={28} weight="Outline" />
+              </div>
+              <h3 className="font-bold text-base text-[#2b1f1a]">Your Cart is Empty</h3>
+              <p className="text-xs text-[#6b5850] max-w-xs leading-relaxed">
+                Explore our best-selling whisper-quiet baby trimmers, interactive sound books, and non-toxic nursery essentials.
+              </p>
+              <Link
+                href="/shop"
+                onClick={closeCart}
+                className="px-5 py-2 bg-[#e06b5b] hover:bg-[#c95444] text-white text-xs font-bold rounded-xl transition-all shadow-sm active:scale-95 inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <span>Browse All Products</span>
+                <ArrowRight size={14} weight="Outline" />
+              </Link>
             </div>
-            <h3 className="font-bold text-lg text-[#2b1f1a]">Your Cart is Empty</h3>
-            <p className="text-xs text-[#6b5850] max-w-xs leading-relaxed">
-              Explore our best-selling whisper-quiet baby trimmers, interactive sound books, and non-toxic nursery essentials.
-            </p>
-            <Link
-              href="/shop"
-              onClick={closeCart}
-              className="px-6 py-2.5 bg-[#e06b5b] hover:bg-[#c95444] text-white text-xs font-bold rounded-xl transition-all shadow-sm active:scale-95"
-            >
-              Start Shopping
-            </Link>
+
+            {/* Trending Mom Favorites Quick-Add Picks */}
+            <div className="w-full mt-3 pt-3 border-t border-[#eddcd1] text-left">
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-xs font-black text-[#2b1f1a] flex items-center gap-1.5 uppercase tracking-wider">
+                  <Sparkles size={14} weight="Filled" className="text-[#e06b5b]" />
+                  Trending Mom Favorites
+                </span>
+                <span className="text-[10px] text-[#4f775d] font-bold bg-[#eaf3ed] px-2 py-0.5 rounded-full">
+                  Fast Dispatch
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                {products.slice(0, 3).map((item) => (
+                  <div
+                    key={item.id}
+                    className="p-2 sm:p-2.5 rounded-xl bg-white border border-[#eddcd1] shadow-2xs flex items-center gap-2.5 hover:border-[#e06b5b]/50 transition-all group"
+                  >
+                    <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-[#fdfbf7] shrink-0 border border-[#eddcd1]/60">
+                      <Image
+                        src={item.images[0]}
+                        alt={item.title}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-xs font-bold text-[#2b1f1a] truncate leading-tight">
+                        {item.title}
+                      </h4>
+                      <p className="text-[10px] text-[#6b5850] truncate mt-0.5">
+                        {item.highlights?.[0] || item.category}
+                      </p>
+                      <div className="flex items-baseline gap-1.5 mt-0.5 font-space tabular-nums">
+                        <span className="text-xs font-bold text-[#2b1f1a]">
+                          ₹{item.price.toLocaleString("en-IN")}
+                        </span>
+                        {item.originalPrice > item.price && (
+                          <span className="text-[10px] text-[#6b5850]/60 line-through">
+                            ₹{item.originalPrice.toLocaleString("en-IN")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleAddCrossSell(item)}
+                      className="px-2.5 py-1.5 bg-[#fdedeb] hover:bg-[#e06b5b] hover:text-white text-[#c95444] rounded-lg text-xs font-bold flex items-center gap-1 transition-all active:scale-95 shrink-0 shadow-2xs cursor-pointer"
+                    >
+                      <span>+ Add</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         ) : (
           <>
@@ -395,11 +455,25 @@ export default function CartDrawer() {
                 </Link>
               </div>
 
-              <div className="text-center pt-0.5">
-                <p className="text-[10px] text-[#6b5850] flex items-center justify-center gap-1">
-                  <ShieldCheck size={13} weight="Filled" className="text-[#4f775d]" />
-                  <span>Free doorstep exchange • Curated Quality Assurance</span>
-                </p>
+              {/* High-Trust Reassurance Seals Strip */}
+              <div className="pt-2 border-t border-[#eddcd1]/70">
+                <div className="grid grid-cols-3 gap-1.5 text-center">
+                  <div className="flex flex-col items-center gap-0.5 py-1 px-1 rounded-lg bg-[#fbf7f0] border border-[#eddcd1]/50">
+                    <ShieldCheck size={14} weight="Filled" className="text-[#4f775d]" />
+                    <span className="text-[9px] font-bold text-[#2b1f1a]">256-Bit SSL</span>
+                    <span className="text-[8px] text-[#6b5850]">Secure Checkout</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-0.5 py-1 px-1 rounded-lg bg-[#fbf7f0] border border-[#eddcd1]/50">
+                    <TruckFast size={14} weight="Filled" className="text-[#e06b5b]" />
+                    <span className="text-[9px] font-bold text-[#2b1f1a]">Doorstep COD</span>
+                    <span className="text-[8px] text-[#6b5850]">Pay on Delivery</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-0.5 py-1 px-1 rounded-lg bg-[#fbf7f0] border border-[#eddcd1]/50">
+                    <Refresh size={14} weight="Outline" className="text-[#4f775d]" />
+                    <span className="text-[9px] font-bold text-[#2b1f1a]">24h Replace</span>
+                    <span className="text-[8px] text-[#6b5850]">Hassle-Free</span>
+                  </div>
+                </div>
               </div>
             </div>
           </>
