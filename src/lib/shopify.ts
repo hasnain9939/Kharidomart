@@ -33,13 +33,31 @@ export interface ShopifyOrderResult {
   error?: string;
 }
 
+import { prisma } from "@/lib/prisma";
+
 /**
  * Normalizes Shopify domain (e.g., "my-store" -> "my-store.myshopify.com")
+ * Supports process.env with automatic fallback to database storeSetting table for cloud deployments.
  */
-function getShopifyUrl(): { domain: string; token: string; version: string } | null {
-  const rawDomain = process.env.SHOPIFY_STORE_DOMAIN?.trim();
-  const token = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN?.trim();
+async function getShopifyUrl(): Promise<{ domain: string; token: string; version: string } | null> {
+  let rawDomain = process.env.SHOPIFY_STORE_DOMAIN?.trim();
+  let token = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN?.trim();
   const version = process.env.SHOPIFY_API_VERSION?.trim() || "2024-01";
+
+  // Fallback to database storeSetting if environment variables are not set in cloud host
+  if (!rawDomain || !token) {
+    try {
+      const settings = await prisma.storeSetting.findMany({
+        where: { key: { in: ["shopifyDomain", "shopifyAdminAccessToken"] } },
+      });
+      for (const s of settings) {
+        if (!rawDomain && s.key === "shopifyDomain" && s.value) rawDomain = s.value.trim();
+        if (!token && s.key === "shopifyAdminAccessToken" && s.value) token = s.value.trim();
+      }
+    } catch (err) {
+      console.error("[Shopify] Failed to load credentials from DB storeSetting:", err);
+    }
+  }
 
   if (!rawDomain || !token) {
     return null;
@@ -56,17 +74,17 @@ function getShopifyUrl(): { domain: string; token: string; version: string } | n
 }
 
 /**
- * Checks if Shopify credentials are fully configured in .env
+ * Checks if Shopify credentials are fully configured in .env or DB
  */
-export function isShopifyConfigured(): boolean {
-  return getShopifyUrl() !== null;
+export async function isShopifyConfigured(): Promise<boolean> {
+  return (await getShopifyUrl()) !== null;
 }
 
 /**
  * Push confirmed order to Shopify Warehouse for dropshipping fulfillment
  */
 export async function pushOrderToShopify(order: SyncOrderInput): Promise<ShopifyOrderResult> {
-  const config = getShopifyUrl();
+  const config = await getShopifyUrl();
   if (!config) {
     console.log("[Shopify] SHOPIFY_STORE_DOMAIN or SHOPIFY_ADMIN_ACCESS_TOKEN not set. Skipping remote push.");
     return {
@@ -177,7 +195,7 @@ export async function testShopifyConnection(): Promise<{
   currency?: string;
   error?: string;
 }> {
-  const config = getShopifyUrl();
+  const config = await getShopifyUrl();
   if (!config) {
     return {
       connected: false,
@@ -225,7 +243,7 @@ export async function fetchShopifyProducts(): Promise<{
   error?: string;
   scopeNeeded?: boolean;
 }> {
-  const config = getShopifyUrl();
+  const config = await getShopifyUrl();
   if (!config) {
     return {
       success: false,

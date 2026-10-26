@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const configured = isShopifyConfigured();
+  const configured = await isShopifyConfigured();
   if (!configured) {
     return NextResponse.json({
       configured: false,
