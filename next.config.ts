@@ -40,17 +40,6 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
-        source: "/:path*",
-        has: [
-          {
-            type: "host",
-            value: "www.kharidomart.com",
-          },
-        ],
-        destination: "https://kharidomart.com/:path*",
-        permanent: true,
-      },
-      {
         source: "/privacy-policy",
         destination: "/policies/privacy-policy",
         permanent: true,
