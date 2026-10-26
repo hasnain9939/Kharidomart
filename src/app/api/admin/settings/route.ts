@@ -2,6 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyAdminSessionToken } from "@/lib/auth";
 
+// Keys containing sensitive credentials or tokens that must NEVER be returned to the client browser
+const SENSITIVE_KEYS = new Set([
+  "shopifyAdminAccessToken",
+  "capiToken",
+  "metaCapiToken",
+  "adminPassword",
+  "jwtSecret",
+  "secret",
+  "token",
+]);
+
+// Keys that are forbidden from being written via the public settings API
+const BLOCKED_POST_KEYS = new Set([
+  "shopifyAdminAccessToken",
+  "capiToken",
+  "metaCapiToken",
+  "adminPassword",
+  "password",
+]);
+
 export async function GET(req: NextRequest) {
   try {
     const sessionCookie = req.cookies.get("km_admin_session")?.value;
@@ -15,6 +35,16 @@ export async function GET(req: NextRequest) {
     const settings = await prisma.storeSetting.findMany();
     const dictionary: Record<string, string> = {};
     for (const item of settings) {
+      const lower = item.key.toLowerCase();
+      // Block any sensitive backend secrets, tokens, or credentials from frontend network responses
+      if (
+        SENSITIVE_KEYS.has(item.key) ||
+        lower.includes("token") ||
+        lower.includes("secret") ||
+        lower.includes("password")
+      ) {
+        continue;
+      }
       dictionary[item.key] = item.value;
     }
 
@@ -52,7 +82,20 @@ export async function POST(req: NextRequest) {
 
     const updates = Object.entries(body);
     for (const [key, rawValue] of updates) {
-      const stringValue = typeof rawValue === "string" ? rawValue : JSON.stringify(rawValue);
+      // Ignore any sensitive credentials submitted from the frontend
+      if (BLOCKED_POST_KEYS.has(key)) {
+        continue;
+      }
+
+      let stringValue = typeof rawValue === "string" ? rawValue.trim() : JSON.stringify(rawValue);
+
+      // Validate metaPixelId: must only contain numeric digits or empty (never email addresses)
+      if (key === "metaPixelId") {
+        if (stringValue && !/^\d+$/.test(stringValue)) {
+          stringValue = "";
+        }
+      }
+
       await prisma.storeSetting.upsert({
         where: { key },
         update: { value: stringValue },

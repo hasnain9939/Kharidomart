@@ -25,7 +25,6 @@ export default function AdminSettingsPage() {
   const [storeName, setStoreName] = useState("Kharido Mart");
   const [shopifyDomain, setShopifyDomain] = useState("cgxx12-ek.myshopify.com");
   const [metaPixelId, setMetaPixelId] = useState("");
-  const [capiToken, setCapiToken] = useState("");
   const [testEventCode, setTestEventCode] = useState("");
   const [supportEmail, setSupportEmail] = useState("kharidomartsupport@gmail.com");
   const [supportPhone, setSupportPhone] = useState("+91 85400 17572");
@@ -74,7 +73,6 @@ export default function AdminSettingsPage() {
           if (s.storeName) setStoreName(s.storeName);
           if (s.shopifyDomain) setShopifyDomain(s.shopifyDomain);
           if (s.metaPixelId) setMetaPixelId(s.metaPixelId);
-          if (s.capiToken) setCapiToken(s.capiToken);
           if (s.testEventCode) setTestEventCode(s.testEventCode);
           if (s.supportEmail) setSupportEmail(s.supportEmail);
           if (s.supportPhone) setSupportPhone(s.supportPhone);
@@ -121,6 +119,14 @@ export default function AdminSettingsPage() {
 
   const handleSaveSettings = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+
+    // Sanitize metaPixelId: prevent accidental email entries
+    if (metaPixelId && !/^\d+$/.test(metaPixelId.trim())) {
+      setToastMessage("Invalid Meta Pixel ID. Must be a numeric dataset ID (e.g. 84920491024819).");
+      setTimeout(() => setToastMessage(null), 3500);
+      return;
+    }
+
     setIsSaving(true);
     try {
       const res = await fetch("/api/admin/settings", {
@@ -129,9 +135,8 @@ export default function AdminSettingsPage() {
         body: JSON.stringify({
           storeName,
           shopifyDomain,
-          metaPixelId,
-          capiToken,
-          testEventCode,
+          metaPixelId: metaPixelId.trim(),
+          testEventCode: testEventCode.trim(),
           supportEmail,
           supportPhone,
           codOtpRequired: String(codOtpRequired),
@@ -414,11 +419,11 @@ export default function AdminSettingsPage() {
             <div className="p-4 rounded-xl bg-[#eff4ff] border border-blue-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
               <div>
                 <span className="font-bold text-[#0b1c30] block">Shopify Order &amp; Fulfillment Webhook:</span>
-                <span className="font-mono text-[#565e74] text-[11px]">https://kharidomart.in/api/webhooks/shopify-orders</span>
+                <span className="font-mono text-[#565e74] text-[11px]">https://www.kharidomart.com/api/webhooks/shopify</span>
               </div>
               <button
                 type="button"
-                onClick={() => copyToClipboard("https://kharidomart.in/api/webhooks/shopify-orders", "Webhook URL")}
+                onClick={() => copyToClipboard("https://www.kharidomart.com/api/webhooks/shopify", "Webhook URL")}
                 className="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-[#0b1c30] text-xs font-bold border border-[#e2e8f0] flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
               >
                 <Copy size={13} weight="Outline" />
@@ -449,23 +454,13 @@ export default function AdminSettingsPage() {
                 <input
                   type="text"
                   value={metaPixelId}
-                  onChange={(e) => setMetaPixelId(e.target.value)}
+                  onChange={(e) => setMetaPixelId(e.target.value.replace(/\D/g, ""))}
                   placeholder="e.g. 84920491024819"
                   className="w-full h-10 px-3.5 rounded-xl bg-[#f8fafc] text-xs font-mono font-bold text-[#0b1c30] border border-[#e2e8f0] focus:border-[#f97316] focus:bg-white focus:outline-none"
                 />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#0b1c30] mb-1">
-                  Conversions API (CAPI) Access Token
-                </label>
-                <input
-                  type="password"
-                  value={capiToken}
-                  onChange={(e) => setCapiToken(e.target.value)}
-                  placeholder="e.g. EAAGz0..."
-                  className="w-full h-10 px-3.5 rounded-xl bg-[#f8fafc] text-xs font-mono text-[#0b1c30] border border-[#e2e8f0] focus:border-[#f97316] focus:bg-white focus:outline-none"
-                />
+                <span className="text-[11px] text-[#565e74] mt-1 block">
+                  Numeric Dataset ID from Meta Events Manager.
+                </span>
               </div>
 
               <div>
@@ -475,11 +470,25 @@ export default function AdminSettingsPage() {
                 <input
                   type="text"
                   value={testEventCode}
-                  onChange={(e) => setTestEventCode(e.target.value)}
+                  onChange={(e) => setTestEventCode(e.target.value.trim().toUpperCase())}
                   placeholder="e.g. TEST12345"
                   className="w-full h-10 px-3.5 rounded-xl bg-[#f8fafc] text-xs font-mono text-[#0b1c30] border border-[#e2e8f0] focus:border-[#f97316] focus:bg-white focus:outline-none"
                 />
+                <span className="text-[11px] text-[#565e74] mt-1 block">
+                  From Meta Test Events tab for debugging events.
+                </span>
               </div>
+            </div>
+
+            {/* Backend Security Info Banner for Meta CAPI */}
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col gap-1.5">
+              <div className="flex items-center gap-2 text-xs font-bold text-[#0b1c30]">
+                <ShieldCheck size={16} weight="Filled" className="text-[#f97316]" />
+                <span>Backend Isolated Security: Meta Conversions API (CAPI)</span>
+              </div>
+              <p className="text-[11px] text-[#565e74] leading-relaxed">
+                For maximum security, your CAPI access token is configured exclusively on the server backend (via <code className="font-mono bg-white px-1.5 py-0.5 rounded border border-[#e2e8f0] text-[#0b1c30]">META_CAPI_TOKEN</code> in Vercel / environment settings). Secret access tokens are never exposed in browser HTML, network responses, or client JavaScript bundles.
+              </p>
             </div>
 
             {metaPixelId ? (
