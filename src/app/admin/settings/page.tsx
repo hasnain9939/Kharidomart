@@ -24,7 +24,6 @@ export default function AdminSettingsPage() {
   // Settings form states
   const [storeName, setStoreName] = useState("Kharido Mart");
   const [shopifyDomain, setShopifyDomain] = useState("cgxx12-ek.myshopify.com");
-  const [shopifyAdminAccessToken, setShopifyAdminAccessToken] = useState("");
   const [metaPixelId, setMetaPixelId] = useState("");
   const [capiToken, setCapiToken] = useState("");
   const [testEventCode, setTestEventCode] = useState("");
@@ -74,7 +73,6 @@ export default function AdminSettingsPage() {
           const s = data.settings;
           if (s.storeName) setStoreName(s.storeName);
           if (s.shopifyDomain) setShopifyDomain(s.shopifyDomain);
-          if (s.shopifyAdminAccessToken) setShopifyAdminAccessToken(s.shopifyAdminAccessToken);
           if (s.metaPixelId) setMetaPixelId(s.metaPixelId);
           if (s.capiToken) setCapiToken(s.capiToken);
           if (s.testEventCode) setTestEventCode(s.testEventCode);
@@ -131,7 +129,6 @@ export default function AdminSettingsPage() {
         body: JSON.stringify({
           storeName,
           shopifyDomain,
-          shopifyAdminAccessToken,
           metaPixelId,
           capiToken,
           testEventCode,
@@ -379,23 +376,6 @@ export default function AdminSettingsPage() {
                   placeholder="Kharido Mart"
                   className="w-full h-10 px-3.5 rounded-xl bg-[#f8fafc] text-xs font-semibold text-[#0b1c30] border border-[#e2e8f0] focus:border-[#f97316] focus:bg-white focus:outline-none"
                 />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-bold text-[#0b1c30] mb-1 flex items-center justify-between">
-                  <span>Shopify Admin API Access Token</span>
-                  <span className="text-[10px] font-normal text-emerald-800">Used for 1-Click Catalog Import &amp; Sync</span>
-                </label>
-                <input
-                  type="password"
-                  value={shopifyAdminAccessToken}
-                  onChange={(e) => setShopifyAdminAccessToken(e.target.value)}
-                  placeholder="shpat_••••••••••••••••••••••••••••••••"
-                  className="w-full h-10 px-3.5 rounded-xl bg-[#f8fafc] text-xs font-mono font-bold text-[#0b1c30] border border-[#e2e8f0] focus:border-[#f97316] focus:bg-white focus:outline-none"
-                />
-                <span className="text-[11px] text-[#565e74] mt-1 block">
-                  Begins with <code className="text-[#0b1c30] font-bold">shpat_</code>. Stored securely in database settings and acts as the cloud fallback when environment variables are not set in your host.
-                </span>
               </div>
             </div>
 
