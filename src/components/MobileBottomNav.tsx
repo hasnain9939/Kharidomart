@@ -16,13 +16,18 @@ export default function MobileBottomNav() {
   const pathname = usePathname();
   const { cartCount, wishlist, openCart } = useStore();
 
+  // On product detail pages, yield directly to the product sticky buy bar for unobstructed conversion
+  if (pathname?.startsWith("/products/")) {
+    return null;
+  }
+
   const handleSearchClick = () => {
     // Smoothly scroll to the top where the search input lives and focus it
     window.scrollTo({ top: 0, behavior: "smooth" });
     setTimeout(() => {
       const searchInputs = document.querySelectorAll<HTMLInputElement>('input[type="text"]');
       if (searchInputs.length > 0) {
-        // Focus the mobile search input (typically the last or second input)
+        // Focus the mobile search input
         const mobileInput = searchInputs[searchInputs.length - 1];
         mobileInput?.focus();
       }
@@ -105,7 +110,7 @@ export default function MobileBottomNav() {
               className={wishlist.length > 0 ? "text-rose-500" : "text-[#6b5850]"}
             />
             {wishlist.length > 0 && (
-              <span className="absolute -top-1.5 -right-2 min-w-4 h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold font-space flex items-center justify-center shadow-xs">
+              <span className="absolute -top-1 -right-2 bg-rose-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
                 {wishlist.length}
               </span>
             )}
@@ -113,28 +118,26 @@ export default function MobileBottomNav() {
           <span className="text-[10px] tracking-tight leading-none">Wishlist</span>
         </Link>
 
-        {/* 5. Cart Drawer Trigger with Vibrant Pill Badge */}
+        {/* 5. Cart Button with Live Count */}
         <button
           type="button"
           onClick={openCart}
-          className="flex flex-col items-center justify-center gap-1 py-1 w-full text-center text-[#e06b5b] hover:text-[#c95444] transition-all duration-150 active:scale-90 cursor-pointer font-bold"
+          className="flex flex-col items-center justify-center gap-1 py-1 w-full text-center text-[#6b5850] hover:text-[#e06b5b] transition-all duration-150 active:scale-90 cursor-pointer font-medium"
           aria-label={`Open shopping cart with ${cartCount} items`}
         >
           <div className="relative">
             <ShoppingBag
               size={22}
-              weight="Filled"
-              className="text-[#e06b5b]"
+              weight={cartCount > 0 ? "Filled" : "Outline"}
+              className={cartCount > 0 ? "text-[#e06b5b]" : "text-[#6b5850]"}
             />
             {cartCount > 0 && (
-              <span className="absolute -top-1.5 -right-2 min-w-4 h-4 px-1 rounded-full bg-[#e06b5b] text-white text-[9px] font-bold font-space flex items-center justify-center shadow-xs animate-in zoom-in-50 duration-200">
+              <span className="absolute -top-1 -right-2 bg-[#e06b5b] text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center animate-in zoom-in-50">
                 {cartCount}
               </span>
             )}
           </div>
-          <span className="text-[10px] tracking-tight leading-none">
-            Cart {cartCount > 0 && `(${cartCount})`}
-          </span>
+          <span className="text-[10px] tracking-tight leading-none">Cart</span>
         </button>
       </div>
     </nav>

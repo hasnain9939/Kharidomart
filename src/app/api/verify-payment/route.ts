@@ -53,6 +53,56 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // If this is a COD-to-Prepaid conversion upgrade:
+    const convertOrderNumber = body.convertOrderNumber || body.convertOrderId;
+    if (convertOrderNumber) {
+      const { prisma } = await import("@/lib/prisma");
+      const existingOrder = await prisma.order.findFirst({
+        where: {
+          OR: [
+            { orderNumber: String(convertOrderNumber).trim() },
+            { id: String(convertOrderNumber).trim() },
+          ],
+        },
+        include: { items: true },
+      });
+
+      if (existingOrder) {
+        const isAlreadyPrepaid =
+          String(existingOrder.paymentMethod).toLowerCase().includes("upi") ||
+          String(existingOrder.paymentMethod).toLowerCase().includes("card");
+
+        const discountBonus = isAlreadyPrepaid ? 0 : 50;
+        const newTotal = isAlreadyPrepaid
+          ? existingOrder.total
+          : Math.max(1, Math.round(existingOrder.total - discountBonus));
+        const newDiscount = (existingOrder.discountAmount || 0) + discountBonus;
+
+        const updatedOrder = await prisma.order.update({
+          where: { id: existingOrder.id },
+          data: {
+            paymentMethod: "UPI (Razorpay Verified)",
+            status: "Processing (Prepaid Verified)",
+            total: newTotal,
+            discountAmount: newDiscount,
+            landmark: existingOrder.landmark
+              ? `${existingOrder.landmark} (Prepaid Upgrade: ${paymentId})`
+              : `Prepaid Upgrade: ${paymentId}`,
+          },
+          include: { items: true },
+        });
+
+        return NextResponse.json({
+          success: true,
+          message: "Order successfully upgraded to prepaid!",
+          order_id: orderId,
+          payment_id: paymentId,
+          order: updatedOrder,
+          isConversion: true,
+        });
+      }
+    }
+
     // If checkout order payload is included, create the confirmed order in the database
     let createdOrder = null;
     if (body.customer && body.address && Array.isArray(body.items) && body.items.length > 0) {

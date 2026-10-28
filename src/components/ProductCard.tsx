@@ -47,7 +47,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           className={`absolute top-2 right-2 sm:top-2.5 sm:right-2.5 z-10 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-transform duration-100 ease-out active:scale-90 shadow-sm cursor-pointer ${
             wishlisted
               ? "bg-rose-500 text-white"
-              : "bg-white/90 text-[#0b1c30]/70 hover:text-rose-500 hover:bg-white"
+              : "bg-white/90 text-[#2b1f1a]/70 hover:text-rose-500 hover:bg-white"
           }`}
           aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
         >
@@ -89,7 +89,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               e.stopPropagation();
               openQuickView(product);
             }}
-            className="w-full py-2 bg-white/95 hover:bg-white active:scale-[0.98] text-[#0b1c30] text-xs font-bold rounded-lg shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+            className="w-full py-2 bg-white/95 hover:bg-white active:scale-[0.98] text-[#2b1f1a] text-xs font-bold rounded-lg shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer"
           >
             <Eye size={15} weight="Outline" />
             <span>Quick View</span>

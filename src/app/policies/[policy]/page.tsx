@@ -60,27 +60,27 @@ export default async function PolicyPage({ params }: PolicyPageProps) {
   ];
 
   return (
-    <div className="w-full bg-[#f8f9ff] min-h-screen py-10 sm:py-16">
+    <div className="w-full bg-[#fdfbf7] min-h-screen py-10 sm:py-16">
       <div className="max-w-[1100px] mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         {/* Navigation Breadcrumb */}
         <div className="flex items-center justify-between">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-xs font-bold text-[#584237] hover:text-[#f97316] transition-colors bg-white px-3.5 py-2 rounded-xl border border-[#e2e8f0] shadow-2xs"
+            className="inline-flex items-center gap-2 text-xs font-bold text-[#584237] hover:text-[#e06b5b] transition-colors bg-white px-3.5 py-2 rounded-xl border border-[#eddcd1] shadow-2xs"
           >
             <ArrowLeft size={16} weight="Outline" />
             <span>Back to Store</span>
           </Link>
 
-          <span className="text-xs font-space font-semibold text-[#15803d] bg-emerald-50 border border-emerald-200/60 px-3 py-1 rounded-full flex items-center gap-1.5">
+          <span className="text-xs font-space font-semibold text-[#4f775d] bg-emerald-50 border border-emerald-200/60 px-3 py-1 rounded-full flex items-center gap-1.5">
             <ShieldCheck size={14} weight="Filled" /> Verified Legal Documentation
           </span>
         </div>
 
         {/* Main Document Header */}
-        <div className="bg-white rounded-3xl p-6 sm:p-10 border border-[#e2e8f0] shadow-xs space-y-4">
+        <div className="bg-white rounded-3xl p-6 sm:p-10 border border-[#eddcd1] shadow-xs space-y-4">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="text-xs font-space font-bold uppercase tracking-wider text-[#ea580c] bg-[#ffedd5] px-3.5 py-1 rounded-full">
+            <span className="text-xs font-space font-bold uppercase tracking-wider text-[#e06b5b] bg-[#f6eee5] px-3.5 py-1 rounded-full">
               Kharido Mart Direct
             </span>
             <span className="text-xs text-[#584237]">
@@ -93,7 +93,7 @@ export default async function PolicyPage({ params }: PolicyPageProps) {
             )}
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#0b1c30] tracking-tight">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#2b1f1a] tracking-tight">
             {policy.title}
           </h1>
 
@@ -119,7 +119,7 @@ export default async function PolicyPage({ params }: PolicyPageProps) {
           )}
 
           {policy.summary && (
-            <div className="p-4 sm:p-5 rounded-2xl bg-[#eff4ff]/70 border border-[#e2e8f0] text-xs sm:text-sm text-[#0b1c30] leading-relaxed font-medium">
+            <div className="p-4 sm:p-5 rounded-2xl bg-[#eff4ff]/70 border border-[#eddcd1] text-xs sm:text-sm text-[#2b1f1a] leading-relaxed font-medium">
               {policy.summary}
             </div>
           )}
@@ -129,8 +129,8 @@ export default async function PolicyPage({ params }: PolicyPageProps) {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Quick Table of Contents / Sidebar (4 cols) */}
           <div className="lg:col-span-4 space-y-5 lg:sticky lg:top-24">
-            <div className="bg-white rounded-3xl p-5 border border-[#e2e8f0] shadow-xs space-y-3">
-              <h3 className="font-space font-bold text-xs uppercase tracking-wider text-[#0b1c30]">
+            <div className="bg-white rounded-3xl p-5 border border-[#eddcd1] shadow-xs space-y-3">
+              <h3 className="font-space font-bold text-xs uppercase tracking-wider text-[#2b1f1a]">
                 All Legal Policies
               </h3>
               <nav className="flex flex-col gap-1.5">
@@ -140,8 +140,8 @@ export default async function PolicyPage({ params }: PolicyPageProps) {
                     href={`/policies/${item.slug}`}
                     className={`px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-between ${
                       item.slug === policySlug
-                        ? "bg-[#f97316] text-white shadow-xs"
-                        : "text-[#584237] hover:bg-slate-50 hover:text-[#0b1c30]"
+                        ? "bg-[#e06b5b] text-white shadow-xs"
+                        : "text-[#584237] hover:bg-slate-50 hover:text-[#2b1f1a]"
                     }`}
                   >
                     <span>{item.label}</span>
@@ -155,11 +155,11 @@ export default async function PolicyPage({ params }: PolicyPageProps) {
           </div>
 
           {/* Primary Policy Content (8 cols) */}
-          <div className="lg:col-span-8 bg-white rounded-3xl border border-[#e2e8f0] p-6 sm:p-10 shadow-xs space-y-8 text-sm text-[#0b1c30] leading-relaxed">
+          <div className="lg:col-span-8 bg-white rounded-3xl border border-[#eddcd1] p-6 sm:p-10 shadow-xs space-y-8 text-sm text-[#2b1f1a] leading-relaxed">
             {policy.sections && policy.sections.length > 0 ? (
               policy.sections.map((section, idx) => (
-                <div key={idx} className="space-y-3 pb-6 border-b border-[#e2e8f0] last:border-0 last:pb-0">
-                  <h2 className="font-extrabold text-base sm:text-lg text-[#0b1c30]">
+                <div key={idx} className="space-y-3 pb-6 border-b border-[#eddcd1] last:border-0 last:pb-0">
+                  <h2 className="font-extrabold text-base sm:text-lg text-[#2b1f1a]">
                     {section.title}
                   </h2>
                   <div className="space-y-2.5 text-[#584237] leading-relaxed">
@@ -178,9 +178,9 @@ export default async function PolicyPage({ params }: PolicyPageProps) {
             )}
 
             {/* Assistance Box */}
-            <div className="pt-6 border-t border-[#e2e8f0] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[#eff4ff]/60 -mx-6 sm:-mx-10 -mb-6 sm:-mb-10 p-6 sm:p-8 rounded-b-3xl">
+            <div className="pt-6 border-t border-[#eddcd1] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[#eff4ff]/60 -mx-6 sm:-mx-10 -mb-6 sm:-mb-10 p-6 sm:p-8 rounded-b-3xl">
               <div>
-                <h4 className="font-bold text-sm text-[#0b1c30]">
+                <h4 className="font-bold text-sm text-[#2b1f1a]">
                   Need Help With Your Order?
                 </h4>
                 <p className="text-xs text-[#584237] mt-0.5">
@@ -190,13 +190,13 @@ export default async function PolicyPage({ params }: PolicyPageProps) {
               <div className="flex items-center gap-3">
                 <Link
                   href="/contact"
-                  className="px-4 py-2.5 bg-[#f97316] hover:bg-[#ea580c] text-white font-bold text-xs rounded-xl shadow-xs transition-all"
+                  className="px-4 py-2.5 bg-[#e06b5b] hover:bg-[#c95444] text-white font-bold text-xs rounded-xl shadow-xs transition-all"
                 >
                   Contact Support
                 </Link>
                 <Link
                   href="/track-order"
-                  className="px-4 py-2.5 bg-white text-[#0b1c30] border border-[#e2e8f0] hover:bg-slate-50 font-bold text-xs rounded-xl shadow-2xs transition-all"
+                  className="px-4 py-2.5 bg-white text-[#2b1f1a] border border-[#eddcd1] hover:bg-slate-50 font-bold text-xs rounded-xl shadow-2xs transition-all"
                 >
                   Track Your Order
                 </Link>

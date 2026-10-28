@@ -10,6 +10,7 @@ import QuickViewModal from "@/components/QuickViewModal";
 import Toast from "@/components/Toast";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
+import MetaPixel from "@/components/MetaPixel";
 import SupportChatbot from "@/components/SupportChatbot";
 import ExitIntentModal from "@/components/ExitIntentModal";
 import MobileBottomNav from "@/components/MobileBottomNav";
@@ -58,6 +59,9 @@ function StorefrontLayoutInner({
       {/* Compliance & Analytics */}
       <CookieConsentBanner />
       <GoogleAnalytics />
+      <Suspense fallback={null}>
+        <MetaPixel />
+      </Suspense>
     </>
   );
 }

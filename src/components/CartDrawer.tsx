@@ -35,7 +35,6 @@ export default function CartDrawer() {
     applyCoupon,
     removeCoupon,
     showToast,
-    user,
   } = useStore();
 
   const [couponInput, setCouponInput] = useState("");
@@ -438,7 +437,7 @@ export default function CartDrawer() {
               {/* Action Buttons: 1. Checkout (Primary), 2. View Full Cart (Secondary) */}
               <div className="space-y-2 pt-1">
                 <Link
-                  href={user ? "/checkout" : "/account?redirect=/checkout"}
+                  href="/checkout"
                   onClick={closeCart}
                   className="w-full bg-[#e06b5b] hover:bg-[#c95444] active:scale-95 text-white font-bold py-3.5 rounded-xl transition-all shadow-[0_4px_14px_rgba(224,107,91,0.3)] text-sm flex items-center justify-center gap-2"
                 >

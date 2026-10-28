@@ -10,6 +10,7 @@ import {
   Phone,
   ShoppingBag,
   Edit,
+  ArrowRight,
 } from "reicon-react";
 import { AdminDiscount } from "@/data/adminData";
 
@@ -19,6 +20,32 @@ export default function AdminMarketingPage() {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [orders, setOrders] = useState<any[]>([]);
+  const [abandonedCheckouts, setAbandonedCheckouts] = useState<any[]>([]);
+  const [abandonedMetrics, setAbandonedMetrics] = useState({
+    totalAbandoned: 0,
+    totalRecovered: 0,
+    abandonedRevenue: 0,
+    recoveredRevenue: 0,
+    recoveryRate: 0,
+  });
+  const [isLoadingAbandoned, setIsLoadingAbandoned] = useState(false);
+
+  const fetchAbandonedCheckouts = async () => {
+    setIsLoadingAbandoned(true);
+    try {
+      const res = await fetch("/api/abandoned-checkout");
+      const data = await res.json();
+      if (data.success) {
+        setAbandonedCheckouts(data.checkouts || []);
+        if (data.metrics) setAbandonedMetrics(data.metrics);
+      }
+    } catch (e) {
+      console.warn("Failed to load abandoned checkouts:", e);
+    } finally {
+      setIsLoadingAbandoned(false);
+    }
+  };
+
 
   React.useEffect(() => {
     const fetchDiscounts = async () => {
@@ -65,6 +92,7 @@ export default function AdminMarketingPage() {
       }
     };
     fetchOrders();
+    fetchAbandonedCheckouts();
   }, []);
 
   const discountedOrders = orders.filter((o) => Number(o.discountAmount || 0) > 0);
@@ -365,30 +393,179 @@ export default function AdminMarketingPage() {
         </div>
       )}
 
-      {/* Tab 3: Cart Recovery Drips */}
+            {/* Tab 3: Live Abandoned Checkouts & WhatsApp Recovery */}
       {activeTab === "cart_recovery" && (
-        <div className="p-6 rounded-2xl bg-white border border-[#e2e8f0] shadow-xs flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-bold text-sm text-[#0b1c30]">
-                Automated WhatsApp 45-Minute Cart Recovery Trigger
-              </h3>
-              <p className="text-xs text-[#565e74] mt-0.5">
-                Dispatched automatically to shopper&apos;s WhatsApp when checkout is abandoned after entering phone.
-              </p>
+        <div className="space-y-6">
+          {/* Recovery Performance Metrics Bar */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="p-4 rounded-2xl bg-white border border-[#eddcd1] shadow-2xs">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#6b5850]">
+                Abandoned Sessions
+              </span>
+              <div className="text-2xl font-black text-[#2b1f1a] font-mono mt-1">
+                {abandonedMetrics.totalAbandoned}
+              </div>
+              <span className="text-[11px] text-[#e06b5b] font-medium">Potential customers</span>
             </div>
-            <span className="px-2.5 py-0.5 rounded-full bg-[#caecbf]/70 text-[#1d3819] text-xs font-bold">
-              Live &amp; Active
-            </span>
+
+            <div className="p-4 rounded-2xl bg-white border border-[#eddcd1] shadow-2xs">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#6b5850]">
+                Lost Revenue Pool
+              </span>
+              <div className="text-2xl font-black text-[#e06b5b] font-mono mt-1">
+                ₹{abandonedMetrics.abandonedRevenue.toLocaleString("en-IN")}
+              </div>
+              <span className="text-[11px] text-[#6b5850]">Pending in carts</span>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-white border border-[#eddcd1] shadow-2xs">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#6b5850]">
+                Recovered Orders
+              </span>
+              <div className="text-2xl font-black text-[#4f775d] font-mono mt-1">
+                {abandonedMetrics.totalRecovered}
+              </div>
+              <span className="text-[11px] text-[#4f775d] font-medium">Successfully completed</span>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-white border border-[#eddcd1] shadow-2xs">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#6b5850]">
+                Recovery Rate
+              </span>
+              <div className="text-2xl font-black text-[#2b1f1a] font-mono mt-1">
+                {abandonedMetrics.recoveryRate}%
+              </div>
+              <span className="text-[11px] text-[#4f775d] font-medium">Cart-to-order wins</span>
+            </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-xs text-[#0b1c30] font-mono leading-relaxed">
-            &ldquo;Hey Priya! You left the Electric Baby Nail Trimmer in your Kharido Mart cart. Complete your order now and enjoy an extra ₹50 off with exclusive code <strong>SAVE50</strong>: https://kharidomart.com/cart?code=SAVE50&rdquo;
-          </div>
+          {/* Abandoned Checkouts Table Card */}
+          <div className="bg-white rounded-2xl border border-[#eddcd1] shadow-xs overflow-hidden">
+            <div className="p-5 border-b border-[#eddcd1] flex flex-wrap items-center justify-between gap-3 bg-[#fbf7f0]/60">
+              <div>
+                <h3 className="font-extrabold text-sm sm:text-base text-[#2b1f1a]">
+                  Recent Abandoned Checkout Sessions ({abandonedCheckouts.length})
+                </h3>
+                <p className="text-xs text-[#6b5850] mt-0.5">
+                  High-intent shoppers who entered contact info. Send 1-click personalized WhatsApp reminders to recover them.
+                </p>
+              </div>
 
-          <div className="flex items-center justify-between text-xs text-[#565e74]">
-            <span>Template status: <strong>Approved by Meta WABA</strong></span>
-            <span className="text-[#15803d] font-bold">Instant trigger on phone entry</span>
+              <button
+                type="button"
+                onClick={fetchAbandonedCheckouts}
+                disabled={isLoadingAbandoned}
+                className="px-3 py-1.5 bg-white border border-[#eddcd1] hover:bg-stone-50 text-[#2b1f1a] text-xs font-bold rounded-xl shadow-2xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer disabled:opacity-50"
+              >
+                <span>{isLoadingAbandoned ? "Refreshing..." : "↻ Refresh List"}</span>
+              </button>
+            </div>
+
+            {abandonedCheckouts.length === 0 ? (
+              <div className="p-12 text-center text-xs text-[#6b5850] space-y-2">
+                <ShoppingBag size={32} weight="Outline" className="mx-auto text-stone-300" />
+                <p className="font-bold text-[#2b1f1a]">No abandoned checkouts recorded yet</p>
+                <p className="text-[11px] text-stone-400">
+                  When shoppers enter phone or email on checkout and leave, they will appear here with 1-click WhatsApp recovery links.
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs text-[#2b1f1a]">
+                  <thead className="bg-[#fdfbf7] text-[#6b5850] font-bold border-b border-[#eddcd1] uppercase text-[10px] tracking-wider">
+                    <tr>
+                      <th className="py-3 px-4">Shopper</th>
+                      <th className="py-3 px-4">Contact</th>
+                      <th className="py-3 px-4">Cart Contents</th>
+                      <th className="py-3 px-4">Cart Value</th>
+                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4 text-right">Recovery Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#eddcd1]/70">
+                    {abandonedCheckouts.map((cart) => {
+                      const recoveryUrl = `https://kharidomart.com/checkout?recover=${cart.recoveryToken}`;
+                      const firstName = (cart.customerName || "there").split(" ")[0];
+                      const waText = encodeURIComponent(
+                        `Hi ${firstName}! Your Kharido Mart cart is reserved with Free Express Delivery. Complete your order now and save an extra ₹50 with UPI: ${recoveryUrl}`
+                      );
+                      const waLink = cart.customerPhone
+                        ? `https://wa.me/91${cart.customerPhone.replace(/\D/g, "")}?text=${waText}`
+                        : null;
+
+                      return (
+                        <tr key={cart.id} className="hover:bg-[#fbf7f0]/50 transition-colors">
+                          <td className="py-3.5 px-4 font-bold text-[#2b1f1a]">
+                            <div>{cart.customerName}</div>
+                            {cart.city && (
+                              <div className="text-[11px] text-[#6b5850] font-normal">
+                                {cart.city} {cart.pincode ? `(${cart.pincode})` : ""}
+                              </div>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-4 font-mono text-[11px]">
+                            {cart.customerPhone && (
+                              <div className="font-semibold text-[#2b1f1a]">{cart.customerPhone}</div>
+                            )}
+                            {cart.customerEmail && (
+                              <div className="text-[11px] text-[#6b5850] truncate max-w-[180px]">
+                                {cart.customerEmail}
+                              </div>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <div className="font-semibold text-[#2b1f1a]">
+                              {cart.itemsCount} {cart.itemsCount === 1 ? "item" : "items"}
+                            </div>
+                            <div className="text-[11px] text-[#6b5850] truncate max-w-[200px]" title={cart.itemsPreview?.join(", ")}>
+                              {cart.itemsPreview?.slice(0, 2).join(", ")}
+                              {cart.itemsPreview?.length > 2 ? ` + ${cart.itemsPreview.length - 2} more` : ""}
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-4 font-mono font-bold text-sm text-[#2b1f1a]">
+                            ₹{cart.subtotal.toLocaleString("en-IN")}
+                          </td>
+                          <td className="py-3.5 px-4">
+                            {cart.status === "recovered" ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#eaf3ed] text-[#4f775d] text-[10px] font-extrabold uppercase">
+                                ✓ Recovered ({cart.orderNumber || "Order"})
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#fdedeb] text-[#e06b5b] text-[10px] font-extrabold uppercase">
+                                Abandoned
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-4 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              {cart.status !== "recovered" && waLink && (
+                                <a
+                                  href={waLink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#4f775d] hover:bg-[#3d6049] text-white text-xs font-bold rounded-lg shadow-2xs transition active:scale-95"
+                                >
+                                  <span>WhatsApp</span>
+                                  <ArrowRight size={13} weight="Outline" />
+                                </a>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => handleCopyCode(recoveryUrl)}
+                                className="p-1.5 text-[#6b5850] hover:text-[#2b1f1a] hover:bg-stone-100 rounded-lg transition"
+                                title="Copy Recovery Cart Link"
+                              >
+                                <Copy size={15} weight="Outline" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       )}

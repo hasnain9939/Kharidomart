@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Product } from "@/data/products";
 import { useStore } from "@/context/StoreContext";
 import ProductCard from "@/components/ProductCard";
@@ -17,16 +18,13 @@ import {
   Share,
   Location,
   ArrowRight,
-  Sparkles,
   TicketDiscount,
-  Clock,
+  Refresh,
   VideoPlay,
 } from "reicon-react";
 import { getVideoEmbed } from "@/lib/media";
 import { getDeliveryEstimate } from "@/lib/pincode";
 import { trackViewItem, trackAddToCart } from "@/lib/analytics";
-
-// Real customer reviews are stored per-product and submitted by verified purchasers
 
 interface ProductDetailsClientProps {
   product: Product;
@@ -39,6 +37,7 @@ export default function ProductDetailsClient({
   relatedProducts,
   initialReviews = [],
 }: ProductDetailsClientProps) {
+  const router = useRouter();
   const { addToCart, toggleWishlist, isWishlisted, openCart, showToast } = useStore();
 
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
@@ -95,9 +94,9 @@ export default function ProductDetailsClient({
   const [isPincodeLoading, setIsPincodeLoading] = useState(false);
   const [showStickyBar, setShowStickyBar] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<"description" | "specs" | "reviews">("description");
+  const [activeTab, setActiveTab] = useState<"description" | "specs" | "shipping" | "reviews">("description");
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
-  const [isLoadingReviews, setIsLoadingReviews] = useState(
+  const [_isLoadingReviews, setIsLoadingReviews] = useState(
     !initialReviews || initialReviews.length === 0
   );
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
@@ -139,91 +138,8 @@ export default function ProductDetailsClient({
     comment: "",
   });
 
-  const bundleTiers = [
-    {
-      tier: 1,
-      qty: 1,
-      title: "1x Single Unit",
-      subtitle: "Standard Pack",
-      unitPrice: product.price,
-      totalPrice: product.price,
-      discountLabel: null,
-      badge: null,
-    },
-    {
-      tier: 2,
-      qty: 2,
-      title: "2x Value Pack (Save 15%)",
-      subtitle: "Most Popular for Siblings / Gifts",
-      unitPrice: Math.round(product.price * 0.85),
-      totalPrice: Math.round(product.price * 2 * 0.85),
-      discountLabel: "Extra 15% OFF",
-      badge: "🔥 MOST POPULAR",
-    },
-    {
-      tier: 3,
-      qty: 3,
-      title: "3x Super Saver Pack (Save 25%)",
-      subtitle: "Best Deal + Free Express Sourcing",
-      unitPrice: Math.round(product.price * 0.75),
-      totalPrice: Math.round(product.price * 3 * 0.75),
-      discountLabel: "Extra 25% OFF",
-      badge: "🎁 BEST VALUE",
-    },
-  ];
-
-  const activeTier = bundleTiers.find((b) => b.qty === quantity);
-  const currentTotalPrice = activeTier ? activeTier.totalPrice : product.price * quantity;
-
-  // Countdown to custom or default 5:00 PM same-day dispatch
-  const cutoffTimeDisplay = product.dispatchCutoff || "5:00 PM";
+  const currentTotalPrice = product.price * quantity;
   const dispatchLeadTime = product.dispatchTime || "24–48 hrs";
-
-  const [dispatchCountdown, setDispatchCountdown] = useState<{ hours: string; minutes: string; seconds: string }>({
-    hours: "00",
-    minutes: "00",
-    seconds: "00",
-  });
-
-  React.useEffect(() => {
-    const parseCutoff = (cutoffStr: string) => {
-      const match = cutoffStr.match(/(\d+)(?::(\d+))?\s*(AM|PM)?/i);
-      if (!match) return { hour: 17, minute: 0 };
-      let hour = parseInt(match[1], 10);
-      const minute = match[2] ? parseInt(match[2], 10) : 0;
-      const period = match[3]?.toUpperCase();
-      if (period === "PM" && hour < 12) hour += 12;
-      if (period === "AM" && hour === 12) hour = 0;
-      return { hour, minute };
-    };
-
-    const calculateTimeLeft = () => {
-      const now = new Date();
-      const cutoff = new Date();
-      const { hour, minute } = parseCutoff(cutoffTimeDisplay);
-      cutoff.setHours(hour, minute, 0, 0);
-
-      let diff = cutoff.getTime() - now.getTime();
-      if (diff <= 0) {
-        cutoff.setDate(cutoff.getDate() + 1);
-        diff = cutoff.getTime() - now.getTime();
-      }
-
-      const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
-      const m = Math.floor((diff / (1000 * 60)) % 60);
-      const s = Math.floor((diff / 1000) % 60);
-
-      setDispatchCountdown({
-        hours: String(h).padStart(2, "0"),
-        minutes: String(m).padStart(2, "0"),
-        seconds: String(s).padStart(2, "0"),
-      });
-    };
-
-    calculateTimeLeft();
-    const interval = setInterval(calculateTimeLeft, 1000);
-    return () => clearInterval(interval);
-  }, [cutoffTimeDisplay]);
 
   // Pincode saved in localStorage with live district lookup
   React.useEffect(() => {
@@ -282,7 +198,7 @@ export default function ProductDetailsClient({
     }
   };
 
-  // Fetch real reviews from Neon PostgreSQL on mount only if not already provided
+  // Fetch real reviews from DB on mount only if not already provided
   React.useEffect(() => {
     if (initialReviews && initialReviews.length > 0) return;
     let isMounted = true;
@@ -298,75 +214,26 @@ export default function ProductDetailsClient({
           if (typeof data.count === "number") setLiveReviewsCount(data.count);
         }
       } catch (err) {
-        console.warn("Failed to load reviews from API:", err);
+        console.error("Failed to load reviews:", err);
       } finally {
         if (isMounted) setIsLoadingReviews(false);
       }
     };
-
     loadProductReviews();
     return () => {
       isMounted = false;
     };
   }, [product.id, product.slug, initialReviews]);
 
-  // Submit verified customer review to PostgreSQL
-  const handleSubmitReview = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!reviewForm.name.trim() || !reviewForm.comment.trim()) {
-      showToast("Please provide your name and review details", "warning");
-      return;
-    }
-    if (reviewForm.comment.trim().length < 5) {
-      showToast("Review must be at least 5 characters long", "warning");
-      return;
-    }
-
-    setIsSubmittingReview(true);
-    try {
-      const res = await fetch("/api/reviews", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productId: product.id,
-          slug: product.slug,
-          customerName: reviewForm.name.trim(),
-          rating: reviewForm.rating,
-          title: reviewForm.title.trim(),
-          comment: reviewForm.comment.trim(),
-          city: reviewForm.city.trim() || "India",
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        showToast(data.error || "Failed to submit review", "warning");
-        setIsSubmittingReview(false);
-        return;
-      }
-
-      if (data.review) {
-        setUserReviews((prev) => [data.review, ...prev.filter((r) => r.id !== data.review.id)]);
-      }
-      if (data.product) {
-        if (typeof data.product.rating === "number") setLiveRating(data.product.rating);
-        if (typeof data.product.reviewsCount === "number") setLiveReviewsCount(data.product.reviewsCount);
-      }
-
-      setIsReviewModalOpen(false);
-      setReviewForm({ name: "", city: "", rating: 5, title: "", comment: "" });
-      showToast("Thank you! Your verified review has been published. 🎉");
-    } catch (err: any) {
-      console.error("Submit review error:", err);
-      showToast("Network error. Please try again.", "warning");
-    } finally {
-      setIsSubmittingReview(false);
-    }
-  };
-
+  // Track product view for analytics
   React.useEffect(() => {
     if (product) {
-      trackViewItem(product);
+      trackViewItem({
+        id: product.id,
+        title: product.title,
+        category: product.category,
+        price: product.price,
+      });
     }
   }, [product]);
 
@@ -376,12 +243,16 @@ export default function ProductDetailsClient({
   );
 
   const handleAddToCart = () => {
-    const discountedProduct = activeTier && activeTier.unitPrice !== product.price
-      ? { ...product, price: activeTier.unitPrice }
-      : product;
-    addToCart(discountedProduct, quantity);
-    trackAddToCart(discountedProduct, quantity);
+    addToCart(product, quantity);
+    trackAddToCart(product, quantity);
     openCart();
+    showToast(`Added ${quantity}x ${product.shortTitle || product.title} to your bag! 🍼`);
+  };
+
+  const handleBuyNow = () => {
+    addToCart(product, quantity);
+    trackAddToCart(product, quantity);
+    router.push("/checkout");
   };
 
   const handleShare = () => {
@@ -419,40 +290,91 @@ export default function ProductDetailsClient({
     }
   };
 
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reviewForm.name || !reviewForm.comment) {
+      showToast("Please provide your name and review details", "warning");
+      return;
+    }
+    setIsSubmittingReview(true);
+    try {
+      const res = await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: product.id,
+          customerName: reviewForm.name,
+          city: reviewForm.city || "India",
+          rating: reviewForm.rating,
+          comment: reviewForm.title ? `${reviewForm.title}: ${reviewForm.comment}` : reviewForm.comment,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setUserReviews((prev) => [data.review, ...prev]);
+        setLiveReviewsCount((prev) => prev + 1);
+        setIsReviewModalOpen(false);
+        setReviewForm({ name: "", city: "", rating: 5, title: "", comment: "" });
+        showToast("Thank you! Your verified review has been published.");
+      } else {
+        showToast(data.error || "Unable to submit review right now", "warning");
+      }
+    } catch {
+      showToast("Unable to submit review. Please try again later.", "warning");
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
+  const deliveryEstimate = pincode && pincode.length === 6 ? getDeliveryEstimate(pincode) : null;
 
   return (
-    <div className="w-full bg-[#fdfbf7] min-h-screen pb-24 sm:pb-0">
-      {/* Top Breadcrumb & Flash Social Proof Banner */}
+    <div className="w-full bg-[#fdfbf7] min-h-screen pb-24 sm:pb-0 text-[#2b1f1a]">
+      {/* Top Breadcrumb & Value Highlights */}
       <section className="w-full bg-[#fbf7f0] border-b border-[#eddcd1]/80 py-2.5">
-        <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm text-[#6b5850]">
-          <nav className="flex items-center flex-wrap gap-2 text-[#6b5850]/80">
+        <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between gap-3 text-xs text-[#6b5850]">
+          <nav className="flex items-center gap-2">
             <Link href="/" className="hover:text-[#e06b5b] transition-colors">
               Home
             </Link>
             <span className="opacity-40">/</span>
             <Link href="/shop" className="hover:text-[#e06b5b] transition-colors">
+              Shop
+            </Link>
+            <span className="opacity-40">/</span>
+            <Link
+              href={`/collections/${product.categorySlug}`}
+              className="hover:text-[#e06b5b] transition-colors"
+            >
               {product.category}
             </Link>
             <span className="opacity-40">/</span>
-            <span className="font-semibold text-[#2b1f1a] truncate max-w-xs md:max-w-md">
-              {product.shortTitle}
+            <span className="font-bold text-[#2b1f1a] truncate max-w-[200px] sm:max-w-xs">
+              {product.shortTitle || product.title}
             </span>
           </nav>
-          <div className="inline-flex items-center gap-2 text-[#4f775d] font-semibold bg-white px-3 py-1 rounded-full shadow-2xs text-xs border border-[#d2e7d7]">
-            <ShieldCheck size={14} weight="Filled" />
-            <span>Quality Inspected • 100% Genuine &amp; Certified</span>
+          <div className="hidden sm:flex items-center gap-4 text-[11px] font-medium text-[#4f775d]">
+            <span className="flex items-center gap-1">
+              <ShieldCheck size={14} weight="Filled" />
+              100% Food-Grade &amp; BPA-Free Materials
+            </span>
+            <span className="text-[#eddcd1]">•</span>
+            <span className="flex items-center gap-1 text-[#e06b5b]">
+              <TruckFast size={14} weight="Filled" />
+              Pan-India Cash on Delivery
+            </span>
           </div>
         </div>
       </section>
 
-      {/* Main Product Showcase Section */}
+      {/* Hero Section: Product Visuals & Buy Engine */}
       <section className="w-full py-8 sm:py-12 bg-[#fdfbf7]">
         <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
             {/* Left Column: Gallery & Trust Proof (7 cols) */}
             <div className="lg:col-span-7 space-y-4">
               {/* Main Display Image */}
-              <div className="relative bg-white rounded-3xl p-3 sm:p-6 shadow-xs border border-[#eddcd1] overflow-hidden flex flex-col items-center justify-center min-h-[300px] sm:min-h-[420px] md:min-h-[520px]">
+              <div className="relative bg-white rounded-3xl p-3 sm:p-6 shadow-xs border border-[#eddcd1] overflow-hidden flex flex-col items-center justify-center min-h-[300px] sm:min-h-[420px] md:min-h-[500px]">
                 {/* Floating Badges */}
                 <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
                   {product.badge && (
@@ -472,8 +394,8 @@ export default function ProductDetailsClient({
                   <button
                     onClick={() => toggleWishlist(product.id)}
                     aria-label="Add to wishlist"
-                    className={`w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center transition-all ${
-                      wishlisted ? "text-rose-600 scale-105" : "text-[#584237] hover:text-rose-500"
+                    className={`w-10 h-10 rounded-full bg-white/95 hover:bg-white border border-[#eddcd1] shadow-xs flex items-center justify-center transition-all cursor-pointer ${
+                      wishlisted ? "text-rose-600 scale-105" : "text-[#6b5850] hover:text-rose-500"
                     }`}
                   >
                     <Heart size={20} weight={wishlisted ? "Filled" : "Outline"} />
@@ -481,7 +403,7 @@ export default function ProductDetailsClient({
                   <button
                     onClick={handleShare}
                     aria-label="Share product"
-                    className="w-10 h-10 rounded-full bg-white/90 hover:bg-white text-[#584237] hover:text-[#f97316] shadow-md flex items-center justify-center transition-all"
+                    className="w-10 h-10 rounded-full bg-white/95 hover:bg-white border border-[#eddcd1] text-[#6b5850] hover:text-[#e06b5b] shadow-xs flex items-center justify-center transition-all cursor-pointer"
                   >
                     <Share size={18} weight="Outline" />
                   </button>
@@ -492,9 +414,9 @@ export default function ProductDetailsClient({
                   <button
                     type="button"
                     onClick={() => setShowVideo(true)}
-                    className="absolute top-4 left-4 z-10 bg-black/85 hover:bg-black text-white px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-lg backdrop-blur-xs transition-all hover:scale-105 cursor-pointer"
+                    className="absolute top-4 left-4 z-10 bg-[#2b1f1a]/90 hover:bg-[#2b1f1a] text-white px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-lg backdrop-blur-xs transition-all hover:scale-105 cursor-pointer"
                   >
-                    <VideoPlay size={14} weight="Filled" className="text-[#f97316]" />
+                    <VideoPlay size={14} weight="Filled" className="text-[#e06b5b]" />
                     <span>Watch Video Demo</span>
                   </button>
                 )}
@@ -505,7 +427,7 @@ export default function ProductDetailsClient({
                     <button
                       type="button"
                       onClick={() => setShowVideo(false)}
-                      className="absolute top-3 right-3 z-20 bg-white/90 hover:bg-white text-[#0b1c30] px-3.5 py-1.5 rounded-full text-xs font-bold shadow-md transition-all cursor-pointer flex items-center gap-1"
+                      className="absolute top-3 right-3 z-20 bg-white/95 hover:bg-white text-[#2b1f1a] px-3.5 py-1.5 rounded-full text-xs font-bold shadow-md transition-all cursor-pointer flex items-center gap-1"
                     >
                       <span>✕ Back to Photos</span>
                     </button>
@@ -535,15 +457,15 @@ export default function ProductDetailsClient({
                       fill
                       priority
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
-                      className="object-contain rounded-2xl transition-all duration-300 hover:scale-[1.03]"
+                      className="object-contain rounded-2xl transition-all duration-300 hover:scale-[1.02]"
                     />
                   </div>
                 )}
 
                 {/* Zoom Cue */}
                 {!showVideo && (
-                  <div className="absolute bottom-4 right-4 bg-white/85 backdrop-blur-xs px-3 py-1.5 rounded-full text-[#584237] text-xs font-semibold flex items-center gap-1.5 shadow-2xs border border-[#e2e8f0]/60">
-                    <span>🔍 Hover to inspect high-resolution detail</span>
+                  <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-xs px-3 py-1.5 rounded-full text-[#6b5850] text-xs font-semibold flex items-center gap-1.5 shadow-2xs border border-[#eddcd1]/80">
+                    <span>🔍 High-resolution photography</span>
                   </div>
                 )}
               </div>
@@ -561,8 +483,8 @@ export default function ProductDetailsClient({
                       }}
                       className={`relative aspect-square rounded-2xl overflow-hidden p-1 bg-white border-2 transition-all cursor-pointer ${
                         !showVideo && selectedImageIdx === idx
-                          ? "border-[#f97316] ring-3 ring-orange-200 scale-95 shadow-sm"
-                          : "border-[#e2e8f0] hover:border-orange-300 opacity-80 hover:opacity-100"
+                          ? "border-[#e06b5b] ring-3 ring-[#fdedeb] scale-95 shadow-sm"
+                          : "border-[#eddcd1] hover:border-[#e06b5b]/50 opacity-80 hover:opacity-100"
                       }`}
                     >
                       <Image
@@ -579,13 +501,13 @@ export default function ProductDetailsClient({
                     <button
                       type="button"
                       onClick={() => setShowVideo(true)}
-                      className={`relative aspect-square rounded-2xl overflow-hidden p-1 bg-[#0b1c30] text-white border-2 transition-all flex flex-col items-center justify-center gap-1 cursor-pointer ${
+                      className={`relative aspect-square rounded-2xl overflow-hidden p-1 bg-[#2b1f1a] text-white border-2 transition-all flex flex-col items-center justify-center gap-1 cursor-pointer ${
                         showVideo
-                          ? "border-[#f97316] ring-3 ring-orange-200 scale-95 shadow-sm"
-                          : "border-[#e2e8f0] hover:border-orange-300 opacity-90 hover:opacity-100"
+                          ? "border-[#e06b5b] ring-3 ring-[#fdedeb] scale-95 shadow-sm"
+                          : "border-[#eddcd1] hover:border-[#e06b5b]/50 opacity-90 hover:opacity-100"
                       }`}
                     >
-                      <div className="w-8 h-8 rounded-full bg-[#f97316] text-white flex items-center justify-center shadow-md">
+                      <div className="w-8 h-8 rounded-full bg-[#e06b5b] text-white flex items-center justify-center shadow-md">
                         <VideoPlay size={16} weight="Filled" />
                       </div>
                       <span className="text-[10px] font-bold text-white tracking-tight">
@@ -596,33 +518,33 @@ export default function ProductDetailsClient({
                 </div>
               )}
 
-              {/* Trust & Quality Assurance Banner */}
-              <div className="bg-[#f8fafc] rounded-3xl p-5 border border-[#e2e8f0] grid grid-cols-1 sm:grid-cols-3 gap-4 shadow-xs">
+              {/* Quality & Safety Assurance Bar */}
+              <div className="bg-[#fbf7f0] rounded-3xl p-5 border border-[#eddcd1] grid grid-cols-1 sm:grid-cols-3 gap-4 shadow-2xs">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-[#15803d] flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-2xl bg-[#eaf3ed] text-[#4f775d] flex items-center justify-center shrink-0">
                     <ShieldCheck size={22} weight="Filled" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-[#0b1c30]">100% Quality Inspected</p>
-                    <p className="text-[11px] text-[#584237]">Pre-checked before dispatch</p>
+                    <p className="text-xs font-bold text-[#2b1f1a]">Quality Inspected</p>
+                    <p className="text-[11px] text-[#6b5850]">Pre-checked before dispatch</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-[#ffedd5] text-[#ea580c] flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-2xl bg-[#fdedeb] text-[#e06b5b] flex items-center justify-center shrink-0">
                     <TruckFast size={22} weight="Filled" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-[#0b1c30]">Priority Express Shipping</p>
-                    <p className="text-[11px] text-[#584237]">Ships in {dispatchLeadTime}</p>
+                    <p className="text-xs font-bold text-[#2b1f1a]">Express Delivery</p>
+                    <p className="text-[11px] text-[#6b5850]">Dispatches in {dispatchLeadTime}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-[#eff4ff] text-[#0b1c30] flex items-center justify-center shrink-0">
-                    <CheckCircle size={22} weight="Filled" />
+                  <div className="w-10 h-10 rounded-2xl bg-[#fbf7f0] text-[#4f775d] flex items-center justify-center shrink-0 border border-[#eddcd1]">
+                    <Refresh size={20} weight="Filled" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-[#0b1c30]">Verified Authentic</p>
-                    <p className="text-[11px] text-[#584237]">24-Hour doorstep replacement</p>
+                    <p className="text-xs font-bold text-[#2b1f1a]">24-Hr Doorstep Replace</p>
+                    <p className="text-[11px] text-[#6b5850]">Hassle-free guarantee</p>
                   </div>
                 </div>
               </div>
@@ -632,120 +554,116 @@ export default function ProductDetailsClient({
             <div className="lg:col-span-5 space-y-5">
               {/* Category & Stock Tag */}
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-xs uppercase tracking-wider text-[#ea580c] bg-[#ffedd5] px-3 py-1 rounded-full font-bold">
+                <span className="text-xs uppercase tracking-wider text-[#e06b5b] bg-[#fdedeb] px-3 py-1 rounded-full font-bold border border-[#f5c7c1]">
                   {product.category} • Kharido Mart Verified
                 </span>
-                <span className="text-xs text-[#15803d] font-bold uppercase tracking-wide flex items-center gap-1">
-                  <CheckCircle size={15} weight="Filled" /> In Stock (Dispatches in 24 hrs)
+                <span className="text-xs text-[#4f775d] font-bold uppercase tracking-wide flex items-center gap-1">
+                  <CheckCircle size={15} weight="Filled" /> In Stock &amp; Ready to Ship
                 </span>
               </div>
 
               {/* Product Title & Hook */}
               <div>
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0b1c30] leading-tight">
+                <h1 className="text-2xl sm:text-3xl font-black text-[#2b1f1a] leading-tight tracking-tight">
                   {product.title}
                 </h1>
-                <p className="text-sm text-[#584237] mt-2.5 leading-relaxed">
-                  {heroHook}
-                </p>
+                {heroHook && (
+                  <p className="text-sm text-[#6b5850] mt-2.5 leading-relaxed">
+                    {heroHook}
+                  </p>
+                )}
               </div>
 
               {/* Star Rating & Social Proof */}
-              <div className="flex items-center flex-wrap gap-2.5 bg-white p-3 rounded-2xl border border-[#e2e8f0] shadow-2xs">
+              <div className="flex items-center flex-wrap gap-2.5 bg-white p-3.5 rounded-2xl border border-[#eddcd1] shadow-2xs">
                 <div className="flex items-center text-[#f59e0b]">
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} size={16} weight="Filled" />
                   ))}
                 </div>
-                <span className="font-space font-bold text-sm text-[#0b1c30]">
+                <span className="font-space font-bold text-sm text-[#2b1f1a] tabular-nums">
                   {liveRating.toFixed(1)}
                 </span>
-                <span className="text-xs text-[#584237]">
+                <span className="text-xs text-[#6b5850]">
                   ({liveReviewsCount} verified {liveReviewsCount === 1 ? "review" : "reviews"})
                 </span>
-                <span className="text-[#584237]/30">|</span>
-                <span className="text-xs font-semibold text-[#15803d] flex items-center gap-1">
-                  <Check size={14} weight="Filled" /> 98% Customer Satisfaction
+                <span className="text-[#eddcd1]">•</span>
+                <span className="text-xs font-semibold text-[#4f775d] flex items-center gap-1">
+                  <Check size={14} weight="Filled" /> 98% Parent Satisfaction
                 </span>
               </div>
 
               {/* Price Display Section */}
-              <div className="bg-white p-5 rounded-3xl border border-[#e2e8f0] shadow-xs space-y-3">
+              <div className="bg-white p-5 rounded-3xl border border-[#eddcd1] shadow-xs space-y-3">
                 <div className="flex items-baseline gap-3 flex-wrap">
-                  <span className="font-space font-extrabold text-3xl sm:text-4xl text-[#0b1c30]">
+                  <span className="font-space font-extrabold text-3xl sm:text-4xl text-[#2b1f1a] tabular-nums">
                     ₹{product.price.toLocaleString("en-IN")}.00
                   </span>
-                  <span className="font-space text-sm sm:text-base text-[#584237]/60 line-through">
-                    ₹{product.originalPrice.toLocaleString("en-IN")}.00
-                  </span>
-                  <span className="px-2.5 py-1 bg-[#ef4444]/10 text-[#ef4444] font-space font-bold text-xs rounded-lg uppercase">
-                    Save ₹{(product.originalPrice - product.price).toLocaleString("en-IN")} ({discountPercent}% OFF)
-                  </span>
+                  {product.originalPrice > product.price && (
+                    <span className="font-space text-sm sm:text-base text-[#6b5850]/60 line-through tabular-nums">
+                      ₹{product.originalPrice.toLocaleString("en-IN")}.00
+                    </span>
+                  )}
+                  {discountPercent > 0 && (
+                    <span className="px-2.5 py-1 bg-[#4f775d]/10 text-[#4f775d] font-space font-bold text-xs rounded-lg uppercase">
+                      Save ₹{(product.originalPrice - product.price).toLocaleString("en-IN")} ({discountPercent}% OFF)
+                    </span>
+                  )}
                 </div>
-                <p className="text-xs text-[#584237]">
-                  Inclusive of all taxes. Free express shipping on all orders today.
+                <p className="text-xs text-[#6b5850]">
+                  Inclusive of all taxes. Free express shipping on all orders ₹499+.
                 </p>
 
-                {/* Quality & Safe Packaging Assurance */}
-                <div className="bg-[#f0fdf4] border border-emerald-200/90 rounded-2xl p-3 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-100 text-[#15803d] flex items-center justify-center shrink-0">
+                {/* Safe Materials Assurance */}
+                <div className="bg-[#eaf3ed] border border-[#d2e7d7] rounded-2xl p-3 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-[#4f775d] text-white flex items-center justify-center shrink-0">
                     <ShieldCheck size={18} weight="Filled" />
                   </div>
                   <div className="text-xs">
-                    <p className="font-bold text-[#0b1c30]">
-                      Quality-Checked &amp; Sanitized Packaging
+                    <p className="font-bold text-[#2b1f1a]">
+                      Certified Child-Safe &amp; BPA-Free Materials
                     </p>
-                    <p className="text-[11px] text-[#584237] mt-0.5">
-                      Inspected, sterilized, and bubble-wrapped for 100% damage-free doorstep transit.
+                    <p className="text-[11px] text-[#6b5850] mt-0.5">
+                      Smooth rounded edges and food-grade components curated for sensitive baby care.
                     </p>
                   </div>
                 </div>
 
                 {/* UPI / Prepaid Extra ₹50 Discount Incentive */}
-                <div className="bg-emerald-50/80 border border-emerald-200 rounded-2xl p-3 flex items-center justify-between text-xs">
+                <div className="bg-[#fbf7f0] border border-[#eddcd1] rounded-2xl p-3 flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
-                    <TicketDiscount size={18} weight="Filled" className="text-[#15803d] shrink-0" />
-                    <span className="text-[#0b1c30] font-semibold">
+                    <TicketDiscount size={18} weight="Filled" className="text-[#4f775d] shrink-0" />
+                    <span className="text-[#2b1f1a] font-medium">
                       Pay via <strong>UPI / GPay / Cards</strong> &amp; get <strong>Instant ₹50 OFF</strong>
                     </span>
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#15803d] bg-emerald-100/70 px-2 py-0.5 rounded-md shrink-0">
-                    Auto Applied
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#4f775d] bg-[#eaf3ed] px-2 py-0.5 rounded-md shrink-0">
+                    Auto-Applied
                   </span>
                 </div>
 
-                {/* Live Same-Day Dispatch Countdown Timer */}
-                <div className="bg-[#fdedeb] border border-[#f5c7c1] rounded-2xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-[#e06b5b] text-white flex items-center justify-center shrink-0 shadow-2xs">
-                      <Clock size={16} weight="Filled" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-[#2b1f1a] flex items-center gap-1.5">
-                        <span>Same-Day Dispatch Cutoff:</span>
-                        <span className="text-[#e06b5b] font-space font-extrabold">{cutoffTimeDisplay}</span>
-                      </p>
-                      <p className="text-[11px] text-[#6b5850]">
-                        Order in the next window for priority warehouse handoff
-                      </p>
-                    </div>
+                {/* Calm Same-Day Dispatch Commitment */}
+                <div className="bg-[#fdedeb]/60 border border-[#eddcd1] rounded-2xl p-3 flex items-center gap-3 text-xs">
+                  <div className="w-8 h-8 rounded-xl bg-[#e06b5b] text-white flex items-center justify-center shrink-0 shadow-2xs">
+                    <TruckFast size={16} weight="Filled" />
                   </div>
-                  <div className="flex items-center justify-center gap-1 self-stretch sm:self-auto bg-white px-2.5 py-1.5 rounded-xl border border-[#eddcd1] shadow-2xs font-space font-bold text-xs text-[#e06b5b] tabular-nums">
-                    <span className="bg-[#fdfbf7] px-1.5 py-0.5 rounded border border-[#eddcd1]/70">{dispatchCountdown.hours}h</span>
-                    <span>:</span>
-                    <span className="bg-[#fdfbf7] px-1.5 py-0.5 rounded border border-[#eddcd1]/70">{dispatchCountdown.minutes}m</span>
-                    <span>:</span>
-                    <span className="bg-[#fdfbf7] px-1.5 py-0.5 rounded border border-[#eddcd1]/70">{dispatchCountdown.seconds}s</span>
+                  <div>
+                    <p className="font-bold text-[#2b1f1a]">
+                      Fast Pan-India Dispatch: Orders before 3:00 PM IST ship same day
+                    </p>
+                    <p className="text-[11px] text-[#6b5850]">
+                      Dispatched via BlueDart / Delhivery Express with real-time WhatsApp updates.
+                    </p>
                   </div>
                 </div>
               </div>
 
-              {/* Color Finish Selector */}
+              {/* Color Finish Selector (if applicable) */}
               {colorVariants.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-[#0b1c30]">Select Color Finish:</span>
-                    <span className="text-xs font-bold text-[#ea580c]">{selectedColor}</span>
+                    <span className="text-xs font-bold text-[#2b1f1a]">Select Color Finish:</span>
+                    <span className="text-xs font-bold text-[#e06b5b]">{selectedColor}</span>
                   </div>
                   <div className="flex items-center flex-wrap gap-2 sm:gap-2.5">
                     {colorVariants.map((color) => (
@@ -755,149 +673,107 @@ export default function ProductDetailsClient({
                         onClick={() => setSelectedColor(color.name)}
                         className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border cursor-pointer ${
                           selectedColor === color.name
-                            ? "border-[#f97316] bg-orange-50/40 shadow-xs"
-                            : "border-[#e2e8f0] bg-white hover:bg-slate-50"
+                            ? "border-[#e06b5b] bg-[#fdedeb]/50 shadow-xs text-[#2b1f1a]"
+                            : "border-[#eddcd1] bg-white hover:bg-stone-50 text-[#6b5850]"
                         }`}
                       >
                         <span
                           className="w-4 h-4 rounded-full border border-black/10 shadow-inner shrink-0"
                           style={{ backgroundColor: color.hex }}
                         />
-                        <span className="text-[#0b1c30]">{color.label || color.name}</span>
+                        <span>{color.label || color.name}</span>
                       </button>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Quantity Bundle Deals (WideBundle dropshipping pattern) */}
-              <div className="space-y-2.5">
+              {/* Clean Quantity Selector & Real Subtotal */}
+              <div className="bg-white p-4 rounded-3xl border border-[#eddcd1] shadow-2xs space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#0b1c30] flex items-center gap-1.5">
-                    <Sparkles size={15} weight="Filled" className="text-[#f97316]" />
-                    <span>Select Bundle &amp; Save (Direct Factory Deals):</span>
-                  </span>
-                  <span className="text-[11px] font-bold text-[#ea580c] bg-orange-100/70 px-2 py-0.5 rounded-full">
-                    Save up to 25% OFF
-                  </span>
+                  <span className="text-xs font-bold text-[#2b1f1a]">Quantity:</span>
+                  <div className="flex items-center gap-2">
+                    {currentTotalPrice >= 499 ? (
+                      <span className="text-[11px] font-bold text-[#4f775d] bg-[#eaf3ed] px-2 py-0.5 rounded-full">
+                        🎉 Free Express Delivery Unlocked
+                      </span>
+                    ) : (
+                      <span className="text-[11px] text-[#6b5850]">
+                        Add ₹{499 - currentTotalPrice} more for Free Shipping
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-2.5">
-                  {bundleTiers.map((tier) => {
-                    const isSelected = quantity === tier.qty;
-                    return (
-                      <div
-                        key={tier.tier}
-                        onClick={() => {
-                          setQuantity(tier.qty);
-                        }}
-                        className={`relative p-3.5 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between ${
-                          isSelected
-                            ? "border-[#f97316] bg-orange-50/40 shadow-xs"
-                            : "border-[#e2e8f0] bg-white hover:border-orange-200 hover:bg-[#fafafa]"
-                        }`}
-                      >
-                        {tier.badge && (
-                          <div className="absolute -top-2.5 right-4 bg-[#f97316] text-white text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-xs">
-                            {tier.badge}
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                          <div
-                            className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                              isSelected ? "border-[#f97316] bg-[#f97316]" : "border-[#cbd5e1] bg-white"
-                            }`}
-                          >
-                            {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center flex-wrap gap-1.5">
-                              <span className="font-bold text-xs text-[#0b1c30]">{tier.title}</span>
-                              {tier.discountLabel && (
-                                <span className="text-[10px] font-bold text-[#15803d] bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 shrink-0">
-                                  {tier.discountLabel}
-                                </span>
-                              )}
-                            </div>
-                            <span className="text-[11px] text-[#584237]/80 block truncate">{tier.subtitle}</span>
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0 pl-2">
-                          <span className="font-space font-extrabold text-sm text-[#0b1c30] block">
-                            ₹{tier.totalPrice.toLocaleString("en-IN")}
-                          </span>
-                          {tier.qty > 1 && (
-                            <span className="text-[10px] text-[#584237]/70 line-through block">
-                              ₹{(product.price * tier.qty).toLocaleString("en-IN")}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center bg-[#fdfbf7] rounded-2xl p-1 border border-[#eddcd1] shrink-0">
+                    <button
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      className="w-9 h-9 rounded-xl flex items-center justify-center text-[#2b1f1a] hover:bg-white transition-colors font-bold text-sm cursor-pointer"
+                      aria-label="Decrease quantity"
+                    >
+                      -
+                    </button>
+                    <span className="w-10 text-center font-space font-bold text-sm text-[#2b1f1a] tabular-nums">
+                      {quantity}
+                    </span>
+                    <button
+                      onClick={() => setQuantity(quantity + 1)}
+                      className="w-9 h-9 rounded-xl flex items-center justify-center text-[#2b1f1a] hover:bg-white transition-colors font-bold text-sm cursor-pointer"
+                      aria-label="Increase quantity"
+                    >
+                      +
+                    </button>
+                  </div>
+
+                  <div className="text-right">
+                    <span className="text-xs text-[#6b5850] block">Subtotal:</span>
+                    <span className="text-lg sm:text-xl font-space font-extrabold text-[#2b1f1a] tabular-nums">
+                      ₹{currentTotalPrice.toLocaleString("en-IN")}.00
+                    </span>
+                  </div>
                 </div>
               </div>
 
               {/* Highlights Feature Bullets */}
               {cleanHighlights.length > 0 && (
-                <div className="bg-[#f8fafc] p-4 rounded-2xl border border-[#e2e8f0] space-y-2">
-                  {cleanHighlights.slice(0, 5).map((h, i) => (
-                    <div key={i} className="flex items-start gap-2 text-xs text-[#0b1c30]">
-                      <CheckCircle size={16} weight="Filled" className="text-[#15803d] shrink-0 mt-0.5" />
-                      <span>{h}</span>
+                <div className="bg-[#fbf7f0] p-4 rounded-2xl border border-[#eddcd1] space-y-2">
+                  {cleanHighlights.slice(0, 4).map((h, i) => (
+                    <div key={i} className="flex items-start gap-2 text-xs text-[#2b1f1a]">
+                      <CheckCircle size={16} weight="Filled" className="text-[#4f775d] shrink-0 mt-0.5" />
+                      <span className="leading-relaxed">{h}</span>
                     </div>
                   ))}
                 </div>
               )}
 
-              {/* Quantity Stepper & Dual Action Buttons */}
-              <div className="space-y-3 pt-1">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center bg-white rounded-2xl p-1 shadow-xs border border-[#e2e8f0] shrink-0">
-                    <button
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="w-9 h-9 rounded-xl flex items-center justify-center text-[#0b1c30] hover:bg-slate-100 transition-colors font-bold text-sm cursor-pointer"
-                    >
-                      -
-                    </button>
-                    <span className="w-9 text-center font-space font-bold text-sm text-[#0b1c30]">
-                      {quantity}
-                    </span>
-                    <button
-                      onClick={() => setQuantity(quantity + 1)}
-                      className="w-9 h-9 rounded-xl flex items-center justify-center text-[#0b1c30] hover:bg-slate-100 transition-colors font-bold text-sm cursor-pointer"
-                    >
-                      +
-                    </button>
-                  </div>
-                  <div className="flex-1 min-w-0 text-[11px] sm:text-xs text-[#584237] leading-tight">
-                    <span className="flex items-start sm:items-center gap-1.5 font-medium">
-                      <TruckFast size={16} weight="Filled" className="text-[#f97316] shrink-0 mt-0.5 sm:mt-0" />
-                      <span>Dispatches in <strong>{dispatchLeadTime}</strong> with WhatsApp live tracking</span>
-                    </span>
-                  </div>
-                </div>
+              {/* Dual Action Buttons (Add to Bag + Buy Now / Direct Checkout) */}
+              <div className="space-y-2.5 pt-1">
+                <button
+                  onClick={handleAddToCart}
+                  className="w-full h-13 bg-[#e06b5b] hover:bg-[#c95444] active:scale-[0.98] text-white font-bold text-sm sm:text-base rounded-2xl flex items-center justify-center gap-2.5 shadow-lg shadow-[#e06b5b]/25 transition-all cursor-pointer"
+                >
+                  <ShoppingBag size={20} weight="Filled" />
+                  <span>Add to Bag — ₹{currentTotalPrice.toLocaleString("en-IN")}</span>
+                </button>
 
-                {/* Primary Full-Width Action Button */}
-                <div>
-                  <button
-                    onClick={handleAddToCart}
-                    className="w-full h-13 bg-[#e06b5b] hover:bg-[#c95444] active:scale-[0.98] text-white font-bold text-base rounded-2xl flex items-center justify-center gap-2.5 shadow-lg shadow-[#e06b5b]/25 transition-all cursor-pointer"
-                  >
-                    <ShoppingBag size={20} weight="Filled" />
-                    <span>Add to Bag — ₹{currentTotalPrice.toLocaleString("en-IN")}</span>
-                  </button>
-                </div>
+                <button
+                  onClick={handleBuyNow}
+                  className="w-full h-12 bg-[#2b1f1a] hover:bg-[#3d2c25] active:scale-[0.98] text-white font-bold text-xs sm:text-sm rounded-2xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
+                >
+                  <span>⚡ Buy Now (Cash on Delivery / UPI)</span>
+                  <ArrowRight size={16} weight="Outline" />
+                </button>
               </div>
 
               {/* Live Pincode Check & Delivery Estimator Widget */}
               <div className="bg-white p-4 sm:p-5 rounded-3xl border border-[#eddcd1] shadow-xs space-y-3">
                 <div className="flex items-center justify-between">
                   <label className="block text-xs font-bold text-[#2b1f1a]">
-                    Estimate Delivery Date &amp; COD:
+                    Check Pincode &amp; Delivery Timeline:
                   </label>
                   <span className="text-[11px] text-[#4f775d] font-semibold flex items-center gap-1">
-                    <TruckFast size={14} weight="Filled" /> All India Express
+                    <TruckFast size={14} weight="Filled" /> Pan-India Express
                   </span>
                 </div>
 
@@ -981,7 +857,7 @@ export default function ProductDetailsClient({
                         <p className="font-bold text-[#2b1f1a]">
                           Expected Delivery:{" "}
                           <span className="text-[#e06b5b] font-space font-extrabold underline underline-offset-2">
-                            {getDeliveryEstimate(pincode).startDate} – {getDeliveryEstimate(pincode).endDate}
+                            {deliveryEstimate ? `${deliveryEstimate.startDate} – ${deliveryEstimate.endDate}` : `${getDeliveryEstimate(pincode).startDate} – ${getDeliveryEstimate(pincode).endDate}`}
                           </span>
                         </p>
                         <p className="text-[11px] text-[#6b5850] mt-0.5">
@@ -989,42 +865,36 @@ export default function ProductDetailsClient({
                           <strong>
                             {pincodeLocation
                               ? `${pincodeLocation.district}, ${pincodeLocation.state}`
-                              : getDeliveryEstimate(pincode).region}{" "}
+                              : (deliveryEstimate ? deliveryEstimate.region : getDeliveryEstimate(pincode).region)}{" "}
                             ({pincode})
                           </strong>{" "}
-                          via Priority Express Delivery
+                          via Priority Express Courier
                         </p>
                       </div>
                     </div>
 
-                    {/* Dispatch Urgency Alert */}
-                    <div className="flex items-center gap-1.5 text-[11px] text-[#4f775d] font-bold bg-[#eaf3ed] p-2 rounded-xl">
-                      <Sparkles size={14} weight="Filled" className="shrink-0 text-[#4f775d]" />
-                      <span>Order in next {dispatchCountdown.hours}h {dispatchCountdown.minutes}m for priority same-day warehouse handoff!</span>
-                    </div>
-
                     <div className="pt-2 border-t border-[#eddcd1]/70 flex flex-wrap gap-2 text-[11px]">
-                      <span className="bg-white text-[#2c4a35] border border-[#eddcd1] font-semibold px-2 py-0.5 rounded-md">
+                      <span className="bg-white text-[#4f775d] border border-[#eddcd1] font-semibold px-2 py-0.5 rounded-md">
                         ✓ Cash on Delivery (COD) Available
                       </span>
-                      <span className="bg-white text-[#2c4a35] border border-[#eddcd1] font-semibold px-2 py-0.5 rounded-md">
-                        ✓ Free Express Delivery
+                      <span className="bg-white text-[#4f775d] border border-[#eddcd1] font-semibold px-2 py-0.5 rounded-md">
+                        ✓ Free Express Delivery (₹499+)
                       </span>
-                      <span className="bg-white text-[#2c4a35] border border-[#eddcd1] font-semibold px-2 py-0.5 rounded-md">
-                        ✓ 24-Hr Doorstep Replacement
+                      <span className="bg-white text-[#4f775d] border border-[#eddcd1] font-semibold px-2 py-0.5 rounded-md">
+                        ✓ 24-Hr Doorstep Replacement Guarantee
                       </span>
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Reassurance Badges */}
+              {/* Transparent Reassurance Badges */}
               <div className="grid grid-cols-2 gap-3 pt-1">
-                <div className="bg-[#fdfbf7] p-3 rounded-2xl flex items-center gap-2 border border-[#eddcd1]">
-                  <TruckFast size={20} weight="Filled" className="text-[#e06b5b]" />
-                  <span className="text-xs font-semibold text-[#2b1f1a]">24-Hr Replacement (Video Req.)</span>
+                <div className="bg-white p-3 rounded-2xl flex items-center gap-2 border border-[#eddcd1] shadow-2xs">
+                  <Refresh size={20} weight="Filled" className="text-[#e06b5b]" />
+                  <span className="text-xs font-semibold text-[#2b1f1a]">24-Hr Replacement Guarantee</span>
                 </div>
-                <div className="bg-[#fdfbf7] p-3 rounded-2xl flex items-center gap-2 border border-[#eddcd1]">
+                <div className="bg-white p-3 rounded-2xl flex items-center gap-2 border border-[#eddcd1] shadow-2xs">
                   <ShieldCheck size={20} weight="Filled" className="text-[#4f775d]" />
                   <span className="text-xs font-semibold text-[#2b1f1a]">100% Quality Inspected</span>
                 </div>
@@ -1034,75 +904,89 @@ export default function ProductDetailsClient({
         </div>
       </section>
 
-      {/* Product Details, Specs & Verified Reviews Section */}
-      <section className="w-full py-12 sm:py-16 bg-white border-t border-[#e2e8f0]">
+      {/* Product Details, Specs, Shipping & Verified Reviews Tabs */}
+      <section className="w-full py-12 sm:py-16 bg-white border-t border-[#eddcd1]">
         <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-          <div className="flex items-center justify-center gap-6 border-b border-[#e2e8f0] pb-4">
+          <div className="flex items-center justify-center flex-wrap gap-3 sm:gap-6 border-b border-[#eddcd1] pb-4">
             <button
               onClick={() => setActiveTab("description")}
-              className={`pb-2 text-sm font-bold transition-all relative ${
+              className={`pb-2 text-xs sm:text-sm font-bold transition-all relative cursor-pointer ${
                 activeTab === "description"
-                  ? "text-[#f97316]"
-                  : "text-[#584237] hover:text-[#0b1c30]"
+                  ? "text-[#e06b5b]"
+                  : "text-[#6b5850] hover:text-[#2b1f1a]"
               }`}
             >
-              <span>Description</span>
+              <span>Overview &amp; Benefits</span>
               {activeTab === "description" && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#f97316]"></span>
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#e06b5b]" />
               )}
             </button>
             <button
               onClick={() => setActiveTab("specs")}
-              className={`pb-2 text-sm font-bold transition-all relative ${
+              className={`pb-2 text-xs sm:text-sm font-bold transition-all relative cursor-pointer ${
                 activeTab === "specs"
-                  ? "text-[#f97316]"
-                  : "text-[#584237] hover:text-[#0b1c30]"
+                  ? "text-[#e06b5b]"
+                  : "text-[#6b5850] hover:text-[#2b1f1a]"
               }`}
             >
-              <span>Specifications</span>
+              <span>Specifications &amp; Materials</span>
               {activeTab === "specs" && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#f97316]"></span>
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#e06b5b]" />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab("shipping")}
+              className={`pb-2 text-xs sm:text-sm font-bold transition-all relative cursor-pointer ${
+                activeTab === "shipping"
+                  ? "text-[#e06b5b]"
+                  : "text-[#6b5850] hover:text-[#2b1f1a]"
+              }`}
+            >
+              <span>Shipping &amp; 24h Replacement</span>
+              {activeTab === "shipping" && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#e06b5b]" />
               )}
             </button>
             <button
               onClick={() => setActiveTab("reviews")}
-              className={`pb-2 text-sm font-bold transition-all relative ${
+              className={`pb-2 text-xs sm:text-sm font-bold transition-all relative cursor-pointer ${
                 activeTab === "reviews"
-                  ? "text-[#f97316]"
-                  : "text-[#584237] hover:text-[#0b1c30]"
+                  ? "text-[#e06b5b]"
+                  : "text-[#6b5850] hover:text-[#2b1f1a]"
               }`}
             >
-              <span>Customer Reviews ({liveReviewsCount})</span>
+              <span>Verified Reviews ({liveReviewsCount})</span>
               {activeTab === "reviews" && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#f97316]"></span>
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#e06b5b]" />
               )}
             </button>
           </div>
 
+          {/* TAB 1: Overview & Benefits */}
           {activeTab === "description" && (
             <div className="max-w-4xl mx-auto space-y-6 pt-2">
-              <div className="bg-[#f8fafc] rounded-3xl p-6 sm:p-8 border border-[#e2e8f0]">
-                <h3 className="font-extrabold text-base text-[#0b1c30] mb-3">
+              <div className="bg-[#fbf7f0] rounded-3xl p-6 sm:p-8 border border-[#eddcd1]">
+                <h3 className="font-black text-base sm:text-lg text-[#2b1f1a] mb-3 tracking-tight">
                   About {product.shortTitle || product.title}
                 </h3>
-                <div className="text-xs sm:text-sm text-[#584237] leading-relaxed whitespace-pre-line">
+                <div className="text-xs sm:text-sm text-[#6b5850] leading-relaxed whitespace-pre-line">
                   {cleanDescription}
                 </div>
               </div>
 
               {cleanHighlights.length > 0 && (
-                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#e2e8f0] shadow-xs space-y-4">
-                  <h3 className="font-extrabold text-base text-[#0b1c30]">
+                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#eddcd1] shadow-xs space-y-4">
+                  <h3 className="font-black text-base text-[#2b1f1a] tracking-tight">
                     Key Highlights &amp; Features
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {cleanHighlights.map((hl, idx) => (
                       <div
                         key={idx}
-                        className="flex items-start gap-3 p-3.5 rounded-2xl bg-[#f8fafc] border border-[#e2e8f0]"
+                        className="flex items-start gap-3 p-3.5 rounded-2xl bg-[#fdfbf7] border border-[#eddcd1]"
                       >
-                        <CheckCircle size={18} weight="Filled" className="text-[#15803d] shrink-0 mt-0.5" />
-                        <span className="text-xs font-semibold text-[#0b1c30] leading-snug">{hl}</span>
+                        <CheckCircle size={18} weight="Filled" className="text-[#4f775d] shrink-0 mt-0.5" />
+                        <span className="text-xs font-semibold text-[#2b1f1a] leading-snug">{hl}</span>
                       </div>
                     ))}
                   </div>
@@ -1111,45 +995,96 @@ export default function ProductDetailsClient({
             </div>
           )}
 
+          {/* TAB 2: Specifications & Materials */}
           {activeTab === "specs" && (
             <div className="max-w-3xl mx-auto space-y-6">
-              <div className="bg-[#f8fafc] rounded-3xl p-6 sm:p-8 border border-[#e2e8f0] shadow-xs">
-                <div className="flex items-center justify-between pb-4 border-b border-[#e2e8f0]">
-                  <h3 className="font-bold text-base text-[#0b1c30]">
-                    Technical Specifications
+              <div className="bg-[#fbf7f0] rounded-3xl p-6 sm:p-8 border border-[#eddcd1] shadow-xs">
+                <div className="flex items-center justify-between pb-4 border-b border-[#eddcd1]">
+                  <h3 className="font-black text-base text-[#2b1f1a] tracking-tight">
+                    Technical Specifications &amp; Quality Check
                   </h3>
-                  <span className="text-xs font-semibold text-[#15803d] flex items-center gap-1">
-                    <CheckCircle size={14} weight="Filled" /> QC Certified
+                  <span className="text-xs font-semibold text-[#4f775d] flex items-center gap-1">
+                    <CheckCircle size={14} weight="Filled" /> Verified Safe
                   </span>
                 </div>
-                <dl className="divide-y divide-[#e2e8f0]">
-                  {product.specs.map((spec, i) => (
-                    <div key={i} className="py-3 flex justify-between text-xs sm:text-sm">
-                      <dt className="text-[#584237] font-medium">{spec.label}</dt>
-                      <dd className="font-bold text-[#0b1c30] text-right">{spec.value}</dd>
+                <dl className="divide-y divide-[#eddcd1]">
+                  {product.specs && product.specs.length > 0 ? (
+                    product.specs.map((spec, i) => (
+                      <div key={i} className="py-3 flex justify-between text-xs sm:text-sm">
+                        <dt className="text-[#6b5850] font-medium">{spec.label}</dt>
+                        <dd className="font-bold text-[#2b1f1a] text-right">{spec.value}</dd>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="py-3 text-xs text-[#6b5850]">
+                      Standard baby care safety specifications apply. Food-grade, BPA-free, and certified child-friendly.
                     </div>
-                  ))}
+                  )}
                 </dl>
               </div>
             </div>
           )}
 
+          {/* TAB 3: Shipping, COD & 24h Replacement */}
+          {activeTab === "shipping" && (
+            <div className="max-w-3xl mx-auto space-y-6">
+              <div className="bg-[#fbf7f0] rounded-3xl p-6 sm:p-8 border border-[#eddcd1] shadow-xs space-y-5">
+                <h3 className="font-black text-base sm:text-lg text-[#2b1f1a] tracking-tight">
+                  Transparent Delivery, COD &amp; Doorstep Replacement
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 rounded-2xl bg-white border border-[#eddcd1] space-y-2">
+                    <div className="flex items-center gap-2 text-[#e06b5b]">
+                      <TruckFast size={18} weight="Filled" />
+                      <h4 className="font-bold text-xs sm:text-sm text-[#2b1f1a]">Express Pan-India Delivery</h4>
+                    </div>
+                    <p className="text-xs text-[#6b5850] leading-relaxed">
+                      Orders placed before 3:00 PM IST dispatch same day. Delivery takes 2–3 days for metro cities (Delhi NCR, Mumbai, Bengaluru, Kolkata) and 3–5 days across India via BlueDart, Delhivery, or Xpressbees.
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-white border border-[#eddcd1] space-y-2">
+                    <div className="flex items-center gap-2 text-[#4f775d]">
+                      <TicketDiscount size={18} weight="Filled" />
+                      <h4 className="font-bold text-xs sm:text-sm text-[#2b1f1a]">Cash on Delivery &amp; UPI</h4>
+                    </div>
+                    <p className="text-xs text-[#6b5850] leading-relaxed">
+                      Cash on Delivery (COD) is available across 28,000+ pin codes. Prefer prepaid? Pay via UPI (GPay/PhonePe/Paytm) to receive an automatic ₹50 instant discount at checkout.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-[#eaf3ed] border border-[#d2e7d7] space-y-2">
+                  <div className="flex items-center gap-2 text-[#4f775d]">
+                    <ShieldCheck size={20} weight="Filled" />
+                    <h4 className="font-bold text-xs sm:text-sm text-[#2b1f1a]">24-Hour Doorstep Replacement Guarantee</h4>
+                  </div>
+                  <p className="text-xs text-[#6b5850] leading-relaxed">
+                    If an item arrives damaged, defective, or missing parts, share a short unboxing video with our WhatsApp care team (+91 85400 17572) within 24 hours of delivery. We promptly dispatch a brand-new replacement at zero extra cost.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 4: Verified Reviews */}
           {activeTab === "reviews" && (
-            <div className="space-y-6 pt-2">
+            <div className="space-y-6 pt-2 max-w-4xl mx-auto">
               {/* Header with Write a Review Button */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-[#e2e8f0] shadow-xs">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[#fbf7f0] p-5 rounded-3xl border border-[#eddcd1] shadow-2xs">
                 <div>
-                  <h3 className="font-extrabold text-lg text-[#0b1c30]">
+                  <h3 className="font-black text-lg text-[#2b1f1a] tracking-tight">
                     Verified Customer Reviews
                   </h3>
-                  <p className="text-xs text-[#584237] mt-0.5">
-                    Reviews from customers who purchased this item on Kharido Mart
+                  <p className="text-xs text-[#6b5850] mt-0.5">
+                    Real feedback from customers who purchased this item on Kharido Mart
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsReviewModalOpen(true)}
-                  className="px-5 py-2.5 bg-[#f97316] hover:bg-[#ea580c] text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 shrink-0"
+                  className="px-5 py-2.5 bg-[#e06b5b] hover:bg-[#c95444] active:scale-[0.98] text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
                 >
                   <Star size={14} weight="Filled" />
                   <span>Write a Review</span>
@@ -1157,96 +1092,91 @@ export default function ProductDetailsClient({
               </div>
 
               {/* User Submitted Reviews */}
-              {userReviews.length > 0 && (
+              {userReviews.length > 0 ? (
                 <div className="space-y-3">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#ea580c]">
-                    Recent Community Feedback
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    {userReviews.map((rev, idx) => (
-                      <div
-                        key={idx}
-                        className="p-5 bg-white rounded-3xl border border-orange-200 shadow-2xs space-y-2"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1 text-[#f59e0b]">
-                            {[...Array(rev.rating)].map((_, i) => (
-                              <Star key={i} size={15} weight="Filled" />
-                            ))}
-                          </div>
-                          <span className="text-[11px] text-[#584237] font-medium">{rev.date}</span>
-                        </div>
-                        {rev.title && (
-                          <h4 className="font-bold text-sm text-[#0b1c30]">&quot;{rev.title}&quot;</h4>
-                        )}
-                        <p className="text-xs text-[#584237] leading-relaxed">{rev.comment}</p>
-                        <p className="text-[11px] font-bold text-[#0b1c30] pt-1 flex items-center gap-1">
-                          <CheckCircle size={13} weight="Filled" className="text-[#15803d]" />
-                          <span>{rev.name} — Verified Buyer, {rev.city || "India"}</span>
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Reviews Loading State */}
-              {isLoadingReviews && userReviews.length === 0 && (
-                <div className="p-8 text-center bg-[#f8fafc] rounded-3xl border border-[#e2e8f0] max-w-lg mx-auto flex flex-col items-center justify-center gap-3">
-                  <div className="w-6 h-6 border-2 border-[#f97316] border-t-transparent rounded-full animate-spin" />
-                  <p className="text-xs text-[#584237]">Loading verified customer reviews...</p>
-                </div>
-              )}
-
-              {/* Empty state when no reviews submitted yet */}
-              {!isLoadingReviews && userReviews.length === 0 && (
-                <div className="p-8 sm:p-12 text-center bg-[#f8fafc] rounded-3xl border border-[#e2e8f0] max-w-lg mx-auto space-y-3">
-                  <div className="w-12 h-12 rounded-2xl bg-orange-100 text-[#f97316] flex items-center justify-center mx-auto">
-                    <Star size={24} weight="Filled" />
-                  </div>
-                  <h4 className="font-bold text-base text-[#0b1c30]">No reviews yet for this product</h4>
-                  <p className="text-xs text-[#584237]">
-                    Be the first verified customer to share your experience with this product!
-                  </p>
-                  <div className="pt-1">
-                    <button
-                      type="button"
-                      onClick={() => setIsReviewModalOpen(true)}
-                      className="px-5 py-2.5 bg-[#f97316] hover:bg-[#ea580c] text-white font-bold text-xs rounded-xl shadow-xs transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                  {userReviews.map((r, idx) => (
+                    <div
+                      key={r.id || idx}
+                      className="bg-white p-5 rounded-2xl border border-[#eddcd1] shadow-2xs space-y-2"
                     >
-                      <Star size={14} weight="Filled" />
-                      <span>Write First Review</span>
-                    </button>
-                  </div>
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-xs text-[#2b1f1a]">
+                            {r.customerName || r.name}
+                          </span>
+                          {r.verified && (
+                            <span className="text-[10px] text-[#4f775d] bg-[#eaf3ed] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                              <CheckCircle size={12} weight="Filled" /> Verified Purchase
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[11px] text-[#6b5850]">{r.date}</span>
+                      </div>
+
+                      <div className="flex items-center text-[#f59e0b]">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            size={14}
+                            weight={i < r.rating ? "Filled" : "Outline"}
+                          />
+                        ))}
+                      </div>
+
+                      {r.title && (
+                        <p className="font-bold text-xs text-[#2b1f1a]">{r.title}</p>
+                      )}
+
+                      <p className="text-xs text-[#6b5850] leading-relaxed">
+                        {r.comment}
+                      </p>
+
+                      {r.city && (
+                        <span className="text-[10px] text-[#6b5850]/70 block">
+                          Purchased in {r.city}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-white p-8 rounded-3xl border border-[#eddcd1] text-center space-y-3">
+                  <p className="text-sm font-bold text-[#2b1f1a]">No reviews yet for this product</p>
+                  <p className="text-xs text-[#6b5850]">
+                    Be the first parent to share your experience and receive an extra discount coupon!
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setIsReviewModalOpen(true)}
+                    className="px-4 py-2 bg-[#2b1f1a] text-white text-xs font-bold rounded-xl"
+                  >
+                    Write the First Review
+                  </button>
                 </div>
               )}
             </div>
           )}
 
-          {/* Interactive Write Review Modal */}
+          {/* Review Submission Modal */}
           {isReviewModalOpen && (
-            <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-              <div className="bg-white w-full max-w-lg rounded-3xl p-6 sm:p-8 shadow-2xl border border-[#e2e8f0] space-y-5 animate-in fade-in zoom-in-95">
-                <div className="flex items-center justify-between pb-3 border-b border-[#e2e8f0]">
-                  <div>
-                    <h3 className="text-lg font-bold text-[#0b1c30]">
-                      Write a Verified Customer Review
-                    </h3>
-                    <p className="text-xs text-[#584237]">
-                      Share your experience with {product.shortTitle}
-                    </p>
-                  </div>
+            <div className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-[#eddcd1] space-y-4 animate-in zoom-in-95 duration-200">
+                <div className="flex items-center justify-between pb-3 border-b border-[#eddcd1]">
+                  <h3 className="text-base font-black text-[#2b1f1a]">
+                    Write a Verified Review
+                  </h3>
                   <button
+                    type="button"
                     onClick={() => setIsReviewModalOpen(false)}
-                    className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-[#0b1c30] flex items-center justify-center font-bold text-sm"
+                    className="text-[#6b5850] hover:text-[#2b1f1a] cursor-pointer"
                   >
                     ✕
                   </button>
                 </div>
 
-                <form onSubmit={handleSubmitReview} className="space-y-4 text-xs">
+                <form onSubmit={handleReviewSubmit} className="space-y-3 text-xs">
                   <div>
-                    <label className="block font-bold text-[#0b1c30] mb-1">
+                    <label className="block font-bold text-[#2b1f1a] mb-1">
                       Rating (1 to 5 Stars) *
                     </label>
                     <div className="flex items-center gap-2">
@@ -1255,7 +1185,7 @@ export default function ProductDetailsClient({
                           key={star}
                           type="button"
                           onClick={() => setReviewForm({ ...reviewForm, rating: star })}
-                          className={`p-1 transition-transform ${
+                          className={`p-1 transition-transform cursor-pointer ${
                             star <= reviewForm.rating
                               ? "text-[#f59e0b] scale-110"
                               : "text-slate-300"
@@ -1264,7 +1194,7 @@ export default function ProductDetailsClient({
                           <Star size={24} weight="Filled" />
                         </button>
                       ))}
-                      <span className="font-space font-bold text-sm text-[#0b1c30] ml-2">
+                      <span className="font-space font-bold text-sm text-[#2b1f1a] ml-2 tabular-nums">
                         {reviewForm.rating} / 5 Stars
                       </span>
                     </div>
@@ -1272,7 +1202,7 @@ export default function ProductDetailsClient({
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block font-bold text-[#0b1c30] mb-1">
+                      <label className="block font-bold text-[#2b1f1a] mb-1">
                         Your Full Name *
                       </label>
                       <input
@@ -1281,11 +1211,11 @@ export default function ProductDetailsClient({
                         value={reviewForm.name}
                         onChange={(e) => setReviewForm({ ...reviewForm, name: e.target.value })}
                         placeholder="Your full name"
-                        className="w-full px-3 py-2.5 rounded-xl border border-[#e2e8f0] text-xs font-semibold focus:outline-none focus:border-[#f97316]"
+                        className="w-full px-3 py-2.5 rounded-xl border border-[#eddcd1] text-xs font-semibold focus:outline-none focus:border-[#e06b5b]"
                       />
                     </div>
                     <div>
-                      <label className="block font-bold text-[#0b1c30] mb-1">
+                      <label className="block font-bold text-[#2b1f1a] mb-1">
                         City / State
                       </label>
                       <input
@@ -1293,26 +1223,26 @@ export default function ProductDetailsClient({
                         value={reviewForm.city}
                         onChange={(e) => setReviewForm({ ...reviewForm, city: e.target.value })}
                         placeholder="e.g. Pune, MH"
-                        className="w-full px-3 py-2.5 rounded-xl border border-[#e2e8f0] text-xs font-semibold focus:outline-none focus:border-[#f97316]"
+                        className="w-full px-3 py-2.5 rounded-xl border border-[#eddcd1] text-xs font-semibold focus:outline-none focus:border-[#e06b5b]"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block font-bold text-[#0b1c30] mb-1">
+                    <label className="block font-bold text-[#2b1f1a] mb-1">
                       Headline / Title
                     </label>
                     <input
                       type="text"
                       value={reviewForm.title}
                       onChange={(e) => setReviewForm({ ...reviewForm, title: e.target.value })}
-                      placeholder="e.g. Excellent build quality, works exactly as described!"
-                      className="w-full px-3 py-2.5 rounded-xl border border-[#e2e8f0] text-xs font-semibold focus:outline-none focus:border-[#f97316]"
+                      placeholder="e.g. Excellent build quality, gentle on baby nails!"
+                      className="w-full px-3 py-2.5 rounded-xl border border-[#eddcd1] text-xs font-semibold focus:outline-none focus:border-[#e06b5b]"
                     />
                   </div>
 
                   <div>
-                    <label className="block font-bold text-[#0b1c30] mb-1">
+                    <label className="block font-bold text-[#2b1f1a] mb-1">
                       Your Detailed Review *
                     </label>
                     <textarea
@@ -1320,23 +1250,23 @@ export default function ProductDetailsClient({
                       rows={3}
                       value={reviewForm.comment}
                       onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
-                      placeholder="What did you like or dislike? How does it perform in daily use?"
-                      className="w-full px-3 py-2.5 rounded-xl border border-[#e2e8f0] text-xs font-semibold focus:outline-none focus:border-[#f97316]"
-                    ></textarea>
+                      placeholder="What did you like or dislike? How does it perform in daily baby care?"
+                      className="w-full px-3 py-2.5 rounded-xl border border-[#eddcd1] text-xs font-semibold focus:outline-none focus:border-[#e06b5b]"
+                    />
                   </div>
 
                   <div className="pt-2 flex items-center justify-end gap-3">
                     <button
                       type="button"
                       onClick={() => setIsReviewModalOpen(false)}
-                      className="px-4 py-2.5 rounded-xl border border-[#e2e8f0] font-bold text-xs text-[#584237]"
+                      className="px-4 py-2.5 rounded-xl border border-[#eddcd1] font-bold text-xs text-[#6b5850] cursor-pointer"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={isSubmittingReview}
-                      className="px-6 py-2.5 bg-[#f97316] hover:bg-[#ea580c] active:scale-[0.98] text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+                      className="px-6 py-2.5 bg-[#e06b5b] hover:bg-[#c95444] active:scale-[0.98] text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
                     >
                       {isSubmittingReview ? (
                         <>
@@ -1355,30 +1285,30 @@ export default function ProductDetailsClient({
         </div>
       </section>
 
-      {/* Related Products Recommendation Carousel/Grid */}
+      {/* Related Products Recommendation Grid */}
       {relatedProducts.length > 0 && (
-        <section className="w-full py-12 sm:py-16 bg-[#f8f9ff]">
-          <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-            <div className="flex items-center justify-between">
+        <section className="w-full py-12 sm:py-16 bg-[#fbf7f0] border-t border-[#eddcd1]">
+          <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between mb-8">
               <div>
-                <span className="text-xs uppercase tracking-wider text-[#ea580c] bg-[#ffedd5] px-3 py-1 rounded-full font-bold">
-                  Recommended For You
+                <span className="text-xs font-bold uppercase tracking-wider text-[#e06b5b]">
+                  Complete The Care Routine
                 </span>
-                <h2 className="text-xl sm:text-2xl font-extrabold text-[#0b1c30] mt-2">
-                  Customers Also Viewed
+                <h2 className="text-xl sm:text-2xl font-black text-[#2b1f1a] mt-1 tracking-tight">
+                  Parents Also Bought Together
                 </h2>
               </div>
               <Link
                 href="/shop"
-                className="hidden sm:inline-flex items-center gap-1 text-xs font-bold text-[#f97316] hover:underline"
+                className="text-xs sm:text-sm font-bold text-[#e06b5b] hover:text-[#c95444] flex items-center gap-1"
               >
-                <span>View Full Catalog</span>
+                <span>Browse All</span>
                 <ArrowRight size={14} weight="Outline" />
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
-              {relatedProducts.map((p) => (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+              {relatedProducts.slice(0, 4).map((p) => (
                 <ProductCard key={p.id} product={p} />
               ))}
             </div>
@@ -1386,14 +1316,14 @@ export default function ProductDetailsClient({
         </section>
       )}
 
-      {/* Sticky Mobile Add to Bag Bottom Bar with Scroll Awareness & iOS Safe Area */}
+      {/* Mobile Sticky Add to Bag & Buy Bar */}
       <div
-        className={`md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#ebdcd3] px-3.5 py-2.5 shadow-[0_-8px_24px_rgba(43,31,26,0.12)] flex items-center justify-between gap-3 transition-transform duration-300 pb-[max(0.65rem,env(safe-area-inset-bottom))] ${
+        className={`md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-[#eddcd1] px-4 py-2.5 shadow-[0_-8px_24px_rgba(43,31,26,0.12)] flex items-center justify-between gap-3 transition-transform duration-300 pb-[max(0.75rem,env(safe-area-inset-bottom))] ${
           showStickyBar ? "translate-y-0 opacity-100" : "translate-y-full opacity-0 pointer-events-none"
         }`}
       >
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-[#fbe8e4]/50 border border-[#ebdcd3] shrink-0">
+          <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-[#fbf7f0] border border-[#eddcd1] shrink-0">
             <Image
               src={product.images[0]}
               alt={product.shortTitle || product.title}
@@ -1407,13 +1337,10 @@ export default function ProductDetailsClient({
               {product.shortTitle || product.title}
             </p>
             <div className="flex items-center gap-1.5 mt-0.5">
-              <span className="font-space font-extrabold text-sm text-[#e06b5b]">
+              <span className="font-space font-extrabold text-sm text-[#e06b5b] tabular-nums">
                 ₹{currentTotalPrice.toLocaleString("en-IN")}
               </span>
-              <span className="text-[10px] text-[#6b5850]/70 line-through">
-                ₹{(product.originalPrice * quantity).toLocaleString("en-IN")}
-              </span>
-              <span className="text-[9px] font-bold text-[#4f775d] bg-[#eaf3ed] px-1 rounded">
+              <span className="text-[10px] text-[#4f775d] font-bold bg-[#eaf3ed] px-1 rounded">
                 Free COD
               </span>
             </div>
@@ -1423,10 +1350,17 @@ export default function ProductDetailsClient({
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={handleAddToCart}
-            className="h-10 px-5 bg-[#e06b5b] hover:bg-[#c25445] active:scale-[0.97] text-white font-bold text-xs sm:text-sm rounded-xl flex items-center gap-2 shadow-md shadow-[#e06b5b]/25 transition-all cursor-pointer"
+            className="h-10 px-4 bg-[#e06b5b] hover:bg-[#c95444] active:scale-[0.98] text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-md shadow-[#e06b5b]/25 transition-all cursor-pointer"
           >
-            <ShoppingBag size={15} weight="Filled" />
-            <span>Add to Bag</span>
+            <ShoppingBag size={14} weight="Filled" />
+            <span>Add</span>
+          </button>
+          <button
+            onClick={handleBuyNow}
+            className="h-10 px-4 bg-[#2b1f1a] hover:bg-[#3d2c25] active:scale-[0.98] text-white font-bold text-xs rounded-xl flex items-center gap-1 shadow-sm transition-all cursor-pointer"
+          >
+            <span>Buy</span>
+            <ArrowRight size={13} weight="Outline" />
           </button>
         </div>
       </div>

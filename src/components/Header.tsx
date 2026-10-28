@@ -183,7 +183,7 @@ export default function Header() {
           <div className="flex items-center gap-3 shrink-0">
             <button
               onClick={toggleMobileMenu}
-              className="p-2 rounded-xl text-[#0b1c30] hover:bg-[#f8fafc] transition-colors lg:hidden cursor-pointer"
+              className="p-2 rounded-xl text-[#2b1f1a] hover:bg-[#fbf7f0] transition-colors lg:hidden cursor-pointer"
               aria-label="Toggle Navigation Menu"
             >
               {mobileMenuOpen ? (

@@ -1,5 +1,5 @@
 // E-commerce Analytics Helper for Kharido Mart
-// Dispatches custom events to Vercel Web Analytics and GA4
+// Dispatches custom events to Vercel Web Analytics, Google Analytics (GA4), and Meta Pixel
 
 import { track } from "@vercel/analytics";
 
@@ -7,6 +7,7 @@ declare global {
   interface Window {
     dataLayer: any[];
     gtag?: (...args: any[]) => void;
+    fbq?: (...args: any[]) => void;
   }
 }
 
@@ -41,6 +42,15 @@ export function trackEvent(action: string, params: Record<string, any> = {}) {
   } catch {
     // Fail silently
   }
+
+  // 3. Dispatch to Meta Pixel if initialized
+  try {
+    if (typeof window.fbq === "function") {
+      window.fbq("trackCustom", action, params);
+    }
+  } catch {
+    // Fail silently
+  }
 }
 
 export function trackViewItem(product: {
@@ -57,6 +67,20 @@ export function trackViewItem(product: {
     category: product.category,
     price: product.price,
   });
+
+  try {
+    if (typeof window !== "undefined" && typeof window.fbq === "function") {
+      window.fbq("track", "ViewContent", {
+        content_ids: [product.id],
+        content_name: product.title,
+        content_category: product.category,
+        value: product.price,
+        currency: "INR",
+      });
+    }
+  } catch {
+    // Fail silently
+  }
 }
 
 export function trackAddToCart(
@@ -77,6 +101,20 @@ export function trackAddToCart(
     price: product.price,
     quantity,
   });
+
+  try {
+    if (typeof window !== "undefined" && typeof window.fbq === "function") {
+      window.fbq("track", "AddToCart", {
+        content_ids: [product.id],
+        content_name: product.title,
+        content_type: "product",
+        value: product.price * quantity,
+        currency: "INR",
+      });
+    }
+  } catch {
+    // Fail silently
+  }
 }
 
 export function trackBeginCheckout(items: any[], totalValue: number) {
@@ -85,6 +123,18 @@ export function trackBeginCheckout(items: any[], totalValue: number) {
     value: totalValue,
     itemCount: items.length,
   });
+
+  try {
+    if (typeof window !== "undefined" && typeof window.fbq === "function") {
+      window.fbq("track", "InitiateCheckout", {
+        value: totalValue,
+        currency: "INR",
+        num_items: items.length,
+      });
+    }
+  } catch {
+    // Fail silently
+  }
 }
 
 export function trackPurchase(order: {
@@ -102,4 +152,17 @@ export function trackPurchase(order: {
     shipping: order.shippingFee || 0,
     paymentMethod: order.paymentMethod || "COD",
   });
+
+  try {
+    if (typeof window !== "undefined" && typeof window.fbq === "function") {
+      window.fbq("track", "Purchase", {
+        value: order.grandTotal,
+        currency: "INR",
+        content_type: "product",
+        num_items: order.items?.length || 0,
+      });
+    }
+  } catch {
+    // Fail silently
+  }
 }

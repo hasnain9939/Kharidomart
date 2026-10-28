@@ -591,19 +591,19 @@ function AccountContent() {
   // ==========================================
   if (user) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] py-8 sm:py-12">
+      <div className="min-h-screen bg-[#fbf7f0] py-8 sm:py-12">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           {/* Breadcrumb Navigation */}
           <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-[#584237]/70 font-medium">
-            <Link href="/" className="hover:text-[#f97316] transition-colors">
+            <Link href="/" className="hover:text-[#e06b5b] transition-colors">
               Home
             </Link>
             <span>/</span>
-            <span className="text-[#0b1c30] font-semibold">My Account</span>
+            <span className="text-[#2b1f1a] font-semibold">My Account</span>
           </nav>
 
           {/* User Hero Banner Card */}
-          <div className="bg-white rounded-3xl border border-[#e2e8f0] p-6 sm:p-8 shadow-xs relative overflow-hidden">
+          <div className="bg-white rounded-3xl border border-[#eddcd1] p-6 sm:p-8 shadow-xs relative overflow-hidden">
             <div className="absolute top-0 right-0 w-80 h-80 bg-radial from-orange-100/60 to-transparent pointer-events-none -mr-20 -mt-20 rounded-full blur-2xl" />
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
@@ -624,7 +624,7 @@ function AccountContent() {
 
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h1 className="text-xl sm:text-2xl font-bold font-sans text-[#0b1c30]">
+                    <h1 className="text-xl sm:text-2xl font-bold font-sans text-[#2b1f1a]">
                       {user.name}
                     </h1>
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
@@ -663,40 +663,40 @@ function AccountContent() {
 
             {/* Quick Metrics Strip */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 mt-6 border-t border-[#f1f5f9]">
-              <div className="bg-[#f8fafc] p-3.5 rounded-2xl border border-[#e2e8f0]/80">
+              <div className="bg-[#fbf7f0] p-3.5 rounded-2xl border border-[#eddcd1]/80">
                 <span className="text-[11px] text-[#584237]/70 font-medium block">Total Orders</span>
-                <span className="text-lg sm:text-xl font-bold font-space text-[#0b1c30]">
+                <span className="text-lg sm:text-xl font-bold font-space text-[#2b1f1a]">
                   {pastOrders.length}
                 </span>
               </div>
 
               <Link
                 href="/shop?filter=wishlist"
-                className="bg-[#f8fafc] hover:bg-rose-50/50 p-3.5 rounded-2xl border border-[#e2e8f0]/80 transition-colors group"
+                className="bg-[#fbf7f0] hover:bg-rose-50/50 p-3.5 rounded-2xl border border-[#eddcd1]/80 transition-colors group"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] text-[#584237]/70 font-medium block">Wishlist</span>
                   <Heart size={14} weight="Filled" className="text-rose-500" />
                 </div>
-                <span className="text-lg sm:text-xl font-bold font-space text-[#0b1c30] group-hover:text-rose-600 transition-colors">
+                <span className="text-lg sm:text-xl font-bold font-space text-[#2b1f1a] group-hover:text-rose-600 transition-colors">
                   {wishlist.length} items
                 </span>
               </Link>
 
               <Link
                 href="/cart"
-                className="bg-[#f8fafc] hover:bg-orange-50/50 p-3.5 rounded-2xl border border-[#e2e8f0]/80 transition-colors group"
+                className="bg-[#fbf7f0] hover:bg-orange-50/50 p-3.5 rounded-2xl border border-[#eddcd1]/80 transition-colors group"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] text-[#584237]/70 font-medium block">Active Cart</span>
-                  <ShoppingBag size={14} weight="Filled" className="text-[#f97316]" />
+                  <ShoppingBag size={14} weight="Filled" className="text-[#e06b5b]" />
                 </div>
-                <span className="text-lg sm:text-xl font-bold font-space text-[#0b1c30] group-hover:text-[#f97316] transition-colors">
+                <span className="text-lg sm:text-xl font-bold font-space text-[#2b1f1a] group-hover:text-[#e06b5b] transition-colors">
                   {cartCount} items
                 </span>
               </Link>
 
-              <div className="bg-[#f8fafc] p-3.5 rounded-2xl border border-[#e2e8f0]/80">
+              <div className="bg-[#fbf7f0] p-3.5 rounded-2xl border border-[#eddcd1]/80">
                 <span className="text-[11px] text-[#584237]/70 font-medium block">Kharido Club</span>
                 <span className="text-lg sm:text-xl font-bold font-space text-amber-600">
                   250 Coins 🪙
@@ -706,13 +706,13 @@ function AccountContent() {
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex items-center gap-2 border-b border-[#e2e8f0] pb-2 overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-2 border-b border-[#eddcd1] pb-2 overflow-x-auto no-scrollbar">
             <button
               onClick={() => setActiveTab("orders")}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium text-xs sm:text-sm transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === "orders"
                   ? "bg-[#0b1c30] text-white shadow-xs font-semibold"
-                  : "text-[#584237] hover:bg-white hover:text-[#0b1c30]"
+                  : "text-[#584237] hover:bg-white hover:text-[#2b1f1a]"
               }`}
             >
               <TruckFast size={16} weight={activeTab === "orders" ? "Filled" : "Outline"} />
@@ -724,7 +724,7 @@ function AccountContent() {
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium text-xs sm:text-sm transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === "addresses"
                   ? "bg-[#0b1c30] text-white shadow-xs font-semibold"
-                  : "text-[#584237] hover:bg-white hover:text-[#0b1c30]"
+                  : "text-[#584237] hover:bg-white hover:text-[#2b1f1a]"
               }`}
             >
               <Location size={16} weight={activeTab === "addresses" ? "Filled" : "Outline"} />
@@ -736,7 +736,7 @@ function AccountContent() {
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium text-xs sm:text-sm transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === "settings"
                   ? "bg-[#0b1c30] text-white shadow-xs font-semibold"
-                  : "text-[#584237] hover:bg-white hover:text-[#0b1c30]"
+                  : "text-[#584237] hover:bg-white hover:text-[#2b1f1a]"
               }`}
             >
               <User size={16} weight={activeTab === "settings" ? "Filled" : "Outline"} />
@@ -748,19 +748,19 @@ function AccountContent() {
           {activeTab === "orders" && (
             <div className="space-y-4">
               {pastOrders.length === 0 ? (
-                <div className="bg-white rounded-3xl border border-[#e2e8f0] p-10 text-center space-y-4 shadow-xs">
-                  <div className="w-16 h-16 rounded-2xl bg-orange-50 text-[#f97316] flex items-center justify-center mx-auto">
+                <div className="bg-white rounded-3xl border border-[#eddcd1] p-10 text-center space-y-4 shadow-xs">
+                  <div className="w-16 h-16 rounded-2xl bg-orange-50 text-[#e06b5b] flex items-center justify-center mx-auto">
                     <ShoppingBag size={28} weight="Filled" />
                   </div>
                   <div className="space-y-1">
-                    <h2 className="text-lg font-bold text-[#0b1c30]">No Orders Yet</h2>
+                    <h2 className="text-lg font-bold text-[#2b1f1a]">No Orders Yet</h2>
                     <p className="text-xs sm:text-sm text-[#584237]/70 max-w-sm mx-auto">
                       Explore our hand-picked collection of smart gadgets, mom & baby essentials, and trending clever finds!
                     </p>
                   </div>
                   <Link
                     href="/shop"
-                    className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#f97316] hover:bg-[#ea580c] text-white text-xs sm:text-sm font-semibold rounded-full transition-all shadow-xs"
+                    className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#e06b5b] hover:bg-[#c95444] text-white text-xs sm:text-sm font-semibold rounded-full transition-all shadow-xs"
                   >
                     <span>Start Shopping</span>
                     <ArrowRight size={14} weight="Outline" />
@@ -771,12 +771,12 @@ function AccountContent() {
                   {pastOrders.map((order, idx) => (
                     <div
                       key={order.orderId || idx}
-                      className="bg-white rounded-3xl border border-[#e2e8f0] p-5 sm:p-6 shadow-xs space-y-4 hover:border-orange-200 transition-all"
+                      className="bg-white rounded-3xl border border-[#eddcd1] p-5 sm:p-6 shadow-xs space-y-4 hover:border-orange-200 transition-all"
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#f1f5f9]">
                         <div className="space-y-0.5">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold font-space text-[#0b1c30]">
+                            <span className="text-xs font-bold font-space text-[#2b1f1a]">
                               Order #{order.orderId}
                             </span>
                             {order.status?.toLowerCase() === "cancelled" ? (
@@ -804,12 +804,12 @@ function AccountContent() {
                         </div>
 
                         <div className="flex items-center gap-3">
-                          <span className="text-sm sm:text-base font-bold font-space text-[#0b1c30]">
+                          <span className="text-sm sm:text-base font-bold font-space text-[#2b1f1a]">
                             ₹{order.grandTotal?.toLocaleString("en-IN") || order.total?.toLocaleString("en-IN")}
                           </span>
                           <Link
                             href={`/track-order?id=${order.orderId}`}
-                            className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-full bg-orange-50 text-[#f97316] hover:bg-[#f97316] hover:text-white text-xs font-semibold transition-all"
+                            className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-full bg-orange-50 text-[#e06b5b] hover:bg-[#e06b5b] hover:text-white text-xs font-semibold transition-all"
                           >
                             <TruckFast size={14} weight="Filled" />
                             <span>Track Order</span>
@@ -838,7 +838,7 @@ function AccountContent() {
                                 )}
                               </div>
                               <div>
-                                <h3 className="text-xs sm:text-sm font-semibold text-[#0b1c30] line-clamp-1">
+                                <h3 className="text-xs sm:text-sm font-semibold text-[#2b1f1a] line-clamp-1">
                                   {item.product?.title || item.product?.shortTitle || "Product Item"}
                                 </h3>
                                 <span className="text-xs text-[#584237]/70">
@@ -846,7 +846,7 @@ function AccountContent() {
                                 </span>
                               </div>
                             </div>
-                            <span className="text-xs font-bold font-space text-[#0b1c30] shrink-0">
+                            <span className="text-xs font-bold font-space text-[#2b1f1a] shrink-0">
                               ₹{(item.product?.price * item.quantity).toLocaleString("en-IN")}
                             </span>
                           </div>
@@ -855,11 +855,11 @@ function AccountContent() {
 
                       {/* Delivery Address Snapshot */}
                       {order.customer && (
-                        <div className="p-3 bg-[#f8fafc] rounded-xl text-xs text-[#584237]/80 flex flex-wrap items-center justify-between gap-2">
+                        <div className="p-3 bg-[#fbf7f0] rounded-xl text-xs text-[#584237]/80 flex flex-wrap items-center justify-between gap-2">
                           <div className="flex items-center gap-1.5">
-                            <Location size={14} weight="Outline" className="text-[#f97316]" />
+                            <Location size={14} weight="Outline" className="text-[#e06b5b]" />
                             <span>
-                              Delivering to: <strong className="text-[#0b1c30]">{order.customer.fullName}</strong>, {order.customer.city}, {order.customer.state} ({order.customer.pincode})
+                              Delivering to: <strong className="text-[#2b1f1a]">{order.customer.fullName}</strong>, {order.customer.city}, {order.customer.state} ({order.customer.pincode})
                             </span>
                           </div>
                           <span className="text-[11px] font-mono text-emerald-600 font-semibold">
@@ -878,11 +878,11 @@ function AccountContent() {
           {activeTab === "addresses" && (
             <div className="space-y-6">
               {/* Header bar with "+ Add Another Address" button */}
-              <div className="bg-white rounded-3xl border border-[#e2e8f0] p-6 sm:p-7 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="bg-white rounded-3xl border border-[#eddcd1] p-6 sm:p-7 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2.5">
-                    <h2 className="text-lg font-bold text-[#0b1c30]">Saved Delivery Addresses</h2>
-                    <span className="px-2.5 py-0.5 rounded-full bg-orange-100 text-[#ea580c] text-xs font-bold font-mono">
+                    <h2 className="text-lg font-bold text-[#2b1f1a]">Saved Delivery Addresses</h2>
+                    <span className="px-2.5 py-0.5 rounded-full bg-orange-100 text-[#e06b5b] text-xs font-bold font-mono">
                       {addresses.length} {addresses.length === 1 ? "Address" : "Addresses"}
                     </span>
                   </div>
@@ -894,7 +894,7 @@ function AccountContent() {
                 <button
                   type="button"
                   onClick={handleOpenAddAddress}
-                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#f97316] hover:bg-[#ea580c] text-white text-xs sm:text-sm font-bold shadow-xs hover:shadow-md transition-all active:scale-[0.98] cursor-pointer shrink-0"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#e06b5b] hover:bg-[#c95444] text-white text-xs sm:text-sm font-bold shadow-xs hover:shadow-md transition-all active:scale-[0.98] cursor-pointer shrink-0"
                 >
                   <Add size={18} weight="Outline" />
                   <span>Add Another Address</span>
@@ -903,12 +903,12 @@ function AccountContent() {
 
               {/* Addresses Grid or Empty State */}
               {addresses.length === 0 ? (
-                <div className="bg-white rounded-3xl border border-[#e2e8f0] p-10 text-center space-y-4 shadow-xs">
-                  <div className="w-16 h-16 rounded-2xl bg-orange-50 border border-orange-200 text-[#ea580c] flex items-center justify-center mx-auto">
+                <div className="bg-white rounded-3xl border border-[#eddcd1] p-10 text-center space-y-4 shadow-xs">
+                  <div className="w-16 h-16 rounded-2xl bg-orange-50 border border-orange-200 text-[#e06b5b] flex items-center justify-center mx-auto">
                     <Location size={28} weight="Outline" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-[#0b1c30]">No Saved Addresses Yet</h3>
+                    <h3 className="text-base font-bold text-[#2b1f1a]">No Saved Addresses Yet</h3>
                     <p className="text-xs text-[#584237]/70 max-w-sm mx-auto mt-1">
                       Add your home or office address to enable 1-tap checkout and speedy delivery updates.
                     </p>
@@ -916,7 +916,7 @@ function AccountContent() {
                   <button
                     type="button"
                     onClick={handleOpenAddAddress}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#f97316] hover:bg-[#ea580c] text-white text-xs sm:text-sm font-bold shadow-xs transition-all active:scale-[0.98] cursor-pointer"
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#e06b5b] hover:bg-[#c95444] text-white text-xs sm:text-sm font-bold shadow-xs transition-all active:scale-[0.98] cursor-pointer"
                   >
                     <Add size={16} weight="Outline" />
                     <span>Add Delivery Address</span>
@@ -930,7 +930,7 @@ function AccountContent() {
                       className={`bg-white rounded-3xl border p-5 sm:p-6 shadow-xs transition-all flex flex-col justify-between relative ${
                         addr.isDefault
                           ? "border-orange-300 ring-2 ring-orange-400/20 bg-orange-50/15"
-                          : "border-[#e2e8f0] hover:border-slate-300"
+                          : "border-[#eddcd1] hover:border-slate-300"
                       }`}
                     >
                       {/* Top row: tag and default status badge */}
@@ -955,12 +955,12 @@ function AccountContent() {
 
                       {/* Address Details */}
                       <div className="space-y-1.5 flex-1">
-                        <h3 className="text-sm font-bold text-[#0b1c30]">{addr.name}</h3>
+                        <h3 className="text-sm font-bold text-[#2b1f1a]">{addr.name}</h3>
                         <p className="text-xs text-[#584237]/85 leading-relaxed">
                           {addr.addressLine}
                         </p>
-                        <p className="text-xs text-[#0b1c30] font-semibold">
-                          {addr.city}, {addr.state} - <span className="font-mono text-[#ea580c]">{addr.pincode}</span>
+                        <p className="text-xs text-[#2b1f1a] font-semibold">
+                          {addr.city}, {addr.state} - <span className="font-mono text-[#e06b5b]">{addr.pincode}</span>
                         </p>
                         {addr.phone && (
                           <p className="text-xs text-[#584237]/75 font-mono pt-1">
@@ -975,7 +975,7 @@ function AccountContent() {
                           <button
                             type="button"
                             onClick={() => handleOpenEditAddress(addr)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 hover:border-orange-300 hover:bg-orange-50/50 text-[#0b1c30] hover:text-[#ea580c] text-xs font-bold transition-all active:scale-[0.98] cursor-pointer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 hover:border-orange-300 hover:bg-orange-50/50 text-[#2b1f1a] hover:text-[#e06b5b] text-xs font-bold transition-all active:scale-[0.98] cursor-pointer"
                           >
                             <Edit size={14} weight="Outline" />
                             <span>Edit</span>
@@ -998,7 +998,7 @@ function AccountContent() {
                           <button
                             type="button"
                             onClick={() => handleSetDefaultAddress(addr.id)}
-                            className="text-xs font-bold text-[#f97316] hover:text-[#ea580c] hover:underline cursor-pointer"
+                            className="text-xs font-bold text-[#e06b5b] hover:text-[#e06b5b] hover:underline cursor-pointer"
                           >
                             Set as Default
                           </button>
@@ -1013,9 +1013,9 @@ function AccountContent() {
 
           {/* TAB 3: ACCOUNT SETTINGS */}
           {activeTab === "settings" && (
-            <div className="bg-white rounded-3xl border border-[#e2e8f0] p-6 sm:p-8 shadow-xs max-w-2xl space-y-6">
+            <div className="bg-white rounded-3xl border border-[#eddcd1] p-6 sm:p-8 shadow-xs max-w-2xl space-y-6">
               <div>
-                <h2 className="text-lg font-bold text-[#0b1c30]">Profile & Notifications</h2>
+                <h2 className="text-lg font-bold text-[#2b1f1a]">Profile & Notifications</h2>
                 <p className="text-xs text-[#584237]/70">
                   Manage your personal information and dispatch notification channels.
                 </p>
@@ -1023,19 +1023,19 @@ function AccountContent() {
 
               <form onSubmit={handleSaveProfile} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-[#0b1c30] mb-1.5">
+                  <label className="block text-xs font-bold text-[#2b1f1a] mb-1.5">
                     Full Legal Name
                   </label>
                   <input
                     type="text"
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-[#e2e8f0] text-xs sm:text-sm focus:border-[#f97316] focus:outline-none bg-[#f8fafc]"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[#eddcd1] text-xs sm:text-sm focus:border-[#e06b5b] focus:outline-none bg-[#fbf7f0]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#0b1c30] mb-1.5">
+                  <label className="block text-xs font-bold text-[#2b1f1a] mb-1.5">
                     Registered Email
                   </label>
                   <input
@@ -1050,7 +1050,7 @@ function AccountContent() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#0b1c30] mb-1.5">
+                  <label className="block text-xs font-bold text-[#2b1f1a] mb-1.5">
                     Phone Number (for SMS & WhatsApp Tracking)
                   </label>
                   <input
@@ -1058,13 +1058,13 @@ function AccountContent() {
                     value={editPhone}
                     onChange={(e) => setEditPhone(e.target.value)}
                     placeholder="10-digit mobile number"
-                    className="w-full px-4 py-2.5 rounded-xl border border-[#e2e8f0] text-xs sm:text-sm focus:border-[#f97316] focus:outline-none bg-[#f8fafc]"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[#eddcd1] text-xs sm:text-sm focus:border-[#e06b5b] focus:outline-none bg-[#fbf7f0]"
                   />
                 </div>
 
                 {/* Notifications Preferences */}
                 <div className="pt-2 space-y-3">
-                  <span className="block text-xs font-bold text-[#0b1c30]">
+                  <span className="block text-xs font-bold text-[#2b1f1a]">
                     Order Notification Preferences
                   </span>
 
@@ -1073,9 +1073,9 @@ function AccountContent() {
                       type="checkbox"
                       checked={whatsappUpdates}
                       onChange={(e) => setWhatsappUpdates(e.target.checked)}
-                      className="w-4 h-4 text-[#f97316] rounded border-[#e2e8f0] focus:ring-[#f97316]"
+                      className="w-4 h-4 text-[#e06b5b] rounded border-[#eddcd1] focus:ring-[#e06b5b]"
                     />
-                    <span className="text-xs text-[#0b1c30]">
+                    <span className="text-xs text-[#2b1f1a]">
                       Receive automated WhatsApp live tracking updates when out for delivery
                     </span>
                   </label>
@@ -1085,9 +1085,9 @@ function AccountContent() {
                       type="checkbox"
                       checked={emailInvoices}
                       onChange={(e) => setEmailInvoices(e.target.checked)}
-                      className="w-4 h-4 text-[#f97316] rounded border-[#e2e8f0] focus:ring-[#f97316]"
+                      className="w-4 h-4 text-[#e06b5b] rounded border-[#eddcd1] focus:ring-[#e06b5b]"
                     />
-                    <span className="text-xs text-[#0b1c30]">
+                    <span className="text-xs text-[#2b1f1a]">
                       Send digital order invoices and dispatch confirmation to my email
                     </span>
                   </label>
@@ -1096,7 +1096,7 @@ function AccountContent() {
                 <div className="pt-3">
                   <button
                     type="submit"
-                    className="px-6 py-2.5 bg-[#f97316] hover:bg-[#ea580c] text-white text-xs sm:text-sm font-semibold rounded-xl transition-all shadow-xs cursor-pointer"
+                    className="px-6 py-2.5 bg-[#e06b5b] hover:bg-[#c95444] text-white text-xs sm:text-sm font-semibold rounded-xl transition-all shadow-xs cursor-pointer"
                   >
                     Save Changes
                   </button>
@@ -1109,14 +1109,14 @@ function AccountContent() {
         {/* Address Modal (Add / Edit) */}
         {isAddressModalOpen && (
           <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 space-y-5 shadow-2xl border border-[#e2e8f0] animate-in fade-in zoom-in-95 duration-200 my-8">
+            <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 space-y-5 shadow-2xl border border-[#eddcd1] animate-in fade-in zoom-in-95 duration-200 my-8">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-2xl bg-orange-50 border border-orange-200 text-[#ea580c] flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-2xl bg-orange-50 border border-orange-200 text-[#e06b5b] flex items-center justify-center shrink-0">
                     <Location size={20} weight="Filled" />
                   </div>
                   <div>
-                    <h2 className="text-base sm:text-lg font-bold text-[#0b1c30]">
+                    <h2 className="text-base sm:text-lg font-bold text-[#2b1f1a]">
                       {editingAddressId ? "Edit Delivery Address" : "Add Delivery Address"}
                     </h2>
                     <p className="text-xs text-[#584237]/70">
@@ -1137,7 +1137,7 @@ function AccountContent() {
                 {/* Recipient Name and Phone */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#0b1c30] mb-1">
+                    <label className="block text-xs font-bold text-[#2b1f1a] mb-1">
                       Full Name <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -1146,15 +1146,15 @@ function AccountContent() {
                       value={formName}
                       onChange={(e) => setFormName(e.target.value)}
                       placeholder="e.g. Rahul Sharma"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#e2e8f0] text-xs sm:text-sm focus:border-[#f97316] focus:outline-none bg-[#f8fafc]"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#eddcd1] text-xs sm:text-sm focus:border-[#e06b5b] focus:outline-none bg-[#fbf7f0]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0b1c30] mb-1">
+                    <label className="block text-xs font-bold text-[#2b1f1a] mb-1">
                       Contact Phone <span className="text-red-500">*</span>
                     </label>
-                    <div className="flex items-center rounded-xl border border-[#e2e8f0] bg-[#f8fafc] overflow-hidden focus-within:border-[#f97316]">
+                    <div className="flex items-center rounded-xl border border-[#eddcd1] bg-[#fbf7f0] overflow-hidden focus-within:border-[#f97316]">
                       <span className="px-3 text-xs font-bold text-slate-500 bg-slate-100/80 border-r border-slate-200 py-2.5">
                         +91
                       </span>
@@ -1173,7 +1173,7 @@ function AccountContent() {
 
                 {/* Address Type Tag Selector */}
                 <div>
-                  <label className="block text-xs font-bold text-[#0b1c30] mb-1.5">
+                  <label className="block text-xs font-bold text-[#2b1f1a] mb-1.5">
                     Address Type
                   </label>
                   <div className="grid grid-cols-3 gap-2">
@@ -1188,7 +1188,7 @@ function AccountContent() {
                         onClick={() => setFormType(t.type as any)}
                         className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
                           formType === t.type
-                            ? "border-[#f97316] bg-orange-50/50 text-[#ea580c] font-bold shadow-2xs"
+                            ? "border-[#f97316] bg-orange-50/50 text-[#e06b5b] font-bold shadow-2xs"
                             : "border-slate-200 hover:border-slate-300 text-slate-600 font-medium"
                         }`}
                       >
@@ -1201,7 +1201,7 @@ function AccountContent() {
 
                 {/* Street / Flat address */}
                 <div>
-                  <label className="block text-xs font-bold text-[#0b1c30] mb-1">
+                  <label className="block text-xs font-bold text-[#2b1f1a] mb-1">
                     Flat, House no., Building, Street, Area <span className="text-red-500">*</span>
                   </label>
                   <textarea
@@ -1210,14 +1210,14 @@ function AccountContent() {
                     value={formAddressLine}
                     onChange={(e) => setFormAddressLine(e.target.value)}
                     placeholder="e.g. Flat 302, Green Acres, 14th Main Road, Indiranagar"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#e2e8f0] text-xs sm:text-sm focus:border-[#f97316] focus:outline-none bg-[#f8fafc] resize-none"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#eddcd1] text-xs sm:text-sm focus:border-[#e06b5b] focus:outline-none bg-[#fbf7f0] resize-none"
                   />
                 </div>
 
                 {/* PIN Code, City, State */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#0b1c30] mb-1">
+                    <label className="block text-xs font-bold text-[#2b1f1a] mb-1">
                       PIN Code <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
@@ -1228,7 +1228,7 @@ function AccountContent() {
                         value={formPincode}
                         onChange={handleFormPincodeChange}
                         placeholder="560038"
-                        className="w-full pl-3.5 pr-8 py-2.5 rounded-xl border border-[#e2e8f0] text-xs sm:text-sm focus:border-[#f97316] focus:outline-none bg-[#f8fafc] font-mono"
+                        className="w-full pl-3.5 pr-8 py-2.5 rounded-xl border border-[#eddcd1] text-xs sm:text-sm focus:border-[#e06b5b] focus:outline-none bg-[#fbf7f0] font-mono"
                       />
                       {isPincodeLoading && (
                         <div className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-[#f97316]/30 border-t-[#f97316] rounded-full animate-spin" />
@@ -1237,7 +1237,7 @@ function AccountContent() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0b1c30] mb-1">
+                    <label className="block text-xs font-bold text-[#2b1f1a] mb-1">
                       City / District <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -1246,12 +1246,12 @@ function AccountContent() {
                       value={formCity}
                       onChange={(e) => setFormCity(e.target.value)}
                       placeholder="Bengaluru"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#e2e8f0] text-xs sm:text-sm focus:border-[#f97316] focus:outline-none bg-[#f8fafc]"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#eddcd1] text-xs sm:text-sm focus:border-[#e06b5b] focus:outline-none bg-[#fbf7f0]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#0b1c30] mb-1">
+                    <label className="block text-xs font-bold text-[#2b1f1a] mb-1">
                       State <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -1260,7 +1260,7 @@ function AccountContent() {
                       value={formState}
                       onChange={(e) => setFormState(e.target.value)}
                       placeholder="Karnataka"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#e2e8f0] text-xs sm:text-sm focus:border-[#f97316] focus:outline-none bg-[#f8fafc]"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#eddcd1] text-xs sm:text-sm focus:border-[#e06b5b] focus:outline-none bg-[#fbf7f0]"
                     />
                   </div>
                 </div>
@@ -1271,9 +1271,9 @@ function AccountContent() {
                     type="checkbox"
                     checked={formIsDefault}
                     onChange={(e) => setFormIsDefault(e.target.checked)}
-                    className="w-4 h-4 rounded text-[#f97316] focus:ring-[#f97316] border-slate-300 cursor-pointer"
+                    className="w-4 h-4 rounded text-[#e06b5b] focus:ring-[#e06b5b] border-slate-300 cursor-pointer"
                   />
-                  <span className="text-xs text-[#0b1c30] font-medium">
+                  <span className="text-xs text-[#2b1f1a] font-medium">
                     Make this my default delivery address
                   </span>
                 </label>
@@ -1289,7 +1289,7 @@ function AccountContent() {
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2.5 rounded-xl bg-[#f97316] hover:bg-[#ea580c] text-white text-xs sm:text-sm font-bold shadow-xs hover:shadow-md transition-all active:scale-[0.98] cursor-pointer"
+                    className="px-6 py-2.5 rounded-xl bg-[#e06b5b] hover:bg-[#c95444] text-white text-xs sm:text-sm font-bold shadow-xs hover:shadow-md transition-all active:scale-[0.98] cursor-pointer"
                   >
                     {editingAddressId ? "Save Changes" : "Save Address"}
                   </button>
@@ -1306,7 +1306,7 @@ function AccountContent() {
   // VIEW: UNAUTHENTICATED (LOGIN / REGISTER)
   // ==========================================
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-[#f8fafc] pt-6 sm:pt-10 pb-16 flex items-start justify-center px-4">
+    <div className="min-h-[calc(100vh-80px)] bg-[#fbf7f0] pt-6 sm:pt-10 pb-16 flex items-start justify-center px-4">
       <div className="w-full max-w-md space-y-6">
         {/* Brand Logo & Back to Home */}
         <div className="text-center space-y-3">
@@ -1315,7 +1315,7 @@ function AccountContent() {
           </Link>
 
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0b1c30] tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#2b1f1a] tracking-tight">
               {isCheckoutRedirect
                 ? (authMode === "signin" ? "Sign In & Checkout" : "Create Account & Checkout")
                 : (authMode === "signin" ? "Welcome Back" : "Create an Account")}
@@ -1331,16 +1331,16 @@ function AccountContent() {
         </div>
 
         {/* Auth Main Card */}
-        <div className="bg-white rounded-3xl border border-[#e2e8f0] p-6 sm:p-8 shadow-sm space-y-6">
+        <div className="bg-white rounded-3xl border border-[#eddcd1] p-6 sm:p-8 shadow-sm space-y-6">
 
           {/* Checkout Guidance Alert */}
           {isCheckoutRedirect && (
-            <div className="p-4 bg-orange-50 border border-orange-200/90 rounded-2xl flex items-start gap-3 text-xs text-[#0b1c30]">
-              <div className="w-8 h-8 rounded-xl bg-[#f97316] text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+            <div className="p-4 bg-orange-50 border border-orange-200/90 rounded-2xl flex items-start gap-3 text-xs text-[#2b1f1a]">
+              <div className="w-8 h-8 rounded-xl bg-[#e06b5b] text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
                 <Lock size={16} weight="Filled" />
               </div>
               <div className="space-y-1">
-                <p className="font-bold text-[#0b1c30] text-sm">Sign in to complete your checkout</p>
+                <p className="font-bold text-[#2b1f1a] text-sm">Sign in to complete your checkout</p>
                 <p className="text-[#584237]/80 text-xs leading-relaxed">
                   Log in with your existing account or create a new one below. We will immediately transfer your cart items directly into checkout!
                 </p>
@@ -1349,14 +1349,14 @@ function AccountContent() {
           )}
 
           {/* Toggle Tabs: Sign In / Create Account */}
-          <div className="flex bg-[#f1f5f9] p-1 rounded-2xl">
+          <div className="flex bg-[#f8f5ee] p-1 rounded-2xl">
             <button
               type="button"
               onClick={() => setAuthMode("signin")}
               className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
                 authMode === "signin"
-                  ? "bg-white text-[#0b1c30] shadow-xs"
-                  : "text-[#584237]/70 hover:text-[#0b1c30]"
+                  ? "bg-white text-[#2b1f1a] shadow-xs"
+                  : "text-[#584237]/70 hover:text-[#2b1f1a]"
               }`}
             >
               Sign In
@@ -1366,8 +1366,8 @@ function AccountContent() {
               onClick={() => setAuthMode("signup")}
               className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
                 authMode === "signup"
-                  ? "bg-white text-[#0b1c30] shadow-xs"
-                  : "text-[#584237]/70 hover:text-[#0b1c30]"
+                  ? "bg-white text-[#2b1f1a] shadow-xs"
+                  : "text-[#584237]/70 hover:text-[#2b1f1a]"
               }`}
             >
               Create Account
@@ -1378,7 +1378,7 @@ function AccountContent() {
           {authMode === "signin" && (
             <form onSubmit={handleSignInSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-[#0b1c30] mb-1.5">
+                <label className="block text-xs font-bold text-[#2b1f1a] mb-1.5">
                   Email Address
                 </label>
                 <div className="relative flex items-center">
@@ -1391,20 +1391,20 @@ function AccountContent() {
                     value={signInEmail}
                     onChange={(e) => setSignInEmail(e.target.value)}
                     placeholder="you@gmail.com"
-                    className="w-full pl-10 pr-4 py-2.5 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-xs sm:text-sm text-[#0b1c30] focus:border-[#f97316] focus:bg-white focus:outline-none transition-all"
+                    className="w-full pl-10 pr-4 py-2.5 bg-[#fbf7f0] border border-[#eddcd1] rounded-xl text-xs sm:text-sm text-[#2b1f1a] focus:border-[#e06b5b] focus:bg-white focus:outline-none transition-all"
                   />
                 </div>
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-bold text-[#0b1c30]">
+                  <label className="block text-xs font-bold text-[#2b1f1a]">
                     Password
                   </label>
                   <button
                     type="button"
                     onClick={() => setShowForgotPassword(true)}
-                    className="text-[11px] font-semibold text-[#f97316] hover:underline cursor-pointer"
+                    className="text-[11px] font-semibold text-[#e06b5b] hover:underline cursor-pointer"
                   >
                     Forgot password?
                   </button>
@@ -1419,12 +1419,12 @@ function AccountContent() {
                     value={signInPassword}
                     onChange={(e) => setSignInPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-12 py-2.5 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-xs sm:text-sm text-[#0b1c30] focus:border-[#f97316] focus:bg-white focus:outline-none transition-all"
+                    className="w-full pl-10 pr-12 py-2.5 bg-[#fbf7f0] border border-[#eddcd1] rounded-xl text-xs sm:text-sm text-[#2b1f1a] focus:border-[#e06b5b] focus:bg-white focus:outline-none transition-all"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 text-[11px] font-semibold text-[#584237]/70 hover:text-[#0b1c30] cursor-pointer"
+                    className="absolute right-3 text-[11px] font-semibold text-[#584237]/70 hover:text-[#2b1f1a] cursor-pointer"
                   >
                     {showPassword ? "Hide" : "Show"}
                   </button>
@@ -1437,7 +1437,7 @@ function AccountContent() {
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 text-[#f97316] rounded border-[#e2e8f0] focus:ring-[#f97316]"
+                    className="w-4 h-4 text-[#e06b5b] rounded border-[#eddcd1] focus:ring-[#e06b5b]"
                   />
                   <span>Remember me on this browser</span>
                 </label>
@@ -1446,7 +1446,7 @@ function AccountContent() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3 bg-[#f97316] hover:bg-[#ea580c] active:scale-[0.99] text-white text-xs sm:text-sm font-bold rounded-2xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full py-3 bg-[#e06b5b] hover:bg-[#c95444] active:scale-[0.99] text-white text-xs sm:text-sm font-bold rounded-2xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
@@ -1464,7 +1464,7 @@ function AccountContent() {
           {authMode === "signup" && (
             <form onSubmit={handleSignUpSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-[#0b1c30] mb-1.5">
+                <label className="block text-xs font-bold text-[#2b1f1a] mb-1.5">
                   Full Name
                 </label>
                 <div className="relative flex items-center">
@@ -1477,13 +1477,13 @@ function AccountContent() {
                     value={signUpName}
                     onChange={(e) => setSignUpName(e.target.value)}
                     placeholder="e.g. Ananya Sen"
-                    className="w-full pl-10 pr-4 py-2.5 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-xs sm:text-sm text-[#0b1c30] focus:border-[#f97316] focus:bg-white focus:outline-none transition-all"
+                    className="w-full pl-10 pr-4 py-2.5 bg-[#fbf7f0] border border-[#eddcd1] rounded-xl text-xs sm:text-sm text-[#2b1f1a] focus:border-[#e06b5b] focus:bg-white focus:outline-none transition-all"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#0b1c30] mb-1.5">
+                <label className="block text-xs font-bold text-[#2b1f1a] mb-1.5">
                   Email Address
                 </label>
                 <div className="relative flex items-center">
@@ -1496,17 +1496,17 @@ function AccountContent() {
                     value={signUpEmail}
                     onChange={(e) => setSignUpEmail(e.target.value)}
                     placeholder="yourname@gmail.com"
-                    className="w-full pl-10 pr-4 py-2.5 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-xs sm:text-sm text-[#0b1c30] focus:border-[#f97316] focus:bg-white focus:outline-none transition-all"
+                    className="w-full pl-10 pr-4 py-2.5 bg-[#fbf7f0] border border-[#eddcd1] rounded-xl text-xs sm:text-sm text-[#2b1f1a] focus:border-[#e06b5b] focus:bg-white focus:outline-none transition-all"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#0b1c30] mb-1.5">
+                <label className="block text-xs font-bold text-[#2b1f1a] mb-1.5">
                   Mobile Number (for SMS Tracking & Delivery Updates)
                 </label>
                 <div className="relative flex items-center">
-                  <span className="absolute left-3.5 text-xs font-bold text-[#0b1c30]/70 font-mono">
+                  <span className="absolute left-3.5 text-xs font-bold text-[#2b1f1a]/70 font-mono">
                     +91
                   </span>
                   <input
@@ -1515,13 +1515,13 @@ function AccountContent() {
                     value={signUpPhone}
                     onChange={(e) => setSignUpPhone(e.target.value.replace(/\D/g, ""))}
                     placeholder="10-digit number"
-                    className="w-full pl-12 pr-4 py-2.5 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-xs sm:text-sm text-[#0b1c30] focus:border-[#f97316] focus:bg-white focus:outline-none transition-all font-mono"
+                    className="w-full pl-12 pr-4 py-2.5 bg-[#fbf7f0] border border-[#eddcd1] rounded-xl text-xs sm:text-sm text-[#2b1f1a] focus:border-[#e06b5b] focus:bg-white focus:outline-none transition-all font-mono"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#0b1c30] mb-1.5">
+                <label className="block text-xs font-bold text-[#2b1f1a] mb-1.5">
                   Create Password
                 </label>
                 <div className="relative flex items-center">
@@ -1534,12 +1534,12 @@ function AccountContent() {
                     value={signUpPassword}
                     onChange={(e) => setSignUpPassword(e.target.value)}
                     placeholder="Min. 6 characters"
-                    className="w-full pl-10 pr-12 py-2.5 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-xs sm:text-sm text-[#0b1c30] focus:border-[#f97316] focus:bg-white focus:outline-none transition-all"
+                    className="w-full pl-10 pr-12 py-2.5 bg-[#fbf7f0] border border-[#eddcd1] rounded-xl text-xs sm:text-sm text-[#2b1f1a] focus:border-[#e06b5b] focus:bg-white focus:outline-none transition-all"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 text-[11px] font-semibold text-[#584237]/70 hover:text-[#0b1c30] cursor-pointer"
+                    className="absolute right-3 text-[11px] font-semibold text-[#584237]/70 hover:text-[#2b1f1a] cursor-pointer"
                   >
                     {showPassword ? "Hide" : "Show"}
                   </button>
@@ -1553,15 +1553,15 @@ function AccountContent() {
                     required
                     checked={agreeTerms}
                     onChange={(e) => setAgreeTerms(e.target.checked)}
-                    className="w-4 h-4 mt-0.5 text-[#f97316] rounded border-[#e2e8f0] focus:ring-[#f97316]"
+                    className="w-4 h-4 mt-0.5 text-[#e06b5b] rounded border-[#eddcd1] focus:ring-[#e06b5b]"
                   />
                   <span className="text-[11px] leading-relaxed">
                     I agree to KharidoMart&apos;s{" "}
-                    <Link href="/policies/terms" className="text-[#f97316] underline">
+                    <Link href="/policies/terms" className="text-[#e06b5b] underline">
                       Terms of Service
                     </Link>{" "}
                     and{" "}
-                    <Link href="/policies/privacy-policy" className="text-[#f97316] underline">
+                    <Link href="/policies/privacy-policy" className="text-[#e06b5b] underline">
                       Privacy Policy
                     </Link>{" "}
                     in compliance with DPDPA 2023.
@@ -1572,7 +1572,7 @@ function AccountContent() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3 bg-[#f97316] hover:bg-[#ea580c] active:scale-[0.99] text-white text-xs sm:text-sm font-bold rounded-2xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full py-3 bg-[#e06b5b] hover:bg-[#c95444] active:scale-[0.99] text-white text-xs sm:text-sm font-bold rounded-2xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
@@ -1601,10 +1601,10 @@ function AccountContent() {
               type="button"
               disabled={isGoogleLoading}
               onClick={handleGoogleLogin}
-              className="w-full py-2.5 px-4 bg-white hover:bg-slate-50 border border-[#e2e8f0] rounded-2xl text-xs sm:text-sm font-semibold text-[#0b1c30] flex items-center justify-center gap-2.5 transition-all shadow-2xs active:scale-[0.99] cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full py-2.5 px-4 bg-white hover:bg-slate-50 border border-[#eddcd1] rounded-2xl text-xs sm:text-sm font-semibold text-[#2b1f1a] flex items-center justify-center gap-2.5 transition-all shadow-2xs active:scale-[0.99] cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {isGoogleLoading ? (
-                <div className="w-4 h-4 border-2 border-orange-500/40 border-t-[#ea580c] rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-orange-500/40 border-t-[#e06b5b] rounded-full animate-spin" />
               ) : (
                 <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -1634,7 +1634,7 @@ function AccountContent() {
         <div className="text-center">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#584237]/80 hover:text-[#f97316] transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#584237]/80 hover:text-[#e06b5b] transition-colors"
           >
             <ArrowLeft size={14} weight="Outline" />
             <span>Return to KharidoMart Store</span>
@@ -1645,9 +1645,9 @@ function AccountContent() {
       {/* Forgot / Reset Password Modal */}
       {showForgotPassword && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-xl border border-[#e2e8f0] animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-xl border border-[#eddcd1] animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-bold text-[#0b1c30]">Reset Account Password</h2>
+              <h2 className="text-base font-bold text-[#2b1f1a]">Reset Account Password</h2>
               <button
                 onClick={() => {
                   setShowForgotPassword(false);
@@ -1672,7 +1672,7 @@ function AccountContent() {
             ) : (
               <form onSubmit={handleForgotSubmit} className="space-y-3">
                 <div>
-                  <label className="block text-[11px] font-bold text-[#0b1c30] mb-1">
+                  <label className="block text-[11px] font-bold text-[#2b1f1a] mb-1">
                     Registered Email
                   </label>
                   <input
@@ -1681,11 +1681,11 @@ function AccountContent() {
                     value={forgotEmail}
                     onChange={(e) => setForgotEmail(e.target.value)}
                     placeholder="you@gmail.com"
-                    className="w-full px-4 py-2.5 rounded-xl border border-[#e2e8f0] text-xs sm:text-sm focus:border-[#f97316] focus:outline-none bg-[#f8fafc]"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[#eddcd1] text-xs sm:text-sm focus:border-[#e06b5b] focus:outline-none bg-[#fbf7f0]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold text-[#0b1c30] mb-1">
+                  <label className="block text-[11px] font-bold text-[#2b1f1a] mb-1">
                     Registered Mobile Number (Verification)
                   </label>
                   <input
@@ -1693,11 +1693,11 @@ function AccountContent() {
                     value={forgotPhone}
                     onChange={(e) => setForgotPhone(e.target.value)}
                     placeholder="e.g. 8540017572"
-                    className="w-full px-4 py-2.5 rounded-xl border border-[#e2e8f0] text-xs sm:text-sm focus:border-[#f97316] focus:outline-none bg-[#f8fafc]"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[#eddcd1] text-xs sm:text-sm focus:border-[#e06b5b] focus:outline-none bg-[#fbf7f0]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold text-[#0b1c30] mb-1">
+                  <label className="block text-[11px] font-bold text-[#2b1f1a] mb-1">
                     New Password (min 6 characters)
                   </label>
                   <input
@@ -1707,13 +1707,13 @@ function AccountContent() {
                     value={forgotNewPassword}
                     onChange={(e) => setForgotNewPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full px-4 py-2.5 rounded-xl border border-[#e2e8f0] text-xs sm:text-sm focus:border-[#f97316] focus:outline-none bg-[#f8fafc]"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[#eddcd1] text-xs sm:text-sm focus:border-[#e06b5b] focus:outline-none bg-[#fbf7f0]"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={forgotLoading}
-                  className="w-full py-2.5 bg-[#f97316] hover:bg-[#ea580c] text-white text-xs font-bold rounded-xl transition-all shadow-xs disabled:opacity-60 cursor-pointer"
+                  className="w-full py-2.5 bg-[#e06b5b] hover:bg-[#c95444] text-white text-xs font-bold rounded-xl transition-all shadow-xs disabled:opacity-60 cursor-pointer"
                 >
                   {forgotLoading ? "Updating Password..." : "Update Password"}
                 </button>
@@ -1729,14 +1729,14 @@ function AccountContent() {
       {/* Google OAuth Configuration Guide Modal */}
       {showGoogleSetupModal && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-xl border border-[#e2e8f0] animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-xl border border-[#eddcd1] animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-orange-50 border border-orange-200 text-[#ea580c] flex items-center justify-center shrink-0">
+                <div className="w-9 h-9 rounded-xl bg-orange-50 border border-orange-200 text-[#e06b5b] flex items-center justify-center shrink-0">
                   <ShieldCheck size={20} weight="Filled" />
                 </div>
                 <div>
-                  <h2 className="text-sm sm:text-base font-bold text-[#0b1c30]">Google Sign-In Configuration Required</h2>
+                  <h2 className="text-sm sm:text-base font-bold text-[#2b1f1a]">Google Sign-In Configuration Required</h2>
                   <p className="text-[11px] text-[#584237]/70">Connect with your Google Cloud project</p>
                 </div>
               </div>
@@ -1752,10 +1752,10 @@ function AccountContent() {
               Real Google Sign-In requires your Google Cloud OAuth Client ID to securely connect Google accounts and prevent unauthorized mock logins.
             </p>
 
-            <div className="bg-[#f8fafc] p-3.5 rounded-2xl border border-[#e2e8f0] space-y-2 text-xs">
-              <p className="font-semibold text-[#0b1c30] text-[11px]">How to enable Google OAuth in 2 minutes:</p>
+            <div className="bg-[#fbf7f0] p-3.5 rounded-2xl border border-[#eddcd1] space-y-2 text-xs">
+              <p className="font-semibold text-[#2b1f1a] text-[11px]">How to enable Google OAuth in 2 minutes:</p>
               <ol className="list-decimal pl-4 space-y-1 text-[#584237]/90 text-[11px]">
-                <li>Open <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noreferrer" className="text-[#ea580c] underline font-semibold">Google Cloud Console &rarr; Credentials</a>.</li>
+                <li>Open <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noreferrer" className="text-[#e06b5b] underline font-semibold">Google Cloud Console &rarr; Credentials</a>.</li>
                 <li>Create an <strong>OAuth 2.0 Client ID</strong> (Web application).</li>
                 <li>Add <code className="bg-white px-1.5 py-0.5 rounded border border-slate-200 font-mono text-[10px]">http://localhost:3000</code> and your live domain to Authorized JavaScript origins.</li>
                 <li>Add to your <code className="bg-white px-1.5 py-0.5 rounded border border-slate-200 font-mono text-[10px]">.env</code> file:
@@ -1768,7 +1768,7 @@ function AccountContent() {
               <button
                 type="button"
                 onClick={() => setShowGoogleSetupModal(false)}
-                className="w-full py-2.5 bg-[#f97316] hover:bg-[#ea580c] text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer text-center"
+                className="w-full py-2.5 bg-[#e06b5b] hover:bg-[#c95444] text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer text-center"
               >
                 Sign In with Email &amp; Password
               </button>
@@ -1784,8 +1784,8 @@ export default function AccountPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
-          <div className="w-8 h-8 border-3 border-orange-500/20 border-t-[#ea580c] rounded-full animate-spin" />
+        <div className="min-h-screen bg-[#fbf7f0] flex items-center justify-center">
+          <div className="w-8 h-8 border-3 border-orange-500/20 border-t-[#e06b5b] rounded-full animate-spin" />
         </div>
       }
     >

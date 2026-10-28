@@ -131,3 +131,25 @@ model Discount {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
+
+model AbandonedCheckout {
+  id            String    @id @default(cuid())
+  sessionId     String    @unique
+  customerPhone String?
+  customerEmail String?
+  customerName  String?
+  address       String?
+  city          String?
+  state         String?
+  pincode       String?
+  cartData      String
+  subtotal      Float     @default(0)
+  discountCode  String?
+  status        String    @default("abandoned")
+  recoveryToken String    @unique @default(cuid())
+  orderNumber   String?
+  remindedAt    DateTime?
+  recoveredAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}

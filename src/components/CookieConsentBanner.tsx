@@ -32,10 +32,22 @@ export default function CookieConsentBanner() {
     }
     setIsVisible(false);
 
-    if (level === "all" && typeof window !== "undefined" && (window as any).gtag) {
-      (window as any).gtag("consent", "update", {
-        analytics_storage: "granted",
-      });
+    if (typeof window !== "undefined") {
+      if (level === "all") {
+        if ((window as any).gtag) {
+          (window as any).gtag("consent", "update", {
+            analytics_storage: "granted",
+            ad_storage: "granted",
+          });
+        }
+        if (typeof (window as any).fbq === "function") {
+          (window as any).fbq("consent", "grant");
+        }
+      } else {
+        if (typeof (window as any).fbq === "function") {
+          (window as any).fbq("consent", "revoke");
+        }
+      }
     }
   };
 
