@@ -2,6 +2,7 @@
   "name": "kharidomart",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@10.30.3",
   "scripts": {
     "dev": "next dev",
     "postinstall": "prisma generate",
@@ -31,5 +32,13 @@
     "prisma": "^6.19.3",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "prisma",
+      "unrs-resolver"
+    ]
   }
 }

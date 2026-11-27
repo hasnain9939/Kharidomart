@@ -35,17 +35,17 @@ A modern, fast, and feature-rich e-commerce web application inspired by and repl
 
 ### 1. Install Dependencies
 ```bash
-npm install
+pnpm install
 ```
 
 ### 2. Initialize Database (Prisma ORM)
 ```bash
-npx prisma db push
+pnpm exec prisma db push
 ```
 
 ### 3. Run the Development Server
 ```bash
-npm run dev
+pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) for the storefront or [http://localhost:3000/admin](http://localhost:3000/admin) for the Store Admin Panel.

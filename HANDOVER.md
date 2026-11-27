@@ -10,23 +10,23 @@ All mock and fake data has been purged. The database is initialized clean and re
 
 ### Prerequisites
 - **Node.js** (v18.18+ or v20+ recommended)
-- **npm** or **pnpm** / **yarn**
+- **pnpm** (v10+)
 
 ### 1. Install Dependencies
 ```bash
-npm install
+pnpm install
 ```
 
 ### 2. Initialize Database
 The project comes pre-configured with **SQLite** (`dev.db`) for zero-configuration local runs:
 ```bash
-npx prisma db push
+pnpm exec prisma db push
 ```
 *(This generates the Prisma Client and creates all database tables: Product, Category, Order, OrderItem, Review, StoreSetting).*
 
 ### 3. Start the Development Server
 ```bash
-npm run dev
+pnpm dev
 ```
 Open **[http://localhost:3000](http://localhost:3000)** in your browser.
 
@@ -125,7 +125,7 @@ By default, the store runs on zero-config local SQLite (`file:./dev.db`). When d
 
 3. **Push to Remote Database**:
    ```bash
-   npx prisma db push
+   pnpm exec prisma db push
    ```
    That's it! All schema, indices, relations, and types are immediately synced to your production PostgreSQL database.
 
@@ -139,7 +139,7 @@ By default, the store runs on zero-config local SQLite (`file:./dev.db`). When d
    - `DATABASE_URL`: Your PostgreSQL / Supabase connection string.
 4. Set Build Command:
    ```bash
-   npx prisma generate && next build
+   pnpm exec prisma generate && pnpm build
    ```
 5. Click **Deploy**. Your ecommerce store is live!
 
@@ -164,6 +164,6 @@ By default, the store runs on zero-config local SQLite (`file:./dev.db`). When d
 - Verified zero console errors, zero fake items, 100% type-safe compilation.
 - For database inspection GUI, run:
   ```bash
-  npx prisma studio
+  pnpm exec prisma studio
   ```
   *(Opens an interactive browser GUI at http://localhost:5555 to view and edit database rows directly).*
